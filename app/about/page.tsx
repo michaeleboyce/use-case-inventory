@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import {
   Section,
@@ -563,10 +562,6 @@ export default function AboutPage() {
           <div className="col-span-12 md:col-span-9">
             <dl className="divide-y divide-border border-b border-border font-mono text-[11px] uppercase tracking-[0.14em]">
               <div className="grid grid-cols-[10rem_minmax(0,1fr)] gap-x-4 py-3">
-                <dt className="text-muted-foreground">Publisher</dt>
-                <dd className="text-foreground">Institute for Progress · IFP</dd>
-              </div>
-              <div className="grid grid-cols-[10rem_minmax(0,1fr)] gap-x-4 py-3">
                 <dt className="text-muted-foreground">Issue</dt>
                 <dd className="text-foreground">
                   No. 001 · OMB M-25-21 · Cycle 2025
@@ -584,22 +579,11 @@ export default function AboutPage() {
                   {formatDate(lastUpdated)}
                 </dd>
               </div>
-              <div className="grid grid-cols-[10rem_minmax(0,1fr)] gap-x-4 py-3">
-                <dt className="text-muted-foreground">Contact</dt>
-                <dd className="text-foreground normal-case tracking-normal">
-                  <Link
-                    href="/"
-                    className="hover:text-[var(--stamp)]"
-                  >
-                    File corrections via IFP&apos;s public channels.
-                  </Link>
-                </dd>
-              </div>
             </dl>
             <p className="mt-5 max-w-prose font-body text-sm leading-[1.55] text-muted-foreground">
-              Produced by the Institute for Progress as part of its work on
-              federal AI adoption. The inventory database powers reporting,
-              benchmarking, and longitudinal analysis across agencies.
+              A longitudinal reference for federal AI adoption, built from
+              agency submissions under OMB M-25-21. The inventory database
+              powers reporting, benchmarking, and comparison across agencies.
             </p>
           </div>
         </div>
