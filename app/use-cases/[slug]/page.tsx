@@ -4,6 +4,7 @@ import {
   getUseCaseOrConsolidatedBySlug,
   getProductById,
   getProductsForUseCase,
+  getProductsForConsolidatedUseCase,
   getTemplateById,
   getAgencyByAbbr,
   getRelatedByAgency,
@@ -518,6 +519,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
   const agency = data.agency_abbreviation
     ? getAgencyByAbbr(data.agency_abbreviation)
     : null;
+  const linkedProducts = getProductsForConsolidatedUseCase(data.id);
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14">
@@ -589,7 +591,51 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
         <TagDefinitionList tags={tags} />
       </Section>
 
-      <Section number="III" title="Related filings">
+      {linkedProducts.length > 0 && (
+        <Section
+          number="III"
+          title={
+            linkedProducts.length > 1 ? "Linked products" : "Linked product"
+          }
+          lede={
+            linkedProducts.length > 1
+              ? "Every canonical product evidenced by this entry's commercial-product, examples, or agency-uses text."
+              : "The commercial product this consolidated entry deploys."
+          }
+        >
+          <ul className="flex flex-col divide-y divide-border border-t-2 border-foreground">
+            {linkedProducts.map((p) => (
+              <li key={p.id} className="py-4 first:pt-4">
+                <Link
+                  href={`/products/${p.id}`}
+                  className="group flex items-start justify-between gap-3 hover:text-[var(--stamp)]"
+                >
+                  <div>
+                    <p className="font-display italic text-[1.4rem] leading-tight tracking-[-0.01em] text-foreground group-hover:text-[var(--stamp)]">
+                      {p.canonical_name}
+                    </p>
+                    {p.vendor && (
+                      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                        {p.vendor}
+                        {p.confidence ? ` · ${p.confidence} evidence` : ""}
+                      </p>
+                    )}
+                  </div>
+                  <ExternalLink
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <Section
+        number={linkedProducts.length > 0 ? "IV" : "III"}
+        title="Related filings"
+      >
         <RelatedUseCases
           title="More from this agency"
           items={related}
@@ -597,7 +643,10 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
         />
       </Section>
 
-      <Section number="IV" title="Raw record">
+      <Section
+        number={linkedProducts.length > 0 ? "V" : "IV"}
+        title="Raw record"
+      >
         <RawJsonViewer json={data.raw_json} />
       </Section>
     </div>

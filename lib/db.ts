@@ -388,8 +388,10 @@ export function getUseCasesFiltered(
     params.push(filters.isHighImpact);
   }
   if (filters.productId != null) {
-    where.push("uc.product_id = ?");
-    params.push(filters.productId);
+    where.push(
+      `(uc.product_id = ? OR uc.id IN (SELECT use_case_id FROM use_case_products WHERE product_id = ?))`,
+    );
+    params.push(filters.productId, filters.productId);
   }
   if (filters.templateId != null) {
     where.push("uc.template_id = ?");
@@ -421,10 +423,11 @@ export function getUseCasesFiltered(
     params.push(...filters.agencyTypes);
   }
   if (filters.productIds && filters.productIds.length > 0) {
+    const placeholders = filters.productIds.map(() => "?").join(",");
     where.push(
-      `uc.product_id IN (${filters.productIds.map(() => "?").join(",")})`,
+      `(uc.product_id IN (${placeholders}) OR uc.id IN (SELECT use_case_id FROM use_case_products WHERE product_id IN (${placeholders})))`,
     );
-    params.push(...filters.productIds);
+    params.push(...filters.productIds, ...filters.productIds);
   }
   if (filters.templateIds && filters.templateIds.length > 0) {
     where.push(
@@ -619,15 +622,30 @@ export function getAllProducts(): ProductWithCounts[] {
            COALESCE(uc_counts.agency_count, 0) AS agency_count
       FROM products p
       LEFT JOIN (
+        -- Every (use_case, product) edge via primary FK OR join table, for both
+        -- individual and consolidated rows. DISTINCT on (source_kind, id,
+        -- product_id) so a use case attributed via both paths counts once.
         SELECT product_id,
                COUNT(*) AS use_case_count,
                COUNT(DISTINCT agency_id) AS agency_count
           FROM (
-            SELECT product_id, agency_id FROM use_cases
-              WHERE product_id IS NOT NULL
+            SELECT DISTINCT 'i' AS k, uc_id, agency_id, product_id FROM (
+              SELECT id AS uc_id, agency_id, product_id FROM use_cases
+                WHERE product_id IS NOT NULL
+              UNION
+              SELECT uc.id, uc.agency_id, ucp.product_id
+                FROM use_case_products ucp
+                JOIN use_cases uc ON uc.id = ucp.use_case_id
+            )
             UNION ALL
-            SELECT product_id, agency_id FROM consolidated_use_cases
-              WHERE product_id IS NOT NULL
+            SELECT DISTINCT 'c' AS k, cuc_id, agency_id, product_id FROM (
+              SELECT id AS cuc_id, agency_id, product_id FROM consolidated_use_cases
+                WHERE product_id IS NOT NULL
+              UNION
+              SELECT c.id, c.agency_id, cucp.product_id
+                FROM consolidated_use_case_products cucp
+                JOIN consolidated_use_cases c ON c.id = cucp.consolidated_use_case_id
+            )
           )
          GROUP BY product_id
       ) uc_counts ON uc_counts.product_id = p.id
@@ -651,35 +669,53 @@ export function getProductById(id: number): ProductDetail | null {
     .all(id)
     .map((r) => r.alias_text);
 
-  // Union use_cases + consolidated_use_cases so the product page shows every
-  // agency that linked to this product, not just those that filed an
-  // individual-format row for it.
+  // Union primary FK + join-table attributions, then de-dup per (kind, id)
+  // so a use case attributed via both paths counts exactly once.
   const agencies = db
-    .prepare<[number, number], { id: number; name: string; abbreviation: string; count: number }>(`
-      SELECT a.id, a.name, a.abbreviation, SUM(n) AS count
-        FROM (
-          SELECT agency_id, COUNT(*) AS n FROM use_cases
-            WHERE product_id = ? GROUP BY agency_id
-          UNION ALL
-          SELECT agency_id, COUNT(*) AS n FROM consolidated_use_cases
-            WHERE product_id = ? GROUP BY agency_id
-        ) sub
-        JOIN agencies a ON a.id = sub.agency_id
+    .prepare<
+      [number, number, number, number],
+      { id: number; name: string; abbreviation: string; count: number }
+    >(`
+      WITH attributed(kind, uc_id, agency_id) AS (
+        SELECT 'i', id, agency_id FROM use_cases WHERE product_id = ?
+        UNION
+        SELECT 'i', uc.id, uc.agency_id
+          FROM use_case_products ucp JOIN use_cases uc ON uc.id = ucp.use_case_id
+         WHERE ucp.product_id = ?
+        UNION
+        SELECT 'c', id, agency_id FROM consolidated_use_cases WHERE product_id = ?
+        UNION
+        SELECT 'c', c.id, c.agency_id
+          FROM consolidated_use_case_products cucp
+          JOIN consolidated_use_cases c ON c.id = cucp.consolidated_use_case_id
+         WHERE cucp.product_id = ?
+      )
+      SELECT a.id, a.name, a.abbreviation, COUNT(*) AS count
+        FROM attributed
+        JOIN agencies a ON a.id = attributed.agency_id
        GROUP BY a.id
        ORDER BY count DESC, a.name COLLATE NOCASE ASC
     `)
-    .all(id, id);
+    .all(id, id, id, id);
 
   const use_case_count = (
     db
-      .prepare<[number, number], { c: number }>(
-        `SELECT
-           (SELECT COUNT(*) FROM use_cases WHERE product_id = ?)
-           +
-           (SELECT COUNT(*) FROM consolidated_use_cases WHERE product_id = ?)
-           AS c`,
-      )
-      .get(id, id) ?? { c: 0 }
+      .prepare<[number, number, number, number], { c: number }>(`
+        SELECT COUNT(*) AS c FROM (
+          SELECT 'i' AS k, id FROM use_cases WHERE product_id = ?
+          UNION
+          SELECT 'i', uc.id
+            FROM use_case_products ucp JOIN use_cases uc ON uc.id = ucp.use_case_id
+           WHERE ucp.product_id = ?
+          UNION
+          SELECT 'c', id FROM consolidated_use_cases WHERE product_id = ?
+          UNION
+          SELECT 'c', c.id
+            FROM consolidated_use_case_products cucp
+            JOIN consolidated_use_cases c ON c.id = cucp.consolidated_use_case_id
+           WHERE cucp.product_id = ?
+        )`)
+      .get(id, id, id, id) ?? { c: 0 }
   ).c;
 
   return { ...product, aliases, agencies, use_case_count };
@@ -718,6 +754,28 @@ export function getProductsForUseCase(
        p.canonical_name COLLATE NOCASE ASC
   `);
   return stmt.all(useCaseId);
+}
+
+/** Mirror of ``getProductsForUseCase`` for consolidated rows. */
+export function getProductsForConsolidatedUseCase(
+  consolidatedId: number,
+): Array<Product & { evidence_text: string | null; confidence: string | null }> {
+  const db = getDb();
+  const stmt = db.prepare<
+    [number],
+    Product & { evidence_text: string | null; confidence: string | null }
+  >(`
+    SELECT p.*,
+           cucp.evidence_text AS evidence_text,
+           cucp.confidence    AS confidence
+      FROM consolidated_use_case_products cucp
+      JOIN products p ON p.id = cucp.product_id
+     WHERE cucp.consolidated_use_case_id = ?
+     ORDER BY
+       CASE cucp.confidence WHEN 'strong' THEN 0 ELSE 1 END,
+       p.canonical_name COLLATE NOCASE ASC
+  `);
+  return stmt.all(consolidatedId);
 }
 
 // -----------------------------------------------------------------------------
@@ -1714,21 +1772,33 @@ export function getChildProducts(parentId: number): Product[] {
   return stmt.all(parentId);
 }
 
-/** All use cases linked to a given product (joined with agency/template names + tags). */
+/** All individual use cases linked to a given product via primary FK OR the
+ *  use_case_products join table. */
 export function getUseCasesForProduct(productId: number): UseCaseWithTags[] {
-  const stmt = getDb().prepare<[number], JoinedUseCaseRow>(
-    `${USE_CASE_SELECT} WHERE uc.product_id = ? ORDER BY a.name COLLATE NOCASE ASC, uc.use_case_name COLLATE NOCASE ASC`,
+  const stmt = getDb().prepare<[number, number], JoinedUseCaseRow>(
+    `${USE_CASE_SELECT}
+       WHERE uc.id IN (
+         SELECT id FROM use_cases WHERE product_id = ?
+         UNION
+         SELECT use_case_id FROM use_case_products WHERE product_id = ?
+       )
+       ORDER BY a.name COLLATE NOCASE ASC, uc.use_case_name COLLATE NOCASE ASC`,
   );
-  return attachTagsToUseCases(stmt.all(productId));
+  return attachTagsToUseCases(stmt.all(productId, productId));
 }
 
-/** Count of consolidated_use_cases rows linked to a product. */
+/** Count of consolidated_use_cases rows linked to a product via primary FK
+ *  OR the consolidated_use_case_products join table. */
 export function getConsolidatedCountForProduct(productId: number): number {
   const row = getDb()
-    .prepare<[number], { c: number }>(
-      `SELECT COUNT(*) AS c FROM consolidated_use_cases WHERE product_id = ?`,
+    .prepare<[number, number], { c: number }>(
+      `SELECT COUNT(*) AS c FROM (
+         SELECT id FROM consolidated_use_cases WHERE product_id = ?
+         UNION
+         SELECT consolidated_use_case_id FROM consolidated_use_case_products WHERE product_id = ?
+       )`,
     )
-    .get(productId);
+    .get(productId, productId);
   return row?.c ?? 0;
 }
 
