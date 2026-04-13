@@ -317,6 +317,9 @@ export interface UseCaseFilterInput {
   useTypes?: string[];
   highImpactDesignations?: string[]; // tags.high_impact_designation
   productIds?: number[];
+  templateIds?: number[];
+  bureaus?: string[];
+  maturityTiers?: string[]; // agency_ai_maturity.maturity_tier
   isGeneralLLMAccess?: boolean;
   isPublicFacing?: boolean;
   hasATOorFedRAMP?: boolean;

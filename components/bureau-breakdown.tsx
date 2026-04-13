@@ -7,12 +7,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { formatNumber, formatPercent } from "@/lib/formatting";
 import type { BureauBreakdown as BureauRow } from "@/lib/types";
+import { agencyUseCasesUrl } from "@/lib/urls";
 
 const DEFAULT_VISIBLE = 15;
 
-export function BureauBreakdown({ rows }: { rows: BureauRow[] }) {
+export function BureauBreakdown({
+  rows,
+  agencyId,
+}: {
+  rows: BureauRow[];
+  agencyId?: number;
+}) {
   const [expanded, setExpanded] = useState(false);
 
   if (rows.length === 0) {
@@ -32,11 +40,10 @@ export function BureauBreakdown({ rows }: { rows: BureauRow[] }) {
       <ul className="divide-y divide-border border-t border-b border-border">
         {visible.map((row) => {
           const pct = total > 0 ? (row.count / total) * 100 : 0;
-          return (
-            <li
-              key={row.label}
-              className="grid grid-cols-[minmax(0,1fr)_8rem_4.5rem] items-center gap-x-4 py-2"
-            >
+          const gridClass =
+            "grid grid-cols-[minmax(0,1fr)_8rem_4.5rem] items-center gap-x-4 py-2";
+          const inner = (
+            <>
               <p className="truncate font-body text-sm text-foreground">
                 {row.label}
               </p>
@@ -55,6 +62,22 @@ export function BureauBreakdown({ rows }: { rows: BureauRow[] }) {
                   {formatPercent(pct, 1)}
                 </span>
               </div>
+            </>
+          );
+          return (
+            <li key={row.label}>
+              {agencyId != null && row.bureau_component ? (
+                <Link
+                  href={agencyUseCasesUrl(agencyId, {
+                    bureaus: [row.bureau_component],
+                  })}
+                  className={`${gridClass} -mx-2 px-2 transition-colors hover:bg-[var(--highlight)]/50`}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div className={gridClass}>{inner}</div>
+              )}
             </li>
           );
         })}

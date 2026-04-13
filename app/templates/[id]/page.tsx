@@ -7,6 +7,11 @@ import {
 } from "@/lib/db";
 import { Section, MonoChip } from "@/components/editorial";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
+import {
+  agencyUseCasesUrl,
+  productUseCasesUrl,
+  templateUseCasesUrl,
+} from "@/lib/urls";
 
 type TemplatePageProps = { params: Promise<{ id: string }> };
 
@@ -90,7 +95,11 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
           {/* Stat ledger */}
           <div className="mt-10 grid grid-cols-3 gap-x-6 border-t-2 border-foreground pt-4">
             <StatCell label="Agencies" value={template.agencies.length} />
-            <StatCell label="Entries" value={template.use_case_count} />
+            <StatCell
+              label="Entries"
+              value={template.use_case_count}
+              href={templateUseCasesUrl(template.id)}
+            />
             <StatCell
               label="Products paired"
               value={template.products.length}
@@ -133,9 +142,14 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
                 >
                   {a.name}
                 </Link>
-                <span className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground">
+                <Link
+                  href={agencyUseCasesUrl(a.id, {
+                    templateIds: [template.id],
+                  })}
+                  className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                >
                   {formatNumber(a.count)} entries
-                </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -173,9 +187,14 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
                 <span className="hidden font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground md:inline">
                   {p.vendor ?? "—"}
                 </span>
-                <span className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground">
+                <Link
+                  href={productUseCasesUrl(p.id, {
+                    templateIds: [template.id],
+                  })}
+                  className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                >
                   {formatNumber(p.count)} entries
-                </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -272,15 +291,32 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
   );
 }
 
-function StatCell({ label, value }: { label: string; value: number }) {
+function StatCell({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number;
+  href?: string;
+}) {
+  const valueClass =
+    "mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground md:text-[2.8rem]";
   return (
     <div>
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground md:text-[2.8rem]">
-        {formatNumber(value)}
-      </div>
+      {href ? (
+        <Link
+          href={href}
+          className={`${valueClass} block transition-colors hover:text-[var(--stamp)]`}
+        >
+          {formatNumber(value)}
+        </Link>
+      ) : (
+        <div className={valueClass}>{formatNumber(value)}</div>
+      )}
     </div>
   );
 }

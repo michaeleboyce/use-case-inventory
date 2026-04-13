@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type Accent = "stamp" | "verified" | "ink";
@@ -15,6 +16,12 @@ type Props = {
   accent?: Accent;
   kicker?: string;
   className?: string;
+  /**
+   * If provided, the card becomes a clickable link that drills through to
+   * the given href. A subtle hover ring in the stamp color is applied so
+   * the affordance is visible without breaking the flat editorial aesthetic.
+   */
+  href?: string;
 };
 
 export function InsightCard({
@@ -24,14 +31,18 @@ export function InsightCard({
   accent = "ink",
   kicker,
   className,
+  href,
 }: Props) {
-  return (
-    <figure
-      className={cn(
-        "flex h-full flex-col border border-border bg-background p-5",
-        className,
-      )}
-    >
+  const base = cn(
+    "flex h-full flex-col border border-border bg-background p-5",
+    href
+      ? "transition-colors hover:ring-1 hover:ring-[var(--stamp)] hover:text-[var(--stamp)]"
+      : null,
+    className,
+  );
+
+  const body = (
+    <>
       {kicker ? (
         <div
           className={cn(
@@ -55,6 +66,16 @@ export function InsightCard({
           </p>
         ) : null}
       </div>
-    </figure>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className={cn(base, "block")}>
+        {body}
+      </Link>
+    );
+  }
+
+  return <figure className={base}>{body}</figure>;
 }

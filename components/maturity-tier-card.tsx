@@ -5,6 +5,7 @@
  */
 
 import Link from "next/link";
+import { buildAgenciesUrl } from "@/lib/urls";
 
 type TierBlock = {
   tier: string;
@@ -62,7 +63,7 @@ export function MaturityTierCard({ tiers }: { tiers: TierBlock[] }) {
         return (
           <Link
             key={block.tier}
-            href={`/agencies?tier=${block.tier}`}
+            href={buildAgenciesUrl({ tier: block.tier })}
             className="group block"
           >
             <div className="flex items-baseline gap-2.5 border-b border-border pb-2">

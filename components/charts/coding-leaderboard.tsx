@@ -16,8 +16,11 @@ export type LeaderboardRow = {
   abbreviation: string;
   name: string;
   value: number;
+  id?: number;
   /** Optional annotation shown in muted text to the right of the abbreviation. */
   subLabel?: string;
+  /** Optional precomputed drill-through URL (server-computed, since this is a Client Component). */
+  href?: string;
 };
 
 type Props = {
@@ -58,7 +61,7 @@ export function CodingLeaderboard({
         return (
           <li key={row.abbreviation}>
             <Link
-              href={`/agencies/${row.abbreviation.toLowerCase()}`}
+              href={row.href ?? `/agencies/${row.abbreviation.toLowerCase()}`}
               className="group grid grid-cols-[28px_96px_1fr_48px] items-center gap-2 rounded px-1 py-1 text-xs hover:bg-muted/60"
               title={`${row.name} — ${row.value} ${unit}`}
             >

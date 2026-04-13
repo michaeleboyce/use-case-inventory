@@ -10,6 +10,7 @@
 
 import Link from "next/link";
 import { formatNumber, humanize } from "@/lib/formatting";
+import { templateUseCasesUrl } from "@/lib/urls";
 import type { TemplateWithCounts } from "@/lib/types";
 
 type Props = {
@@ -18,10 +19,7 @@ type Props = {
 
 export function TemplateCard({ template }: Props) {
   return (
-    <Link
-      href={`/templates/${template.id}`}
-      className="group flex h-full flex-col border-t-2 border-foreground bg-transparent pt-4 transition-colors hover:border-[var(--stamp)]"
-    >
+    <div className="group relative flex h-full flex-col border-t-2 border-foreground bg-transparent pt-4 transition-colors hover:border-[var(--stamp)]">
       <div className="flex items-baseline justify-between gap-3">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           {template.short_name ? (
@@ -37,30 +35,43 @@ export function TemplateCard({ template }: Props) {
         ) : null}
       </div>
 
-      <blockquote className="mt-2 font-display italic text-[1.2rem] leading-[1.2] tracking-[-0.005em] text-foreground group-hover:text-[var(--stamp)]">
+      {/* Body link covers the whole card → /templates/[id]. The count link
+          below sits above this via z-index so it drills to /use-cases. */}
+      <Link
+        href={`/templates/${template.id}`}
+        aria-label={`Open template ${template.short_name ?? template.id}`}
+        className="absolute inset-0 z-0"
+      />
+
+      <blockquote className="pointer-events-none relative mt-2 font-display italic text-[1.2rem] leading-[1.2] tracking-[-0.005em] text-foreground group-hover:text-[var(--stamp)]">
         &ldquo;{template.template_text}&rdquo;
       </blockquote>
 
       {template.capability_category ? (
-        <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
+        <div className="pointer-events-none relative mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
           § {humanize(template.capability_category)}
         </div>
       ) : null}
 
-      <div className="mt-auto grid grid-cols-2 gap-x-4 border-t border-dotted border-border pt-3 font-mono text-[11px] uppercase tracking-[0.12em]">
-        <div className="flex items-baseline justify-between gap-2">
+      <div className="relative mt-auto grid grid-cols-2 gap-x-4 border-t border-dotted border-border pt-3 font-mono text-[11px] uppercase tracking-[0.12em]">
+        <div className="pointer-events-none flex items-baseline justify-between gap-2">
           <span className="text-muted-foreground">Agencies</span>
           <span className="tabular-nums text-foreground">
             {formatNumber(template.agency_count)}
           </span>
         </div>
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-muted-foreground">Entries</span>
-          <span className="tabular-nums text-foreground">
-            {formatNumber(template.use_case_count)}
+          <span className="pointer-events-none text-muted-foreground">
+            Entries
           </span>
+          <Link
+            href={templateUseCasesUrl(template.id)}
+            className="relative z-10 tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]"
+          >
+            {formatNumber(template.use_case_count)}
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

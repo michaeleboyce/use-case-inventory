@@ -29,7 +29,12 @@ export interface FilterOption {
 
 export interface UseCaseFiltersProps {
   agencies: Array<{ id: number; name: string; abbreviation: string }>;
-  products: Array<{ id: number; canonical_name: string; vendor: string | null }>;
+  products: Array<{
+    id: number;
+    canonical_name: string;
+    vendor: string | null;
+    use_case_count?: number;
+  }>;
   facets: {
     agencyTypes: string[];
     tagEntryTypes: string[];
@@ -211,13 +216,27 @@ export function UseCaseFilters({
 
   const filteredProducts = useMemo(() => {
     const q = productQuery.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.canonical_name.toLowerCase().includes(q) ||
-        (p.vendor ?? "").toLowerCase().includes(q),
-    );
-  }, [products, productQuery]);
+    const base = q
+      ? products.filter(
+          (p) =>
+            p.canonical_name.toLowerCase().includes(q) ||
+            (p.vendor ?? "").toLowerCase().includes(q),
+        )
+      : products;
+    // Pin selected products to the top so the user can always see what's active.
+    const selected = new Set(selectedProductIds);
+    return [...base].sort((a, b) => {
+      const aSel = selected.has(String(a.id)) ? 1 : 0;
+      const bSel = selected.has(String(b.id)) ? 1 : 0;
+      if (aSel !== bSel) return bSel - aSel;
+      return (b.use_case_count ?? 0) - (a.use_case_count ?? 0);
+    });
+  }, [products, productQuery, selectedProductIds]);
+
+  const topProductPicks = useMemo(
+    () => products.filter((p) => (p.use_case_count ?? 0) > 0).slice(0, 6),
+    [products],
+  );
 
   return (
     <aside
@@ -351,12 +370,54 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Product */}
-      <FilterGroup title="Product" defaultOpen={false}>
+      <FilterGroup
+        title={
+          selectedProductIds.length > 0
+            ? `Product · ${selectedProductIds.length} selected`
+            : "Product"
+        }
+        defaultOpen={selectedProductIds.length > 0}
+      >
+        {/* Popular picks — one click to filter by a widely-deployed product. */}
+        {topProductPicks.length > 0 && productQuery.trim() === "" && (
+          <div className="mb-2">
+            <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+              Popular
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {topProductPicks.map((p) => {
+                const active = selectedProductIds.includes(String(p.id));
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => toggleMulti("product_ids", String(p.id))}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] transition-colors",
+                      active
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground",
+                    )}
+                    title={`${p.canonical_name}${p.vendor ? ` · ${p.vendor}` : ""} — ${p.use_case_count ?? 0} use cases`}
+                  >
+                    <span className="truncate max-w-[140px]">
+                      {p.canonical_name}
+                    </span>
+                    <span className="tabular-nums opacity-70">
+                      {p.use_case_count ?? 0}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="mb-2">
           <Input
             value={productQuery}
             onChange={(e) => setProductQuery(e.currentTarget.value)}
-            placeholder="Find product…"
+            placeholder="Search product or vendor…"
             className="h-7 border-border bg-transparent font-mono text-[11px]"
           />
         </div>
@@ -367,13 +428,20 @@ export function UseCaseFilters({
               checked={selectedProductIds.includes(String(p.id))}
               onToggle={() => toggleMulti("product_ids", String(p.id))}
               label={
-                <span className="flex flex-col">
-                  <span className="truncate text-[12px] text-foreground">
-                    {p.canonical_name}
+                <span className="flex w-full items-start gap-2">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-[12px] text-foreground">
+                      {p.canonical_name}
+                    </span>
+                    {p.vendor && (
+                      <span className="truncate font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                        {p.vendor}
+                      </span>
+                    )}
                   </span>
-                  {p.vendor && (
-                    <span className="truncate font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-                      {p.vendor}
+                  {p.use_case_count != null && p.use_case_count > 0 && (
+                    <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                      {p.use_case_count}
                     </span>
                   )}
                 </span>

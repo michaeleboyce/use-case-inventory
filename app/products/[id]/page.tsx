@@ -11,6 +11,7 @@ import {
 import { ProductCard } from "@/components/product-card";
 import { Section, MonoChip, Eyebrow } from "@/components/editorial";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
+import { agencyUseCasesUrl, productUseCasesUrl } from "@/lib/urls";
 
 type ProductPageProps = { params: Promise<{ id: string }> };
 
@@ -130,11 +131,20 @@ export default async function ProductDetailPage(props: ProductPageProps) {
 
           {/* Stat ledger */}
           <div className="mt-10 grid grid-cols-3 gap-x-6 border-t-2 border-foreground pt-4">
-            <StatCell label="Agencies" value={product.agencies.length} />
-            <StatCell label="Total entries" value={product.use_case_count} />
+            <StatCell
+              label="Agencies"
+              value={product.agencies.length}
+              href="/agencies"
+            />
+            <StatCell
+              label="Total entries"
+              value={product.use_case_count}
+              href={productUseCasesUrl(product.id)}
+            />
             <StatCell
               label="Consolidated"
               value={consolidatedCount}
+              href={productUseCasesUrl(product.id)}
             />
           </div>
         </div>
@@ -223,9 +233,12 @@ export default async function ProductDetailPage(props: ProductPageProps) {
                 >
                   {a.name}
                 </Link>
-                <span className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground">
+                <Link
+                  href={agencyUseCasesUrl(a.id, { productIds: [product.id] })}
+                  className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                >
                   {formatNumber(a.count)} entries
-                </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -335,17 +348,38 @@ export default async function ProductDetailPage(props: ProductPageProps) {
   );
 }
 
-function StatCell({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
+function StatCell({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number;
+  href?: string;
+}) {
+  const inner = (
+    <>
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground md:text-[2.8rem]">
+      <div
+        className={`mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground transition-colors md:text-[2.8rem] ${
+          href ? "group-hover:text-[var(--stamp)]" : ""
+        }`}
+      >
         {formatNumber(value)}
       </div>
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="group block">
+        {inner}
+      </Link>
+    );
+  }
+  return <div>{inner}</div>;
 }
 
 // Pre-render known product IDs at build time.

@@ -20,6 +20,7 @@ import {
   Figure,
   MonoChip,
 } from "@/components/editorial";
+import { agencyUseCasesUrl } from "@/lib/urls";
 
 export const metadata = {
   title: "Compare agencies · Federal AI Use Case Inventory",
@@ -74,7 +75,13 @@ function entryTypeLabel(key: string): string {
   return ENTRY_TYPE_LABELS[key] ?? "Unknown";
 }
 
-function EntryTypeStrip({ mix }: { mix: AgencyCompareData["entry_type_mix"] }) {
+function EntryTypeStrip({
+  mix,
+  agencyId,
+}: {
+  mix: AgencyCompareData["entry_type_mix"];
+  agencyId: number;
+}) {
   const total = ENTRY_TYPE_KEYS.reduce((acc, k) => acc + mix[k], 0);
   if (total === 0) {
     return (
@@ -103,18 +110,45 @@ function EntryTypeStrip({ mix }: { mix: AgencyCompareData["entry_type_mix"] }) {
         {ENTRY_TYPE_KEYS.filter((k) => mix[k] > 0).map((k) => {
           const pct = (mix[k] / total) * 100;
           return (
-            <span key={k} className="inline-flex items-center gap-1 tabular-nums">
+            <Link
+              key={k}
+              href={agencyUseCasesUrl(agencyId, { entryTypes: [k] })}
+              className="inline-flex items-center gap-1 tabular-nums transition-colors hover:text-[var(--stamp)]"
+              title={`${entryTypeLabel(k)}: ${mix[k]} (${pct.toFixed(1)}%)`}
+            >
               <span
                 className="size-2"
                 style={{ background: entryTypeColor(k) }}
                 aria-hidden
               />
               {pct.toFixed(0)}%
-            </span>
+            </Link>
           );
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * Link wrapper used by metric cells — drills into `/use-cases` filtered to this
+ * agency (and any extra filter dimensions for the metric). Keeps the hover
+ * subtle so the dense grid doesn't get noisy.
+ */
+function MetricLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="transition-colors hover:text-[var(--stamp)]"
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -126,32 +160,62 @@ const METRIC_ROWS: Array<{
   {
     key: "total",
     label: "Total use cases",
-    render: (d) => formatNumber(d.total_use_cases),
+    render: (d) => (
+      <MetricLink href={agencyUseCasesUrl(d.id)}>
+        {formatNumber(d.total_use_cases)}
+      </MetricLink>
+    ),
   },
   {
     key: "products",
     label: "Distinct products",
-    render: (d) => formatNumber(d.distinct_products_deployed),
+    render: (d) => (
+      <MetricLink href={agencyUseCasesUrl(d.id)}>
+        {formatNumber(d.distinct_products_deployed)}
+      </MetricLink>
+    ),
   },
   {
     key: "general_llm",
     label: "General LLM count",
-    render: (d) => formatNumber(d.general_llm_count),
+    render: (d) => (
+      <MetricLink
+        href={agencyUseCasesUrl(d.id, { isGeneralLLMAccess: true })}
+      >
+        {formatNumber(d.general_llm_count)}
+      </MetricLink>
+    ),
   },
   {
     key: "coding",
     label: "Coding tool count",
-    render: (d) => formatNumber(d.coding_tool_count),
+    render: (d) => (
+      <MetricLink href={agencyUseCasesUrl(d.id, { isCodingTool: true })}>
+        {formatNumber(d.coding_tool_count)}
+      </MetricLink>
+    ),
   },
   {
     key: "agentic",
     label: "Agentic AI count",
-    render: (d) => formatNumber(d.agentic_ai_count),
+    render: (d) => (
+      <MetricLink
+        href={agencyUseCasesUrl(d.id, { aiSophistications: ["agentic"] })}
+      >
+        {formatNumber(d.agentic_ai_count)}
+      </MetricLink>
+    ),
   },
   {
     key: "custom",
     label: "Custom system count",
-    render: (d) => formatNumber(d.custom_system_count),
+    render: (d) => (
+      <MetricLink
+        href={agencyUseCasesUrl(d.id, { entryTypes: ["custom_system"] })}
+      >
+        {formatNumber(d.custom_system_count)}
+      </MetricLink>
+    ),
   },
   {
     key: "pct_deployed",
@@ -161,12 +225,26 @@ const METRIC_ROWS: Array<{
   {
     key: "pct_high_impact",
     label: "% high impact",
-    render: (d) => formatPercent(d.pct_high_impact),
+    render: (d) => (
+      <MetricLink
+        href={agencyUseCasesUrl(d.id, {
+          highImpactDesignations: ["high_impact"],
+        })}
+      >
+        {formatPercent(d.pct_high_impact)}
+      </MetricLink>
+    ),
   },
   {
     key: "pct_risk",
     label: "% with risk docs",
-    render: (d) => formatPercent(d.pct_with_risk_docs),
+    render: (d) => (
+      <MetricLink
+        href={agencyUseCasesUrl(d.id, { hasMeaningfulRiskDocs: true })}
+      >
+        {formatPercent(d.pct_with_risk_docs)}
+      </MetricLink>
+    ),
   },
   {
     key: "yoy",
@@ -396,7 +474,7 @@ export default async function ComparePage({
                       {d.abbreviation}
                     </MonoChip>
                   </Link>
-                  <EntryTypeStrip mix={d.entry_type_mix} />
+                  <EntryTypeStrip mix={d.entry_type_mix} agencyId={d.id} />
                 </div>
               ))}
             </div>
@@ -441,6 +519,25 @@ export default async function ComparePage({
                         centerSubLabel="entries"
                       />
                     </div>
+                    {d.ai_sophistication_mix.length > 0 && (
+                      <ul className="mt-3 flex w-full flex-wrap justify-center gap-x-2 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {d.ai_sophistication_mix.map((slice) => (
+                          <li key={slice.label}>
+                            <Link
+                              href={agencyUseCasesUrl(d.id, {
+                                aiSophistications: [slice.label],
+                              })}
+                              className="inline-flex items-center gap-1 tabular-nums transition-colors hover:text-[var(--stamp)]"
+                            >
+                              <span className="truncate">{slice.label}</span>
+                              <span className="text-foreground">
+                                {slice.count}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 );
               })}
@@ -486,9 +583,14 @@ export default async function ComparePage({
                           >
                             {p.canonical_name}
                           </Link>
-                          <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                          <Link
+                            href={agencyUseCasesUrl(d.id, {
+                              productIds: [p.id],
+                            })}
+                            className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                          >
                             {p.use_case_count}
-                          </span>
+                          </Link>
                         </li>
                       ))}
                     </ul>

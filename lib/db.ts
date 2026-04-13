@@ -365,6 +365,25 @@ export function getUseCasesFiltered(
     );
     params.push(...filters.productIds);
   }
+  if (filters.templateIds && filters.templateIds.length > 0) {
+    where.push(
+      `uc.template_id IN (${filters.templateIds.map(() => "?").join(",")})`,
+    );
+    params.push(...filters.templateIds);
+  }
+  if (filters.bureaus && filters.bureaus.length > 0) {
+    where.push(
+      `uc.bureau_component IN (${filters.bureaus.map(() => "?").join(",")})`,
+    );
+    params.push(...filters.bureaus);
+  }
+  if (filters.maturityTiers && filters.maturityTiers.length > 0) {
+    // Maturity tier lives on agency_ai_maturity; filter by joining via agency_id.
+    where.push(
+      `uc.agency_id IN (SELECT agency_id FROM agency_ai_maturity WHERE maturity_tier IN (${filters.maturityTiers.map(() => "?").join(",")}))`,
+    );
+    params.push(...filters.maturityTiers);
+  }
 
   const joinTags =
     filters.entryType != null ||
@@ -1243,6 +1262,7 @@ export function getAnalyticsInsights(): {
   cfo_act_total: number;
   cfo_act_with_enterprise_llm: number;
   github_copilot_agencies: number;
+  top_product_id: number | null;
   top_product_name: string | null;
   top_product_agencies: number;
   zero_coding_agencies: number;
@@ -1286,9 +1306,10 @@ export function getAnalyticsInsights(): {
   const topProductRow = db
     .prepare<
       [],
-      { canonical_name: string; agency_count: number }
+      { id: number; canonical_name: string; agency_count: number }
     >(`
-      SELECT p.canonical_name,
+      SELECT p.id,
+             p.canonical_name,
              COUNT(DISTINCT uc.agency_id) AS agency_count
         FROM products p
         JOIN use_cases uc ON uc.product_id = p.id
@@ -1335,6 +1356,7 @@ export function getAnalyticsInsights(): {
     cfo_act_total,
     cfo_act_with_enterprise_llm,
     github_copilot_agencies,
+    top_product_id: topProductRow?.id ?? null,
     top_product_name: topProductRow?.canonical_name ?? null,
     top_product_agencies: topProductRow?.agency_count ?? 0,
     zero_coding_agencies,
@@ -1598,12 +1620,23 @@ export function getProductOptions(): Array<{
   id: number;
   canonical_name: string;
   vendor: string | null;
+  use_case_count: number;
 }> {
   return getDb()
-    .prepare<[], { id: number; canonical_name: string; vendor: string | null }>(
-      `SELECT id, canonical_name, vendor
-         FROM products
-        ORDER BY canonical_name COLLATE NOCASE ASC`,
+    .prepare<
+      [],
+      { id: number; canonical_name: string; vendor: string | null; use_case_count: number }
+    >(
+      `SELECT p.id,
+              p.canonical_name,
+              p.vendor,
+              (
+                SELECT COUNT(*) FROM use_cases uc WHERE uc.product_id = p.id
+              ) + (
+                SELECT COUNT(*) FROM consolidated_use_cases c WHERE c.product_id = p.id
+              ) AS use_case_count
+         FROM products p
+        ORDER BY use_case_count DESC, p.canonical_name COLLATE NOCASE ASC`,
     )
     .all();
 }

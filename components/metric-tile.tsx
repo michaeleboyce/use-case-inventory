@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatNumber } from "@/lib/formatting";
 
 type Accent = "default" | "stamp" | "verified" | "ink" | "highlight";
@@ -15,20 +16,24 @@ export function MetricTile({
   value,
   sublabel,
   accent = "default",
+  href,
 }: {
   label: string;
   value: number | string;
   sublabel?: string;
   accent?: Accent;
+  href?: string;
 }) {
   const display =
     typeof value === "number" ? formatNumber(value) : value || "—";
 
-  return (
-    <div className="group flex min-w-0 flex-col gap-1 border-t-2 border-foreground pt-2">
+  const inner = (
+    <>
       <div className="eyebrow truncate">{label}</div>
       <div
-        className={`font-display text-[2.2rem] leading-[0.95] tracking-[-0.02em] italic ${ACCENT_CLASSES[accent]}`}
+        className={`font-display text-[2.2rem] leading-[0.95] tracking-[-0.02em] italic transition-colors ${ACCENT_CLASSES[accent]} ${
+          href ? "group-hover:text-[var(--stamp)]" : ""
+        }`}
       >
         <span className="tabular-nums">{display}</span>
       </div>
@@ -37,6 +42,23 @@ export function MetricTile({
           {sublabel}
         </div>
       ) : null}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="group flex min-w-0 flex-col gap-1 border-t-2 border-foreground pt-2"
+      >
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="group flex min-w-0 flex-col gap-1 border-t-2 border-foreground pt-2">
+      {inner}
     </div>
   );
 }

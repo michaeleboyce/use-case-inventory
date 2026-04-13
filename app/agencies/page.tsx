@@ -3,6 +3,7 @@ import { getAgencyMaturity } from "@/lib/db";
 import { AgenciesTable, type AgencyRow } from "@/components/agencies-table";
 import { MetricTile } from "@/components/metric-tile";
 import { formatNumber } from "@/lib/formatting";
+import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
 
 export const metadata = {
   title: "Agencies · Federal AI Use Case Inventory",
@@ -77,24 +78,28 @@ export default function AgenciesPage() {
               value={`${withLLM}/${total}`}
               sublabel="Have a dept-wide model"
               accent="verified"
+              href={buildAgenciesUrl({ hasEnterpriseLlm: true })}
             />
             <MetricTile
               label="Coding tools"
               value={`${withCoding}/${total}`}
               sublabel="Copilot, Claude, etc."
               accent="ink"
+              href={buildAgenciesUrl({ hasCoding: true })}
             />
             <MetricTile
               label="Leading tier"
               value={`${leading}/${total}`}
               sublabel="Most mature filings"
               accent="stamp"
+              href={buildAgenciesUrl({ tier: "leading" })}
             />
             <MetricTile
               label="Custom-AI heavy"
               value={`${customHeavy}/${total}`}
               sublabel="≥ 10 custom systems"
               accent="highlight"
+              href={buildUseCasesUrl({ entryTypes: ["custom_system"] })}
             />
           </div>
         </div>

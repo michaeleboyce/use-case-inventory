@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { getAllTemplates } from "@/lib/db";
 import { TemplatesFilters } from "@/components/templates-filters";
 import { CapabilityCategoryChart } from "@/components/charts/capability-category-chart";
 import { Section, Figure } from "@/components/editorial";
 import { formatNumber } from "@/lib/formatting";
+import { buildUseCasesUrl } from "@/lib/urls";
 
 export const metadata = {
   title: "Templates — Federal AI Use Case Inventory 2025",
@@ -77,9 +79,12 @@ export default function TemplatesPage() {
                 <div className="mb-0.5 text-[9px] text-muted-foreground/70">
                   Verbatim entries
                 </div>
-                <div className="text-foreground">
+                <Link
+                  href={buildUseCasesUrl({})}
+                  className="block text-foreground transition-colors hover:text-[var(--stamp)]"
+                >
                   {formatNumber(totalEntries)}
-                </div>
+                </Link>
               </div>
             </div>
           </div>
@@ -144,7 +149,12 @@ export default function TemplatesPage() {
                   <div className="flex items-baseline justify-between gap-3">
                     <dt className="text-muted-foreground">Entries</dt>
                     <dd className="tabular-nums text-foreground">
-                      {formatNumber(totalEntries)}
+                      <Link
+                        href={buildUseCasesUrl({})}
+                        className="transition-colors hover:text-[var(--stamp)]"
+                      >
+                        {formatNumber(totalEntries)}
+                      </Link>
                     </dd>
                   </div>
                 </dl>

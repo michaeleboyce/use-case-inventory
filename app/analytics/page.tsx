@@ -24,7 +24,12 @@ import {
 } from "@/components/charts/architecture-donut";
 import { CodingLeaderboard } from "@/components/charts/coding-leaderboard";
 import { EntryTypeMixChart } from "@/components/charts/entry-type-mix-chart";
-import { Section, Figure } from "@/components/editorial";
+import { Section, Figure, MonoChip } from "@/components/editorial";
+import {
+  buildUseCasesUrl,
+  buildAgenciesUrl,
+  agencyUseCasesUrl,
+} from "@/lib/urls";
 
 export const metadata = {
   title: "Analytics · Federal AI Use Case Inventory",
@@ -66,18 +71,22 @@ export default function AnalyticsPage() {
   const entryMix = getEntryTypeMixByAgency();
 
   const codingRows = coding.map((c) => ({
+    id: c.agency_id,
     abbreviation: c.abbreviation,
     name: c.name,
     value: c.coding_tool_count,
+    href: agencyUseCasesUrl(c.agency_id, { isCodingTool: true }),
   }));
 
   const enterpriseLLMRows = enterpriseLLM
     .filter((r) => r.has_enterprise_llm === 1)
     .map((r) => ({
+      id: r.agency_id,
       abbreviation: r.abbreviation,
       name: r.name,
       value: r.general_llm_count,
       subLabel: "enterprise LLM",
+      href: agencyUseCasesUrl(r.agency_id, { isGeneralLLMAccess: true }),
     }));
 
   const llmVendorTotal = llmVendors.reduce((acc, r) => acc + r.count, 0);
@@ -108,8 +117,19 @@ export default function AnalyticsPage() {
                   Corpus
                 </div>
                 <div className="text-foreground">
-                  {formatNumber(globalStats.total_use_cases)} uc ·{" "}
-                  {globalStats.total_agencies_with_data} ag
+                  <Link
+                    href={buildUseCasesUrl({})}
+                    className="hover:text-[var(--stamp)]"
+                  >
+                    {formatNumber(globalStats.total_use_cases)} uc
+                  </Link>
+                  {" · "}
+                  <Link
+                    href="/agencies"
+                    className="hover:text-[var(--stamp)]"
+                  >
+                    {globalStats.total_agencies_with_data} ag
+                  </Link>
                 </div>
               </div>
               <div>
@@ -218,6 +238,10 @@ export default function AnalyticsPage() {
               </>
             }
             subtext="Having an enterprise-wide chatbot is nearly table stakes now — but far from universal."
+            href={buildAgenciesUrl({
+              type: "CFO_ACT",
+              hasEnterpriseLlm: true,
+            })}
           />
           <InsightCard
             kicker="B · Coding"
@@ -225,6 +249,7 @@ export default function AnalyticsPage() {
             accent="verified"
             headline={<>Agencies that reported deploying GitHub Copilot.</>}
             subtext="Coding copilots are the single fastest-adopted AI category in government."
+            href={buildUseCasesUrl({ isCodingTool: true })}
           />
           <InsightCard
             kicker="C · Top product"
@@ -240,6 +265,11 @@ export default function AnalyticsPage() {
               </>
             }
             subtext="COTS dominance is concentrated at the very top of the long tail."
+            href={
+              insights.top_product_id != null
+                ? `/products/${insights.top_product_id}`
+                : undefined
+            }
           />
           <InsightCard
             kicker="D · Gap"
@@ -249,6 +279,7 @@ export default function AnalyticsPage() {
               <>Agencies reported zero coding tools in their inventory.</>
             }
             subtext="Whether that means truly zero adoption or under-reporting is one of the biggest open questions in the data."
+            href={buildAgenciesUrl({ hasCoding: false })}
           />
           <InsightCard
             kicker="E · Catalogue"
@@ -261,6 +292,7 @@ export default function AnalyticsPage() {
               </>
             }
             subtext="After canonical-name deduplication across 3,600+ raw entries."
+            href="/products"
           />
           <InsightCard
             kicker="F · Outlier"
@@ -272,6 +304,7 @@ export default function AnalyticsPage() {
             accent="stamp"
             headline={<>NASA's year-over-year growth in reported use cases.</>}
             subtext="The largest outlier in the dataset — see Fig. 02 and Fig. 05."
+            href="/agencies/NASA"
           />
         </div>
 
@@ -338,8 +371,14 @@ export default function AnalyticsPage() {
               eyebrow="Fig. 07 · LLM vendor share"
               caption={
                 <>
-                  Among the {formatNumber(llmVendorTotal)} general-LLM-access
-                  entries.
+                  Among the{" "}
+                  <Link
+                    href={buildUseCasesUrl({ isGeneralLLMAccess: true })}
+                    className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                  >
+                    {formatNumber(llmVendorTotal)}
+                  </Link>{" "}
+                  general-LLM-access entries.
                 </>
               }
             >
@@ -373,6 +412,26 @@ export default function AnalyticsPage() {
           >
             <YoYGrowthChart data={yoy} />
           </Figure>
+          <div className="-mt-8 flex flex-wrap items-center gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Drill in ›
+            </span>
+            <MonoChip
+              href={buildAgenciesUrl({ hasEnterpriseLlm: true })}
+              title="Agencies with enterprise LLM access"
+            >
+              Enterprise LLM
+            </MonoChip>
+            <MonoChip
+              href={buildAgenciesUrl({ hasCoding: false })}
+              title="Agencies reporting zero coding tools"
+            >
+              Zero coding tools
+            </MonoChip>
+            <MonoChip href="/agencies/NASA" title="NASA detail page">
+              NASA outlier
+            </MonoChip>
+          </div>
 
           <div id="scatter" className="scroll-mt-32">
             <Figure

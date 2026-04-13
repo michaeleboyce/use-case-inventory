@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   getAllProducts,
   getProductNamesById,
@@ -7,6 +8,7 @@ import { ProductsFilters } from "@/components/products-filters";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
 import { Section, Figure } from "@/components/editorial";
 import { formatNumber } from "@/lib/formatting";
+import { buildUseCasesUrl } from "@/lib/urls";
 
 export const metadata = {
   title: "Products — Federal AI Use Case Inventory 2025",
@@ -57,9 +59,12 @@ export default function ProductsPage() {
                 <div className="mb-0.5 text-[9px] text-muted-foreground/70">
                   Canonical
                 </div>
-                <div className="text-foreground">
+                <Link
+                  href="/products"
+                  className="text-foreground transition-colors hover:text-[var(--stamp)]"
+                >
                   {formatNumber(products.length)} products
-                </div>
+                </Link>
               </div>
               <div>
                 <div className="mb-0.5 text-[9px] text-muted-foreground/70">
@@ -129,32 +134,41 @@ export default function ProductsPage() {
               <div className="editorial-rule-left space-y-3">
                 <div className="eyebrow">By the numbers</div>
                 <dl className="space-y-2 font-mono text-sm">
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
+                  <Link
+                    href="/products"
+                    className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5 transition-colors hover:text-[var(--stamp)]"
+                  >
                     <dt className="text-muted-foreground">Products</dt>
-                    <dd className="tabular-nums text-foreground">
+                    <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
                       {formatNumber(products.length)}
                     </dd>
-                  </div>
+                  </Link>
                   <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
                     <dt className="text-muted-foreground">Vendors</dt>
                     <dd className="tabular-nums text-foreground">
                       {formatNumber(distinctVendors)}
                     </dd>
                   </div>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
+                  <Link
+                    href={buildUseCasesUrl({})}
+                    className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5 transition-colors hover:text-[var(--stamp)]"
+                  >
                     <dt className="text-muted-foreground">
                       Agency × product
                     </dt>
-                    <dd className="tabular-nums text-foreground">
+                    <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
                       {formatNumber(totalAgencyMentions)}
                     </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3">
+                  </Link>
+                  <Link
+                    href={buildUseCasesUrl({})}
+                    className="flex items-baseline justify-between gap-3 transition-colors hover:text-[var(--stamp)]"
+                  >
                     <dt className="text-muted-foreground">Entries</dt>
-                    <dd className="tabular-nums text-foreground">
+                    <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
                       {formatNumber(totalEntries)}
                     </dd>
-                  </div>
+                  </Link>
                 </dl>
               </div>
             </div>

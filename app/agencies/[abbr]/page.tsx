@@ -37,10 +37,15 @@ import {
   Section,
   Figure,
   Eyebrow,
+  MonoChip,
   ENTRY_TYPE_COLORS,
+  ENTRY_TYPE_LABELS,
   SOPHISTICATION_COLORS,
+  SOPHISTICATION_LABELS,
   SCOPE_COLORS,
+  SCOPE_LABELS,
 } from "@/components/editorial";
+import { agencyUseCasesUrl } from "@/lib/urls";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export async function generateMetadata({
@@ -86,15 +91,36 @@ export default async function AgencyDetailPage({
 
       {/* Ledger row */}
       <section className="ink-in mt-10 grid grid-cols-2 gap-4 md:mt-14 md:grid-cols-4 lg:grid-cols-7">
-        <MetricTile label="Individual use cases" value={individual.length} />
-        <MetricTile label="Consolidated entries" value={consolidated.length} />
+        <MetricTile
+          label="Individual use cases"
+          value={individual.length}
+          href={agencyUseCasesUrl(agency.id)}
+        />
+        <MetricTile
+          label="Consolidated entries"
+          value={consolidated.length}
+          href={agencyUseCasesUrl(agency.id)}
+        />
         <MetricTile
           label="Distinct products"
           value={maturity?.distinct_products_deployed ?? 0}
+          href={agencyUseCasesUrl(agency.id)}
         />
-        <MetricTile label="General LLM" value={maturity?.general_llm_count ?? 0} />
-        <MetricTile label="Coding tools" value={maturity?.coding_tool_count ?? 0} />
-        <MetricTile label="Agentic AI" value={maturity?.agentic_ai_count ?? 0} />
+        <MetricTile
+          label="General LLM"
+          value={maturity?.general_llm_count ?? 0}
+          href={agencyUseCasesUrl(agency.id, { isGeneralLLMAccess: true })}
+        />
+        <MetricTile
+          label="Coding tools"
+          value={maturity?.coding_tool_count ?? 0}
+          href={agencyUseCasesUrl(agency.id, { isCodingTool: true })}
+        />
+        <MetricTile
+          label="Agentic AI"
+          value={maturity?.agentic_ai_count ?? 0}
+          href={agencyUseCasesUrl(agency.id, { aiSophistications: ["agentic"] })}
+        />
         <MetricTile
           label="YoY growth"
           value={maturity?.year_over_year_growth ?? 0}
@@ -119,6 +145,12 @@ export default async function AgencyDetailPage({
               height={260}
               centerSubLabel="entries"
             />
+            <BreakdownChips
+              agencyId={agency.id}
+              rows={entryTypeBreakdown}
+              labels={ENTRY_TYPE_LABELS}
+              filterKey="entryTypes"
+            />
           </Figure>
           <Figure
             eyebrow="Fig. 2 · AI sophistication"
@@ -130,6 +162,12 @@ export default async function AgencyDetailPage({
               height={260}
               centerSubLabel="tagged"
             />
+            <BreakdownChips
+              agencyId={agency.id}
+              rows={sophisticationBreakdown}
+              labels={SOPHISTICATION_LABELS}
+              filterKey="aiSophistications"
+            />
           </Figure>
           <Figure
             eyebrow="Fig. 3 · Deployment scope"
@@ -140,6 +178,12 @@ export default async function AgencyDetailPage({
               colorMap={SCOPE_COLORS}
               height={260}
               labelWidth={120}
+            />
+            <BreakdownChips
+              agencyId={agency.id}
+              rows={scopeBreakdown}
+              labels={SCOPE_LABELS}
+              filterKey="deploymentScopes"
             />
           </Figure>
         </div>
@@ -160,7 +204,7 @@ export default async function AgencyDetailPage({
         title="Products deployed"
         lede="Canonical AI products linked across this agency's use cases."
       >
-        <ProductGrid products={products} />
+        <ProductGrid products={products} agencyId={agency.id} />
       </Section>
 
       {/* § IV · Bureau breakdown — conditionally rendered */}
@@ -170,7 +214,7 @@ export default async function AgencyDetailPage({
           title="Bureau breakdown"
           lede="Use case counts by bureau or component."
         >
-          <BureauBreakdown rows={bureaus} />
+          <BureauBreakdown rows={bureaus} agencyId={agency.id} />
         </Section>
       ) : null}
 
@@ -255,6 +299,38 @@ export default async function AgencyDetailPage({
           ) : null}
         </div>
       </Section>
+    </div>
+  );
+}
+
+function BreakdownChips({
+  agencyId,
+  rows,
+  labels,
+  filterKey,
+}: {
+  agencyId: number;
+  rows: { label: string; count: number }[];
+  labels: Record<string, string>;
+  filterKey: "entryTypes" | "aiSophistications" | "deploymentScopes";
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+        Jump to filtered:
+      </span>
+      {rows.map((row) => (
+        <MonoChip
+          key={row.label}
+          href={agencyUseCasesUrl(agencyId, { [filterKey]: [row.label] })}
+          tone="stamp"
+          size="xs"
+          title={`${labels[row.label] ?? row.label} (${row.count})`}
+        >
+          {(labels[row.label] ?? row.label)} ({formatNumber(row.count)})
+        </MonoChip>
+      ))}
     </div>
   );
 }

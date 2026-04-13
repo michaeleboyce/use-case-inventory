@@ -9,6 +9,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { buildUseCasesUrl } from "@/lib/urls";
 
 export type ProductHeatmapData = {
   products: Array<{
@@ -136,7 +137,10 @@ export function ProductHeatmap({ data }: { data: ProductHeatmapData }) {
               return (
                 <Link
                   key={key}
-                  href={`/use-cases?agency=${a.abbreviation}&product=${p.id}`}
+                  href={buildUseCasesUrl({
+                    agencyIds: [a.id],
+                    productIds: [p.id],
+                  })}
                   className={cn(
                     "m-0.5 flex h-8 items-center justify-center rounded text-[10px] font-semibold tabular-nums transition-opacity hover:opacity-80",
                     intensityClass(count, max),
