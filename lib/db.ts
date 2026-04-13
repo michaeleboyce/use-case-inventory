@@ -44,6 +44,34 @@ import type {
   YoYRow,
 } from "./types";
 
+/**
+ * Normalize the 30+ free-text variants of `use_cases.stage_of_development`
+ * into the 4 canonical OMB M-25-21 buckets. Usage:
+ *   SELECT ${STAGE_BUCKET_SQL} AS stage_bucket FROM use_cases uc ...
+ * Returns one of: 'pre_deployment' | 'pilot' | 'deployed' | 'retired' | 'unknown'.
+ * Declared near the top of the file so it's safely accessible from
+ * `getGlobalStats` and other functions above the main query-builders (const
+ * declarations are not hoisted, so putting it below caused a temporal-dead-
+ * zone ReferenceError when the home page rendered).
+ */
+export const STAGE_BUCKET_SQL = `
+  CASE
+    WHEN uc.stage_of_development IS NULL OR TRIM(uc.stage_of_development) = ''
+      THEN 'unknown'
+    WHEN LOWER(uc.stage_of_development) LIKE '%retired%'
+      THEN 'retired'
+    WHEN LOWER(uc.stage_of_development) LIKE '%pilot%'
+      THEN 'pilot'
+    WHEN LOWER(uc.stage_of_development) LIKE '%deployed%'
+      THEN 'deployed'
+    WHEN LOWER(uc.stage_of_development) LIKE '%pre-deployment%'
+      OR LOWER(uc.stage_of_development) LIKE '%pre deployment%'
+      OR LOWER(uc.stage_of_development) LIKE '%development or acquisition%'
+      THEN 'pre_deployment'
+    ELSE 'unknown'
+  END
+`;
+
 // -----------------------------------------------------------------------------
 // Connection singleton
 // -----------------------------------------------------------------------------
@@ -256,30 +284,6 @@ export function getGlobalStats(): GlobalStats {
 // -----------------------------------------------------------------------------
 // Use cases
 // -----------------------------------------------------------------------------
-
-/**
- * Normalize the 30+ free-text variants of `use_cases.stage_of_development`
- * into the 4 canonical OMB M-25-21 buckets. Usage:
- *   SELECT ${STAGE_BUCKET_SQL} AS stage_bucket FROM use_cases ...
- * Returns one of: 'pre_deployment' | 'pilot' | 'deployed' | 'retired' | 'unknown'.
- */
-export const STAGE_BUCKET_SQL = `
-  CASE
-    WHEN uc.stage_of_development IS NULL OR TRIM(uc.stage_of_development) = ''
-      THEN 'unknown'
-    WHEN LOWER(uc.stage_of_development) LIKE '%retired%'
-      THEN 'retired'
-    WHEN LOWER(uc.stage_of_development) LIKE '%pilot%'
-      THEN 'pilot'
-    WHEN LOWER(uc.stage_of_development) LIKE '%deployed%'
-      THEN 'deployed'
-    WHEN LOWER(uc.stage_of_development) LIKE '%pre-deployment%'
-      OR LOWER(uc.stage_of_development) LIKE '%pre deployment%'
-      OR LOWER(uc.stage_of_development) LIKE '%development or acquisition%'
-      THEN 'pre_deployment'
-    ELSE 'unknown'
-  END
-`;
 
 const USE_CASE_SELECT = `
   SELECT uc.*,

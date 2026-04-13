@@ -25,6 +25,7 @@ const ARRAY_PARAMS: Array<
   ["highImpactDesignations", "high_impact", "string"],
   ["bureaus", "bureau", "string"],
   ["maturityTiers", "tier", "string"],
+  ["stageBuckets", "stage_bucket", "string"],
 ];
 
 const BOOL_PARAMS: Array<

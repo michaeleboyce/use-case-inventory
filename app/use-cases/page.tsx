@@ -95,6 +95,9 @@ function buildFilters(sp: Search): UseCaseFilterInput & { page: number } {
   const highImpact = parseCsv(sp.high_impact);
   if (highImpact.length > 0) filters.highImpactDesignations = highImpact;
 
+  const stageBuckets = parseCsv(sp.stage_bucket);
+  if (stageBuckets.length > 0) filters.stageBuckets = stageBuckets;
+
   if (first(sp.coding_tool) === "1") filters.isCodingTool = true;
   if (first(sp.coding_tool) === "0") filters.isCodingTool = false;
   if (first(sp.general_llm_access) === "1") filters.isGeneralLLMAccess = true;
