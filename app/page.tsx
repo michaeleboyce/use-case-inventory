@@ -283,10 +283,42 @@ export default function HomePage() {
               />
               <StatGlance
                 label="High-impact"
-                count={undefined}
-                pct={undefined}
-                sublabel="see filter"
+                count={stats.total_high_impact_entries}
+                pct={pct(stats.total_high_impact_entries, totalEntries)}
                 href={buildUseCasesUrl({ highImpactDesignations: ["high_impact"] })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-3 eyebrow">
+              Stage mix · of {formatNumber(stats.total_use_cases)} individual use cases
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
+              <StatGlance
+                label="Pre-deployment"
+                count={stats.stage_bucket_counts.pre_deployment}
+                pct={pct(stats.stage_bucket_counts.pre_deployment, stats.total_use_cases)}
+                href={buildUseCasesUrl({ stageBuckets: ["pre_deployment"] })}
+              />
+              <StatGlance
+                label="Pilot"
+                count={stats.stage_bucket_counts.pilot}
+                pct={pct(stats.stage_bucket_counts.pilot, stats.total_use_cases)}
+                href={buildUseCasesUrl({ stageBuckets: ["pilot"] })}
+              />
+              <StatGlance
+                label="Deployed"
+                count={stats.stage_bucket_counts.deployed}
+                pct={pct(stats.stage_bucket_counts.deployed, stats.total_use_cases)}
+                href={buildUseCasesUrl({ stageBuckets: ["deployed"] })}
+                accent="verified"
+              />
+              <StatGlance
+                label="Retired"
+                count={stats.stage_bucket_counts.retired}
+                pct={pct(stats.stage_bucket_counts.retired, stats.total_use_cases)}
+                href={buildUseCasesUrl({ stageBuckets: ["retired"] })}
               />
             </div>
           </div>

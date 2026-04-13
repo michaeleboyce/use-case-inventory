@@ -215,6 +215,29 @@ export function getGlobalStats(): GlobalStats {
       )
       .get() as { c: number }
   ).c;
+  const total_high_impact_entries = (
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM use_case_tags WHERE high_impact_designation = 'high_impact'`,
+      )
+      .get() as { c: number }
+  ).c;
+
+  // Stage-bucket counts over canonical use_cases only. Consolidated rows
+  // have no stage_of_development column so they're excluded from this mix.
+  const stageRows = db
+    .prepare<[], { bucket: string; c: number }>(
+      `SELECT ${STAGE_BUCKET_SQL} AS bucket, COUNT(*) AS c FROM use_cases uc GROUP BY bucket`,
+    )
+    .all();
+  const stage_bucket_counts: Record<string, number> = {
+    pre_deployment: 0,
+    pilot: 0,
+    deployed: 0,
+    retired: 0,
+    unknown: 0,
+  };
+  for (const r of stageRows) stage_bucket_counts[r.bucket] = r.c;
 
   return {
     total_use_cases,
@@ -225,12 +248,38 @@ export function getGlobalStats(): GlobalStats {
     total_templates,
     total_coding_entries,
     total_genai_entries,
+    total_high_impact_entries,
+    stage_bucket_counts,
   };
 }
 
 // -----------------------------------------------------------------------------
 // Use cases
 // -----------------------------------------------------------------------------
+
+/**
+ * Normalize the 30+ free-text variants of `use_cases.stage_of_development`
+ * into the 4 canonical OMB M-25-21 buckets. Usage:
+ *   SELECT ${STAGE_BUCKET_SQL} AS stage_bucket FROM use_cases ...
+ * Returns one of: 'pre_deployment' | 'pilot' | 'deployed' | 'retired' | 'unknown'.
+ */
+export const STAGE_BUCKET_SQL = `
+  CASE
+    WHEN uc.stage_of_development IS NULL OR TRIM(uc.stage_of_development) = ''
+      THEN 'unknown'
+    WHEN LOWER(uc.stage_of_development) LIKE '%retired%'
+      THEN 'retired'
+    WHEN LOWER(uc.stage_of_development) LIKE '%pilot%'
+      THEN 'pilot'
+    WHEN LOWER(uc.stage_of_development) LIKE '%deployed%'
+      THEN 'deployed'
+    WHEN LOWER(uc.stage_of_development) LIKE '%pre-deployment%'
+      OR LOWER(uc.stage_of_development) LIKE '%pre deployment%'
+      OR LOWER(uc.stage_of_development) LIKE '%development or acquisition%'
+      THEN 'pre_deployment'
+    ELSE 'unknown'
+  END
+`;
 
 const USE_CASE_SELECT = `
   SELECT uc.*,
@@ -317,6 +366,14 @@ export function getUseCasesFiltered(
   if (filters.stage) {
     where.push("uc.stage_of_development = ?");
     params.push(filters.stage);
+  }
+  if (filters.stageBuckets && filters.stageBuckets.length > 0) {
+    // Normalized OMB M-25-21 buckets. Raw column has 30+ formatting variants
+    // (e.g. "a) Pre-deployment – The use case is in a development...",
+    // "Pre-deployment", "a) Pre-deployment - ..."). Bucket via substring match.
+    const bucketExprs = filters.stageBuckets.map(() => `${STAGE_BUCKET_SQL} = ?`);
+    where.push(`(${bucketExprs.join(" OR ")})`);
+    for (const b of filters.stageBuckets) params.push(b);
   }
   if (filters.aiClassification) {
     where.push("uc.ai_classification = ?");
