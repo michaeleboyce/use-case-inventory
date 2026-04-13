@@ -257,7 +257,9 @@ export default function HomePage() {
       >
         <div className="space-y-10">
           <div>
-            <div className="mb-3 eyebrow">Entry mix · of {formatNumber(totalEntries)} total</div>
+            <div className="mb-3 eyebrow">
+              Entry mix · of {formatNumber(totalEntries)} reported AI uses (individual + consolidated)
+            </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
               <StatGlance
                 label="Coding assistants"

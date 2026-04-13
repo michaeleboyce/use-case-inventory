@@ -188,6 +188,13 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
               ) : null}
             </p>
           )}
+          {agency && (
+            <SourceInventoryLinks
+              inventoryUrl={agency.inventory_page_url}
+              csvUrl={agency.csv_download_url}
+              sourceFile={data.source_file}
+            />
+          )}
           {data.problem_statement && (
             <p className="mt-6 max-w-[62ch] text-[1rem] leading-relaxed text-foreground/85">
               {data.problem_statement}
@@ -508,6 +515,9 @@ function rawNumber(hasProduct: boolean, hasTemplate: boolean) {
 function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
   const tags = data.tags;
   const related = getRelatedByAgency(data.agency_id, -1, 5);
+  const agency = data.agency_abbreviation
+    ? getAgencyByAbbr(data.agency_abbreviation)
+    : null;
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14">
@@ -539,6 +549,23 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
           <h1 className="font-display italic text-[2.2rem] leading-[1.02] tracking-[-0.02em] text-foreground md:text-[3.4rem]">
             {data.ai_use_case}
           </h1>
+          {agency && (
+            <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              <Link
+                href={`/agencies/${data.agency_abbreviation}`}
+                className="hover:text-[var(--stamp)]"
+              >
+                {agency.name}
+              </Link>
+            </p>
+          )}
+          {agency && (
+            <SourceInventoryLinks
+              inventoryUrl={agency.inventory_page_url}
+              csvUrl={agency.csv_download_url}
+              sourceFile={data.source_file}
+            />
+          )}
         </div>
       </header>
 
@@ -711,4 +738,46 @@ function truncateUrl(url: string): string {
   } catch {
     return url.length > 60 ? `${url.slice(0, 59)}…` : url;
   }
+}
+
+function SourceInventoryLinks({
+  inventoryUrl,
+  csvUrl,
+  sourceFile,
+}: {
+  inventoryUrl: string | null;
+  csvUrl: string | null;
+  sourceFile?: string | null;
+}) {
+  if (!inventoryUrl && !csvUrl) return null;
+  return (
+    <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+      <span>Source</span>
+      {inventoryUrl ? (
+        <Link
+          href={inventoryUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-foreground hover:text-[var(--stamp)]"
+        >
+          Agency inventory page<span aria-hidden>↗</span>
+        </Link>
+      ) : null}
+      {csvUrl ? (
+        <Link
+          href={csvUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-foreground hover:text-[var(--stamp)]"
+        >
+          Official inventory file<span aria-hidden>↗</span>
+        </Link>
+      ) : null}
+      {sourceFile ? (
+        <span className="text-muted-foreground normal-case tracking-normal">
+          {sourceFile}
+        </span>
+      ) : null}
+    </p>
+  );
 }
