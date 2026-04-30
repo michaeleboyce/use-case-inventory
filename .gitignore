@@ -62,6 +62,7 @@ next-env.d.ts
 # ad-hoc scratch
 /tmp/
 .claude/
+/data/audit/
 
 # --- Explicitly DO include the SQLite DB ----------------------------------
 # It is the data payload of the dashboard. Override any broader rule that

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node -e \"const fs=require('fs');const src='../data/federal_ai_inventory_2025.db';if(fs.existsSync(src))fs.copyFileSync(src,'data/federal_ai_inventory_2025.db')\"",
     "build": "next build",
     "start": "next start"
   },
