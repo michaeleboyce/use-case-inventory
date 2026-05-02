@@ -4,12 +4,16 @@ import {
   getAllProducts,
   getChildProducts,
   getConsolidatedCountForProduct,
+  getFedrampAuthorizationsForProducts,
+  getFedrampLinksForInventoryProduct,
   getProductById,
   getProductsByVendor,
   getUseCasesForProduct,
 } from "@/lib/db";
 import { ProductCard } from "@/components/product-card";
 import { Section, MonoChip, Eyebrow } from "@/components/editorial";
+import { Badge } from "@/components/ui/badge";
+import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
 import { agencyUseCasesUrl, productUseCasesUrl } from "@/lib/urls";
 
@@ -48,6 +52,17 @@ export default async function ProductDetailPage(props: ProductPageProps) {
   const related = product.vendor
     ? getProductsByVendor(product.vendor, product.id).slice(0, 8)
     : [];
+
+  const fedrampLinks = getFedrampLinksForInventoryProduct(product.id);
+  // Batched lookup avoids the N+1 (one query for all linked FedRAMP products
+  // instead of one-per-link). Shape is identical to the per-product helper.
+  const authsByFedrampId = getFedrampAuthorizationsForProducts(
+    fedrampLinks.map((fp) => fp.fedramp_id),
+  );
+  const fedrampAuthsByProduct = fedrampLinks.map((fp) => ({
+    product: fp,
+    authorizations: authsByFedrampId.get(fp.fedramp_id) ?? [],
+  }));
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
@@ -90,6 +105,15 @@ export default async function ProductDetailPage(props: ProductPageProps) {
               {product.is_generative_ai === 1 ? (
                 <MonoChip tone="ink" size="xs">
                   GenAI
+                </MonoChip>
+              ) : null}
+              {product.product_origin === "agency_internal_platform" ? (
+                <MonoChip
+                  tone="muted"
+                  size="xs"
+                  title="Built and operated by the agency itself, not a commercial vendor product."
+                >
+                  Agency-internal platform
                 </MonoChip>
               ) : null}
               {parent ? (
@@ -326,6 +350,128 @@ export default async function ProductDetailPage(props: ProductPageProps) {
           </div>
         </Section>
       ) : null}
+
+      {/* ------------------------------------------------------------ */}
+      {/* § V — FEDRAMP AUTHORIZATION                                  */}
+      {/* ------------------------------------------------------------ */}
+      <Section
+        number="V"
+        title="FedRAMP authorization"
+        lede={
+          fedrampAuthsByProduct.length > 0
+            ? `${fedrampAuthsByProduct.length === 1 ? "Mapped to" : `${fedrampAuthsByProduct.length} matches in`} the FedRAMP marketplace.`
+            : "Cross-reference with the FedRAMP marketplace."
+        }
+      >
+        {fedrampAuthsByProduct.length === 0 ? (
+          <div className="space-y-3">
+            <FedrampCoverageBadge state="no_fedramp" />
+            <p className="max-w-prose text-[13.5px] leading-relaxed text-muted-foreground">
+              No FedRAMP marketplace listing has been mapped to this canonical
+              product. That may mean the product is not FedRAMP-authorized, or
+              that a candidate is sitting in the link-curation queue awaiting
+              review.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-10 border-t-2 border-foreground pt-6">
+            {fedrampAuthsByProduct.map(({ product: fp, authorizations }) => {
+              const topAuths = authorizations.slice(0, 8);
+              const moreAuths = authorizations.length - topAuths.length;
+              const inheritedFromParentName = (
+                fp as unknown as { inherited_from_parent_name?: string | null }
+              ).inherited_from_parent_name ?? null;
+              return (
+                <article key={fp.fedramp_id} className="space-y-4">
+                  <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+                    <div className="min-w-0">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                        {fp.csp}
+                      </div>
+                      <h3 className="font-display italic text-[1.5rem] leading-tight tracking-[-0.01em] text-foreground">
+                        {fp.cso}
+                      </h3>
+                    </div>
+                    <Link
+                      href={`/fedramp/marketplace/products/${fp.fedramp_id}`}
+                      className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-foreground hover:text-[var(--stamp)]"
+                    >
+                      View on FedRAMP marketplace →
+                    </Link>
+                  </header>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {inheritedFromParentName ? (
+                      <Badge
+                        variant="outline"
+                        className="border-[var(--stamp)] text-[var(--stamp)]"
+                        title="This FedRAMP authorization is not attached directly to this product; it is inherited from the parent platform via Phase-5 hierarchy."
+                      >
+                        Inherited from {inheritedFromParentName}
+                      </Badge>
+                    ) : null}
+                    {fp.impact_level ? (
+                      <Badge variant="outline">
+                        Impact: {fp.impact_level}
+                      </Badge>
+                    ) : null}
+                    {fp.status ? (
+                      <Badge variant="outline">
+                        {humanize(fp.status)}
+                      </Badge>
+                    ) : null}
+                    <Badge variant="outline">
+                      {formatNumber(authorizations.length)} authorizing{" "}
+                      {authorizations.length === 1 ? "agency" : "agencies"}
+                    </Badge>
+                    {fp.auth_type ? (
+                      <Badge variant="outline">{fp.auth_type}</Badge>
+                    ) : null}
+                  </div>
+
+                  {topAuths.length > 0 ? (
+                    <div>
+                      <Eyebrow color="stamp">§ Authorizing agencies</Eyebrow>
+                      <ul className="mt-3 flex flex-wrap gap-1.5">
+                        {topAuths.map((a) => (
+                          <li key={a.id}>
+                            <MonoChip
+                              tone="muted"
+                              size="xs"
+                              title={
+                                a.ato_issuance_date
+                                  ? `ATO issued ${a.ato_issuance_date}`
+                                  : undefined
+                              }
+                            >
+                              {a.parent_agency ?? a.sub_agency ?? "—"}
+                            </MonoChip>
+                          </li>
+                        ))}
+                        {moreAuths > 0 ? (
+                          <li>
+                            <MonoChip
+                              tone="muted"
+                              size="xs"
+                              href={`/fedramp/marketplace/products/${fp.fedramp_id}`}
+                            >
+                              + {formatNumber(moreAuths)} more
+                            </MonoChip>
+                          </li>
+                        ) : null}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                      — No authorization records on file —
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </Section>
 
       {/* ------------------------------------------------------------ */}
       {/* Footer caption                                               */}

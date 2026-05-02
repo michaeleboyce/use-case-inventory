@@ -10,7 +10,12 @@ import {
   getRelatedByAgency,
   getRelatedByProduct,
   getRelatedByTemplate,
+  getExternalEvidenceForUseCase,
+  getExternalEvidenceForConsolidated,
+  getUseCaseFedrampCoverage,
 } from "@/lib/db";
+import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
+import { getOrganizationById } from "@/lib/hierarchy-db";
 import type {
   ConsolidatedWithTags,
   UseCaseWithTags,
@@ -19,6 +24,10 @@ import { RawJsonViewer } from "@/components/raw-json-viewer";
 import { TagDefinitionList } from "@/components/tag-definition-list";
 import { RelatedUseCases } from "@/components/related-use-cases";
 import { Section, MonoChip } from "@/components/editorial";
+import {
+  ExternalEvidenceBadge,
+  ExternalEvidenceList,
+} from "@/components/external-evidence";
 import { formatBoolFlag } from "@/lib/formatting";
 import {
   ArrowLeft,
@@ -88,6 +97,12 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
     data.product_id != null ? getProductById(data.product_id) : null;
   const template =
     data.template_id != null ? getTemplateById(data.template_id) : null;
+  const externalEvidence = getExternalEvidenceForUseCase(data.id);
+  const fedrampCoverage = getUseCaseFedrampCoverage(data.id);
+  const bureauOrg =
+    data.bureau_organization_id != null
+      ? getOrganizationById(data.bureau_organization_id)
+      : null;
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
@@ -163,6 +178,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
                   ATO / FedRAMP
                 </span>
               )}
+              <ExternalEvidenceBadge evidence={externalEvidence} />
             </div>
           </div>
         </aside>
@@ -182,9 +198,19 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
               {data.bureau_component ? (
                 <>
                   {" · "}
-                  <span className="text-foreground">
-                    {data.bureau_component}
-                  </span>
+                  {bureauOrg ? (
+                    <Link
+                      href={`/agencies/${bureauOrg.slug}`}
+                      className="text-foreground hover:text-[var(--stamp)]"
+                      title={bureauOrg.name}
+                    >
+                      {data.bureau_component}
+                    </Link>
+                  ) : (
+                    <span className="text-foreground">
+                      {data.bureau_component}
+                    </span>
+                  )}
                 </>
               ) : null}
             </p>
@@ -225,6 +251,14 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
 
       <Section
         number="II"
+        title="External corroboration"
+        lede="What we know about this entry from sources outside the inventory itself — press, agency announcements, vendor case studies, or web searches."
+      >
+        <ExternalEvidenceList evidence={externalEvidence} />
+      </Section>
+
+      <Section
+        number="III"
         title="AI classification"
         lede="How the entry describes its own AI — and how we've re-classified it analytically."
       >
@@ -250,7 +284,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       </Section>
 
       <Section
-        number="III"
+        number="IV"
         title="Problem &amp; benefits"
         lede="The narrative fields — what the system does, what it's meant to improve, and what it outputs."
       >
@@ -262,7 +296,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       </Section>
 
       <Section
-        number="IV"
+        number="V"
         title="Documentation"
         lede="Development posture, vendor, and authority-to-operate status."
       >
@@ -280,7 +314,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       </Section>
 
       <Section
-        number="V"
+        number="VI"
         title="Data &amp; code"
         lede="PII exposure, data catalog entries, and open-source disclosures."
       >
@@ -311,7 +345,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       </Section>
 
       <Section
-        number="VI"
+        number="VII"
         title="Risk management"
         lede="Testing, monitoring, training, and the appeal / feedback machinery required under M-25-21."
       >
@@ -357,7 +391,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       </Section>
 
       <Section
-        number="VII"
+        number="VIII"
         title="Analytical tags"
         lede="Every derived tag we attach to this entry, with a short definition of each field."
       >
@@ -366,7 +400,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
 
       {(product || linkedProducts.length > 0) && (
         <Section
-          number="VIII"
+          number="IX"
           title={
             linkedProducts.length > 1 ? "Linked products" : "Linked product"
           }
@@ -426,7 +460,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
 
       {template && (
         <Section
-          number={product ? "IX" : "VIII"}
+          number={product ? "X" : "IX"}
           title="Linked template"
           lede="The canonical phrasing this entry matches — a useful handle for discovering similar work elsewhere."
         >
@@ -491,6 +525,14 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       >
         <RawJsonViewer json={data.raw_json} />
       </Section>
+
+      <Section
+        number={fedrampNumber(!!product, !!template)}
+        title="FedRAMP coverage"
+        lede="Whether this entry's product is FedRAMP-authorized — and whether the using agency is named in the ATO scope."
+      >
+        <FedrampCoverageSection coverage={fedrampCoverage} />
+      </Section>
     </div>
   );
 }
@@ -498,15 +540,105 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
 /** Figure out which Roman numeral to give the "Related filings" section
  *  depending on whether product/template sections exist. */
 function templateOrProductNextNumber(hasProduct: boolean, hasTemplate: boolean) {
-  if (hasProduct && hasTemplate) return "X";
-  if (hasProduct || hasTemplate) return "IX";
-  return "VIII";
-}
-
-function rawNumber(hasProduct: boolean, hasTemplate: boolean) {
   if (hasProduct && hasTemplate) return "XI";
   if (hasProduct || hasTemplate) return "X";
   return "IX";
+}
+
+function rawNumber(hasProduct: boolean, hasTemplate: boolean) {
+  if (hasProduct && hasTemplate) return "XII";
+  if (hasProduct || hasTemplate) return "XI";
+  return "X";
+}
+
+/** FedRAMP coverage section sits at the very end of the main column,
+ *  one number past the Raw record. */
+function fedrampNumber(hasProduct: boolean, hasTemplate: boolean) {
+  if (hasProduct && hasTemplate) return "XIII";
+  if (hasProduct || hasTemplate) return "XII";
+  return "XI";
+}
+
+function FedrampCoverageSection({
+  coverage,
+}: {
+  coverage: {
+    state: import("@/lib/types").FedrampCoverageState;
+    fedramp_products: import("@/lib/types").FedrampProduct[];
+    authorized_at_using_agency: boolean;
+    inherited_via_parent: boolean;
+  };
+}) {
+  const { state, fedramp_products, inherited_via_parent } = coverage;
+  const primary = fedramp_products[0] ?? null;
+  return (
+    <div className="border-t-2 border-foreground pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <FedrampCoverageBadge
+          state={state}
+          impactLevel={primary?.impact_level ?? null}
+        />
+        {inherited_via_parent && state === "covered" ? (
+          <span
+            className="inline-flex items-center border border-[var(--stamp)] bg-background px-2 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--stamp)]"
+            title="Coverage is inherited via the parent product's FedRAMP authorization (Phase-5 hierarchy)."
+          >
+            via parent platform
+          </span>
+        ) : null}
+      </div>
+
+      {state === "outside_scope" ? (
+        <p className="mt-4 max-w-prose text-[13.5px] leading-relaxed text-muted-foreground">
+          The product is FedRAMP authorized, but the filing agency does not
+          appear in the ATO scope for this product. The agency may be operating
+          under another agency&apos;s ATO, under a separate authorization not
+          captured here, or without an authorization at all.
+        </p>
+      ) : null}
+
+      {state === "no_fedramp" ? (
+        <p className="mt-4 max-w-prose text-[13.5px] leading-relaxed text-muted-foreground">
+          No FedRAMP marketplace listing has been mapped to this entry&apos;s
+          linked product.
+        </p>
+      ) : null}
+
+      {state === "no_link" ? (
+        <p className="mt-4 max-w-prose text-[13.5px] leading-relaxed text-muted-foreground">
+          This entry has no canonical product resolved yet, or the product is
+          awaiting FedRAMP-link review in the curation queue.
+        </p>
+      ) : null}
+
+      {fedramp_products.length > 0 ? (
+        <ul className="mt-5 flex flex-col divide-y divide-border border-t border-border">
+          {fedramp_products.map((p) => (
+            <li key={p.fedramp_id} className="py-3">
+              <Link
+                href={`/fedramp/marketplace/products/${p.fedramp_id}`}
+                className="group flex items-baseline justify-between gap-3 hover:text-[var(--stamp)]"
+              >
+                <div className="min-w-0">
+                  <p className="font-display italic text-[1.15rem] leading-tight tracking-[-0.01em] text-foreground group-hover:text-[var(--stamp)]">
+                    {p.cso}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {p.csp}
+                    {p.impact_level ? ` · Impact ${p.impact_level}` : ""}
+                  </p>
+                </div>
+                <ExternalLink
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -520,6 +652,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
     ? getAgencyByAbbr(data.agency_abbreviation)
     : null;
   const linkedProducts = getProductsForConsolidatedUseCase(data.id);
+  const externalEvidence = getExternalEvidenceForConsolidated(data.id);
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14">
@@ -545,6 +678,9 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
                 {tags.entry_type.replace(/_/g, " ")}
               </div>
             )}
+            <div className="pt-2">
+              <ExternalEvidenceBadge evidence={externalEvidence} />
+            </div>
           </div>
         </aside>
         <div className="col-span-12 md:col-span-9">
@@ -587,13 +723,21 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
         </DL>
       </Section>
 
-      <Section number="II" title="Analytical tags">
+      <Section
+        number="II"
+        title="External corroboration"
+        lede="What we know about this entry from sources outside the inventory itself."
+      >
+        <ExternalEvidenceList evidence={externalEvidence} />
+      </Section>
+
+      <Section number="III" title="Analytical tags">
         <TagDefinitionList tags={tags} />
       </Section>
 
       {linkedProducts.length > 0 && (
         <Section
-          number="III"
+          number="IV"
           title={
             linkedProducts.length > 1 ? "Linked products" : "Linked product"
           }
@@ -633,7 +777,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
       )}
 
       <Section
-        number={linkedProducts.length > 0 ? "IV" : "III"}
+        number={linkedProducts.length > 0 ? "V" : "IV"}
         title="Related filings"
       >
         <RelatedUseCases
@@ -644,7 +788,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
       </Section>
 
       <Section
-        number={linkedProducts.length > 0 ? "V" : "IV"}
+        number={linkedProducts.length > 0 ? "VI" : "V"}
         title="Raw record"
       >
         <RawJsonViewer json={data.raw_json} />
