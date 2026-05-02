@@ -15,6 +15,7 @@ const LINKS: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/templates", label: "Templates", kicker: "IV" },
   { href: "/analytics", label: "Analytics", kicker: "V" },
   { href: "/compare", label: "Compare", kicker: "VI" },
+  { href: "/fedramp", label: "FedRAMP", kicker: "VII" },
   { href: "/about", label: "Colophon", kicker: "§" },
 ];
 
