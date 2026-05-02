@@ -91,7 +91,7 @@ export function YoYGrowthChart({ data }: { data: YoYRow[] }) {
       </div>
 
       <div style={{ height }} className="w-full">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <BarChart
             data={display}
             layout="vertical"

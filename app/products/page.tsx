@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   getAllProducts,
+  getProductCatalogStats,
   getProductNamesById,
   getVendorMarketShare,
 } from "@/lib/db";
@@ -18,6 +19,7 @@ export const metadata = {
 
 export default function ProductsPage() {
   const products = getAllProducts();
+  const catalogStats = getProductCatalogStats();
   const parentNames = getProductNamesById();
   const vendorShare = getVendorMarketShare();
 
@@ -25,14 +27,7 @@ export default function ProductsPage() {
     (acc, p) => acc + (p.agency_count ?? 0),
     0,
   );
-  const totalEntries = products.reduce(
-    (acc, p) => acc + (p.use_case_count ?? 0),
-    0,
-  );
   const frontierCount = products.filter((p) => p.is_frontier_llm === 1).length;
-  const distinctVendors = new Set(
-    products.map((p) => p.vendor).filter((v): v is string => Boolean(v)),
-  ).size;
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
@@ -71,15 +66,15 @@ export default function ProductsPage() {
                   Vendors
                 </div>
                 <div className="text-foreground">
-                  {formatNumber(distinctVendors)}
+                  {formatNumber(catalogStats.distinct_vendors)}
                 </div>
               </div>
               <div>
                 <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Raw mentions
+                  Linked attributions
                 </div>
                 <div className="text-foreground">
-                  {formatNumber(Object.keys(parentNames).length)}
+                  {formatNumber(catalogStats.linked_entry_product_edges)}
                 </div>
               </div>
               <div>
@@ -119,15 +114,17 @@ export default function ProductsPage() {
               ederal agencies name the commercial tools they run in hundreds of
               slightly different ways — &ldquo;M365 Copilot,&rdquo;
               &ldquo;Microsoft 365 Copilot,&rdquo; &ldquo;Copilot for M365.&rdquo;
-              This catalogue consolidates{" "}
+              This catalogue tracks{" "}
               <span className="font-medium text-foreground">
-                {formatNumber(Object.keys(parentNames).length)} raw product
-                mentions
+                {formatNumber(catalogStats.linked_entry_product_edges)} product
+                attributions
               </span>{" "}
-              into {formatNumber(products.length)} canonical products, attributes
-              each to its vendor, and tallies the agencies and entries that cite
-              it. Filter below by vendor, type, or capability; click any card to
-              open agency-level adoption.
+              across {formatNumber(catalogStats.linked_entries)} inventory
+              entries and {formatNumber(products.length)} canonical products.
+              Agency-internal platforms are labeled separately from commercial
+              tools, and {formatNumber(catalogStats.pending_product_reviews)}
+              rows remain in the product review queue. Filter below by vendor,
+              type, or capability; click any card to open agency-level adoption.
             </p>
 
             <div className="col-span-12 md:col-span-4 md:col-start-9 md:self-end">
@@ -146,7 +143,7 @@ export default function ProductsPage() {
                   <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
                     <dt className="text-muted-foreground">Vendors</dt>
                     <dd className="tabular-nums text-foreground">
-                      {formatNumber(distinctVendors)}
+                      {formatNumber(catalogStats.distinct_vendors)}
                     </dd>
                   </div>
                   <Link
@@ -164,9 +161,9 @@ export default function ProductsPage() {
                     href={buildUseCasesUrl({})}
                     className="flex items-baseline justify-between gap-3 transition-colors hover:text-[var(--stamp)]"
                   >
-                    <dt className="text-muted-foreground">Entries</dt>
+                    <dt className="text-muted-foreground">Attributions</dt>
                     <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
-                      {formatNumber(totalEntries)}
+                      {formatNumber(catalogStats.linked_entry_product_edges)}
                     </dd>
                   </Link>
                 </dl>
@@ -220,7 +217,7 @@ export default function ProductsPage() {
           </span>
           <span>
             {formatNumber(products.length)} products ·{" "}
-            {formatNumber(distinctVendors)} vendors
+            {formatNumber(catalogStats.distinct_vendors)} vendors
           </span>
         </div>
       </footer>

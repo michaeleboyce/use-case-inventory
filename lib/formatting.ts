@@ -24,7 +24,7 @@ export function formatPercent(
 /** Year-over-year growth. Positive values get a leading '+'. */
 export function formatYoY(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
-  const pct = value > 1 ? value : value * 100;
+  const pct = Math.abs(value) > 1 ? value : value * 100;
   const sign = pct > 0 ? "+" : "";
   return `${sign}${pct.toFixed(1)}%`;
 }

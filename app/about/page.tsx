@@ -570,7 +570,7 @@ export default function AboutPage() {
               <div className="grid grid-cols-[10rem_minmax(0,1fr)] gap-x-4 py-3">
                 <dt className="text-muted-foreground">Set in</dt>
                 <dd className="text-foreground">
-                  Instrument Serif · Fraunces · JetBrains Mono
+                  System serif · platform monospace
                 </dd>
               </div>
               <div className="grid grid-cols-[10rem_minmax(0,1fr)] gap-x-4 py-3">

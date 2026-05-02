@@ -1,6 +1,9 @@
 import { Suspense } from "react";
-import { getAgencyMaturity } from "@/lib/db";
+import Link from "next/link";
+import { getAgencyMaturity, getGlobalStats } from "@/lib/db";
+import { getFullHierarchyWithCounts } from "@/lib/hierarchy-db";
 import { AgenciesTable, type AgencyRow } from "@/components/agencies-table";
+import { AgencyHierarchyTree } from "@/components/hierarchy";
 import { MetricTile } from "@/components/metric-tile";
 import { formatNumber } from "@/lib/formatting";
 import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
@@ -9,8 +12,18 @@ export const metadata = {
   title: "Agencies · Federal AI Use Case Inventory",
 };
 
-export default function AgenciesPage() {
+type ViewMode = "flat" | "tree";
+
+export default async function AgenciesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ view?: string }>;
+}) {
+  const sp = (await searchParams) ?? {};
+  const view: ViewMode = sp.view === "tree" ? "tree" : "flat";
   const rows = getAgencyMaturity();
+  const globalStats = getGlobalStats();
+  const hierarchy = view === "tree" ? getFullHierarchyWithCounts() : [];
 
   const tableRows: AgencyRow[] = rows.map((a) => ({
     id: a.id,
@@ -50,7 +63,7 @@ export default function AgenciesPage() {
               Directory · Filing Index
             </div>
             <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              Cycle 2025 · {formatNumber(total)} agencies
+              Cycle 2025 · {formatNumber(total)} filing agencies
             </div>
             <p className="max-w-xs border-t border-border pt-3 text-sm leading-snug text-muted-foreground">
               Click any row to open the per-agency detail page. Filters are
@@ -61,14 +74,16 @@ export default function AgenciesPage() {
 
         <div className="col-span-12 md:col-span-9">
           <h1 className="font-display text-[clamp(2.4rem,6vw,5rem)] italic leading-[0.95] tracking-[-0.03em] text-foreground">
-            Sixty agencies,
+            {formatNumber(total)} filers,
             <br />
-            ranked and compared.
+            {formatNumber(globalStats.total_agencies)} tracked.
           </h1>
           <p className="mt-8 max-w-prose text-[1.02rem] leading-[1.55] text-foreground/85">
-            Every agency that filed a 2025 AI use-case inventory, side by side.
-            Sort by volume, product breadth, or year-over-year growth; filter
-            by type, maturity tier, or capability flags.
+            Every agency with loaded 2025 inventory data, side by side. The
+            tracker covers {formatNumber(globalStats.total_agencies)} agencies
+            overall, including 2024-only and no-file statuses. Sort by volume,
+            product breadth, or year-over-year growth; filter by type, maturity
+            tier, or capability flags.
           </p>
 
           {/* Four-column ledger ------------------------------------------ */}
@@ -106,19 +121,51 @@ export default function AgenciesPage() {
       </header>
 
       {/* ---------------------------------------------------------------- */}
-      {/* Directory table                                                   */}
+      {/* Directory table or hierarchy tree                                 */}
       {/* ---------------------------------------------------------------- */}
       <section className="mt-16 md:mt-20">
-        <div className="mb-6 flex items-baseline justify-between gap-4 border-b border-border pb-3">
-          <div className="eyebrow">Fig. 1 · Directory</div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            Sortable · {formatNumber(total)} rows
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 border-b border-border pb-3">
+          <div className="eyebrow">
+            Fig. 1 · {view === "tree" ? "Hierarchy" : "Directory"}
+          </div>
+          <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            <Link
+              href="/agencies?view=flat"
+              className={
+                view === "flat"
+                  ? "text-foreground underline underline-offset-4"
+                  : "hover:text-[var(--stamp)]"
+              }
+            >
+              Flat
+            </Link>
+            <span aria-hidden className="text-muted-foreground/50">|</span>
+            <Link
+              href="/agencies?view=tree"
+              className={
+                view === "tree"
+                  ? "text-foreground underline underline-offset-4"
+                  : "hover:text-[var(--stamp)]"
+              }
+            >
+              Tree
+            </Link>
+            <span aria-hidden className="text-muted-foreground/50">·</span>
+            <span>
+              {view === "tree"
+                ? `${formatNumber(hierarchy.length)} orgs`
+                : `${formatNumber(total)} rows`}
+            </span>
           </div>
         </div>
 
-        <Suspense fallback={null}>
-          <AgenciesTable rows={tableRows} />
-        </Suspense>
+        {view === "tree" ? (
+          <AgencyHierarchyTree orgs={hierarchy} />
+        ) : (
+          <Suspense fallback={null}>
+            <AgenciesTable rows={tableRows} />
+          </Suspense>
+        )}
       </section>
     </div>
   );

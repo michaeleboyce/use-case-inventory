@@ -22,18 +22,7 @@ type Props = {
 };
 
 const ALL = "__all__";
-
-const PRODUCT_TYPES = [
-  "LLM",
-  "coding_assistant",
-  "security_tool",
-  "productivity",
-  "legal_research",
-  "nlp_specific",
-  "computer_vision",
-  "ml_platform",
-  "custom",
-];
+const UNCLASSIFIED = "__unclassified__";
 
 const fieldClass =
   "h-8 min-w-0 border border-border bg-background px-2 font-mono text-[11px] uppercase tracking-[0.08em] text-foreground focus:border-foreground focus:outline-none";
@@ -52,12 +41,28 @@ export function ProductsFilters({ products, parentNames }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [products]);
 
+  const productTypes = useMemo(() => {
+    const set = new Set<string>();
+    let hasUnclassified = false;
+    for (const p of products) {
+      const t = p.product_type?.trim();
+      if (t) set.add(t);
+      else hasUnclassified = true;
+    }
+    const types = Array.from(set).sort((a, b) => a.localeCompare(b));
+    return hasUnclassified ? [...types, UNCLASSIFIED] : types;
+  }, [products]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const rows = products.filter((p) => {
       if (q && !p.canonical_name.toLowerCase().includes(q)) return false;
       if (vendor !== ALL && p.vendor !== vendor) return false;
-      if (productType !== ALL && p.product_type !== productType) return false;
+      if (productType === UNCLASSIFIED) {
+        if (p.product_type && p.product_type.trim() !== "") return false;
+      } else if (productType !== ALL && p.product_type !== productType) {
+        return false;
+      }
       if (frontierOnly && p.is_frontier_llm !== 1) return false;
       if (genaiOnly && p.is_generative_ai !== 1) return false;
       return true;
@@ -108,9 +113,9 @@ export function ProductsFilters({ products, parentNames }: Props) {
               className={fieldClass + " w-full"}
             >
               <option value={ALL}>All types</option>
-              {PRODUCT_TYPES.map((t) => (
+              {productTypes.map((t) => (
                 <option key={t} value={t}>
-                  {humanize(t)}
+                  {t === UNCLASSIFIED ? "Unclassified" : humanize(t)}
                 </option>
               ))}
             </select>

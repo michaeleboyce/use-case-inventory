@@ -4,8 +4,8 @@
  * An editorial/bureaucratic design language — part declassified government
  * document, part long-form data journalism. Warm cream paper, deep ink,
  * vermilion stamp accents, and monospaced serial numbers as the signature
- * feature. Typography is Instrument Serif (display, italic), Fraunces
- * (body), and JetBrains Mono (all data/codes/serials).
+ * feature. Typography uses a network-independent system serif stack for
+ * display/body text and platform monospace faces for data/codes/serials.
  */
 
 @import "tailwindcss";
@@ -72,6 +72,10 @@
 }
 
 :root {
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-body: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  --font-mono: "SFMono-Regular", "IBM Plex Mono", "Roboto Mono", Consolas, monospace;
+
   /* Paper & ink */
   --paper: oklch(0.962 0.014 75);
   --ink: oklch(0.205 0.015 60);
@@ -204,7 +208,7 @@
   h5 {
     font-family: var(--font-display), "Iowan Old Style", Georgia, serif;
     font-feature-settings: "liga", "dlig", "ss01";
-    letter-spacing: -0.015em;
+    letter-spacing: 0;
   }
 
   /* Tabular numerals on data */

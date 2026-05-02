@@ -42,6 +42,7 @@ export function ProductCard({ product, parentName }: Props) {
 
       {product.is_generative_ai === 1 ||
       product.is_frontier_llm === 1 ||
+      product.product_origin === "agency_internal_platform" ||
       parentName ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {product.is_frontier_llm === 1 ? (
@@ -52,6 +53,15 @@ export function ProductCard({ product, parentName }: Props) {
           {product.is_generative_ai === 1 ? (
             <MonoChip tone="ink" size="xs">
               GenAI
+            </MonoChip>
+          ) : null}
+          {product.product_origin === "agency_internal_platform" ? (
+            <MonoChip
+              tone="muted"
+              size="xs"
+              title="Built and operated by the agency itself, not a commercial vendor product."
+            >
+              Agency-internal
             </MonoChip>
           ) : null}
           {parentName ? (

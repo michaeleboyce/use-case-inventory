@@ -243,7 +243,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
                 —
               </span>
             );
-          const pct = v > 1 ? v : v * 100;
+          const pct = Math.abs(v) > 1 ? v : v * 100;
           const color =
             pct > 0
               ? "text-[var(--verified)]"

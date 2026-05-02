@@ -39,7 +39,7 @@ export function AgencyTypeChart({ data }: { data: AgencyTypeDatum[] }) {
 
   return (
     <div className="h-[280px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart data={shaped} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />

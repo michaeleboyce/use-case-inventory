@@ -26,18 +26,21 @@ The dashboard reads from:
 relative to the `dashboard/` directory. The DB is opened in **read-only** mode;
 the dashboard never writes to it.
 
-Table snapshot (as of scaffold):
+Table snapshot generated from the current DB:
 
 | Table | Rows |
 | --- | --- |
 | `agencies` | 60 |
-| `use_cases` | 3,616 |
+| `use_cases` | 3,617 |
 | `consolidated_use_cases` | 192 |
-| `products` | 45 |
-| `product_aliases` | 136 |
-| `use_case_templates` | 20 |
-| `use_case_tags` | 3,808 |
+| `products` | 217 |
+| `product_aliases` | 367 |
+| `entry_product_edges` | 726 |
+| `use_case_templates` | 22 |
+| `use_case_tags` | 3,809 |
 | `agency_ai_maturity` | 44 |
+
+The authoritative generated count block lives at `../audit/db_snapshot.md`.
 
 ## Running
 

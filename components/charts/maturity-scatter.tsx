@@ -71,7 +71,7 @@ export function MaturityScatter({ data }: { data: MaturityScatterDatum[] }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="h-80 w-full">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <ScatterChart margin={{ top: 12, right: 16, bottom: 44, left: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis

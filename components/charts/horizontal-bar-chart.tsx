@@ -74,7 +74,7 @@ export function HorizontalBarChart({
 
   return (
     <div className="w-full" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart
           data={chartData}
           layout="vertical"
