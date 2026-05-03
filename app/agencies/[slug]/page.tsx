@@ -55,6 +55,7 @@ import {
   Figure,
   Eyebrow,
   MonoChip,
+  SourceLegend,
   ENTRY_TYPE_COLORS,
   ENTRY_TYPE_LABELS,
   SOPHISTICATION_COLORS,
@@ -134,6 +135,8 @@ function TopLevelOrgPage({
       <HierarchyBreadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
       <AgencyHeader agency={agency} />
 
+      <SourceLegend />
+
       {/* Ledger row */}
       <section className="ink-in mt-10 grid grid-cols-2 gap-4 md:mt-14 md:grid-cols-4 lg:grid-cols-7">
         <MetricTile
@@ -177,6 +180,7 @@ function TopLevelOrgPage({
       <Section
         number="I"
         title="Portfolio"
+        source="derived"
         lede={`How this agency's ${formatNumber(totalEntries)} reported AI uses break down.`}
       >
         <div className="grid gap-x-6 gap-y-10 md:grid-cols-3">
@@ -238,6 +242,7 @@ function TopLevelOrgPage({
       <Section
         number="II"
         title="Capabilities"
+        source="derived"
         lede="What the 2025 inventory shows this agency has — and does not have."
       >
         <CapabilityFlags maturity={maturity} />
@@ -247,6 +252,7 @@ function TopLevelOrgPage({
       <Section
         number="III"
         title="Products deployed"
+        source="derived"
         lede="Canonical AI products linked across this agency's use cases."
       >
         <ProductGrid products={products} agencyId={agency.id} />
@@ -259,6 +265,7 @@ function TopLevelOrgPage({
         <Section
           number="IV"
           title="Sub-agencies"
+          source="derived"
           lede="Bureaus, labs, centers, and offices within this agency, with their own AI use-case rollups."
         >
           <SubAgencyRollupGrid orgs={childOrgs} />
@@ -271,6 +278,7 @@ function TopLevelOrgPage({
         <Section
           number="IV"
           title="Bureau breakdown"
+          source="derived"
           lede="Use case counts by bureau or component."
         >
           <BureauBreakdown rows={bureaus} agencyId={agency.id} />
@@ -281,6 +289,7 @@ function TopLevelOrgPage({
       <Section
         number={(bureaus.length > 0 || childOrgs.length > 0) ? "V" : "IV"}
         title="Use cases"
+        source="omb"
         lede="Every 2025 entry linked to this agency."
       >
         <Tabs defaultValue="individual">
@@ -311,6 +320,7 @@ function TopLevelOrgPage({
       <Section
         number={(bureaus.length > 0 || childOrgs.length > 0) ? "VI" : "V"}
         title="Colophon"
+        source="mixed"
         lede="Filing metadata for this record."
       >
         <div className="border-t-2 border-foreground pt-4">
@@ -363,6 +373,7 @@ function TopLevelOrgPage({
       <Section
         number={(bureaus.length > 0 || childOrgs.length > 0) ? "VII" : "VI"}
         title="FedRAMP authorization scope"
+        source="derived"
         lede="FedRAMP-authorized cloud products linked to this agency's curated AI inventory. Shows only AI-relevant products (linked to a use-case via the curation queue), not the agency's full ATO portfolio."
       >
         {fedrampScope.length === 0 ? (
@@ -594,6 +605,8 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
         ) : null}
       </header>
 
+      <SourceLegend />
+
       {/* Maturity ledger if computed for this org */}
       {orgMaturity ? (
         <section className="ink-in mt-10 grid grid-cols-2 gap-4 md:mt-14 md:grid-cols-4">
@@ -625,6 +638,7 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
         <Section
           number="I"
           title="Sub-units"
+          source="derived"
           lede="Offices and components within this bureau."
         >
           <SubAgencyRollupGrid orgs={childOrgs} />
@@ -635,6 +649,7 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
       <Section
         number={childOrgs.length > 0 ? "II" : "I"}
         title="Use cases"
+        source="omb"
         lede="Every 2025 entry whose bureau matches this organization or any of its descendants."
       >
         {useCases.length === 0 ? (

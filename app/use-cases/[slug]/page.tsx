@@ -23,7 +23,8 @@ import type {
 import { RawJsonViewer } from "@/components/raw-json-viewer";
 import { TagDefinitionList } from "@/components/tag-definition-list";
 import { RelatedUseCases } from "@/components/related-use-cases";
-import { Section, MonoChip } from "@/components/editorial";
+import { Section, MonoChip, SourceLegend } from "@/components/editorial";
+import type { SectionSource } from "@/components/editorial";
 import {
   ExternalEvidenceBadge,
   ExternalEvidenceList,
@@ -230,10 +231,13 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
         </div>
       </header>
 
+      <SourceLegend />
+
       {/* Sections */}
       <Section
         number="I"
         title="Summary"
+        source="omb"
         lede="The filing card: bureau, stage, topic area, and the agency's own justification for high-impact status."
       >
         <DL>
@@ -252,6 +256,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="II"
         title="External corroboration"
+        source="derived"
         lede="What we know about this entry from sources outside the inventory itself — press, agency announcements, vendor case studies, or web searches."
       >
         <ExternalEvidenceList evidence={externalEvidence} />
@@ -260,6 +265,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="III"
         title="AI classification"
+        source="mixed"
         lede="How the entry describes its own AI — and how we've re-classified it analytically."
       >
         <DL>
@@ -267,18 +273,22 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
             label="Classification (reported)"
             value={data.ai_classification}
             multiline
+            source="omb"
           />
           <Row
             label="AI sophistication"
             value={tags?.ai_sophistication?.replace(/_/g, " ") ?? null}
+            source="derived"
           />
           <Row
             label="Generative AI"
             value={boolText(tags?.is_generative_ai)}
+            source="derived"
           />
           <Row
             label="Frontier model"
             value={boolText(tags?.is_frontier_model)}
+            source="derived"
           />
         </DL>
       </Section>
@@ -286,6 +296,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="IV"
         title="Problem &amp; benefits"
+        source="omb"
         lede="The narrative fields — what the system does, what it's meant to improve, and what it outputs."
       >
         <div className="flex flex-col gap-6">
@@ -298,6 +309,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="V"
         title="Documentation"
+        source="omb"
         lede="Development posture, vendor, and authority-to-operate status."
       >
         <DL>
@@ -316,29 +328,30 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="VI"
         title="Data &amp; code"
+        source="omb"
         lede="PII exposure, data catalog entries, and open-source disclosures."
       >
         <DL>
-          <Row label="Involves PII" value={data.involves_pii} />
+          <Row label="Involves PII" value={data.has_pii} />
           <Row
             label="Federal data catalog"
-            value={externalLink(data.federal_data_catalog_link)}
+            value={externalLink(data.link_to_data)}
             raw
           />
           <Row
             label="Privacy Impact Assessment"
-            value={externalLink(data.pia_link)}
+            value={externalLink(data.pia_url)}
             raw
           />
           <Row
             label="Demographic variables"
-            value={data.demographic_variables}
+            value={data.demographic_features}
             multiline
           />
           <Row label="Has custom code" value={data.has_custom_code} />
           <Row
             label="Open-source link"
-            value={externalLink(data.open_source_link)}
+            value={externalLink(data.code_url)}
             raw
           />
         </DL>
@@ -347,44 +360,45 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="VII"
         title="Risk management"
+        source="omb"
         lede="Testing, monitoring, training, and the appeal / feedback machinery required under M-25-21."
       >
         <DL columns={2}>
           <Row
             label="Pre-deployment testing"
-            value={data.pre_deployment_testing}
+            value={data.hi_testing_conducted}
             multiline
           />
           <Row
             label="Impact assessment"
-            value={data.impact_assessment}
+            value={data.hi_assessment_completed}
             multiline
           />
           <Row
             label="Potential impacts"
-            value={data.potential_impacts}
+            value={data.hi_potential_impacts}
             multiline
           />
           <Row
             label="Independent review"
-            value={data.independent_review}
+            value={data.hi_independent_review}
             multiline
           />
           <Row
             label="Ongoing monitoring"
-            value={data.ongoing_monitoring}
+            value={data.hi_ongoing_monitoring}
             multiline
           />
           <Row
             label="Operator training"
-            value={data.operator_training}
+            value={data.hi_training_established}
             multiline
           />
-          <Row label="Fail-safe" value={data.has_fail_safe} />
-          <Row label="Appeal process" value={data.appeal_process} multiline />
+          <Row label="Fail-safe" value={data.hi_failsafe_presence} />
+          <Row label="Appeal process" value={data.hi_appeal_process} multiline />
           <Row
             label="End-user feedback"
-            value={data.end_user_feedback}
+            value={data.hi_public_consultation}
             multiline
           />
         </DL>
@@ -393,6 +407,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number="VIII"
         title="Analytical tags"
+        source="derived"
         lede="Every derived tag we attach to this entry, with a short definition of each field."
       >
         <TagDefinitionList tags={tags} />
@@ -404,6 +419,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
           title={
             linkedProducts.length > 1 ? "Linked products" : "Linked product"
           }
+          source="derived"
           lede={
             linkedProducts.length > 1
               ? "Every canonical product evidenced by this entry's vendor, system, name, or problem-statement text."
@@ -462,6 +478,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
         <Section
           number={product ? "X" : "IX"}
           title="Linked template"
+          source="derived"
           lede="The canonical phrasing this entry matches — a useful handle for discovering similar work elsewhere."
         >
           <div className="flex flex-col gap-3 border-t-2 border-foreground pt-4">
@@ -489,6 +506,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number={templateOrProductNextNumber(!!product, !!template)}
         title="Related filings"
+        source="derived"
         lede="Other entries with the same agency, product, or template."
       >
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -521,6 +539,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number={rawNumber(!!product, !!template)}
         title="Raw record"
+        source="omb"
         lede="The source JSON, preserved untouched for auditability."
       >
         <RawJsonViewer json={data.raw_json} />
@@ -529,6 +548,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       <Section
         number={fedrampNumber(!!product, !!template)}
         title="FedRAMP coverage"
+        source="derived"
         lede="Whether this entry's product is FedRAMP-authorized — and whether the using agency is named in the ATO scope."
       >
         <FedrampCoverageSection coverage={fedrampCoverage} />
@@ -707,7 +727,9 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
         </div>
       </header>
 
-      <Section number="I" title="Summary">
+      <SourceLegend />
+
+      <Section number="I" title="Summary" source="omb">
         <DL>
           <Row label="Commercial product" value={data.commercial_product} />
           <Row
@@ -726,12 +748,13 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
       <Section
         number="II"
         title="External corroboration"
+        source="derived"
         lede="What we know about this entry from sources outside the inventory itself."
       >
         <ExternalEvidenceList evidence={externalEvidence} />
       </Section>
 
-      <Section number="III" title="Analytical tags">
+      <Section number="III" title="Analytical tags" source="derived">
         <TagDefinitionList tags={tags} />
       </Section>
 
@@ -741,6 +764,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
           title={
             linkedProducts.length > 1 ? "Linked products" : "Linked product"
           }
+          source="derived"
           lede={
             linkedProducts.length > 1
               ? "Every canonical product evidenced by this entry's commercial-product, examples, or agency-uses text."
@@ -779,6 +803,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
       <Section
         number={linkedProducts.length > 0 ? "V" : "IV"}
         title="Related filings"
+        source="derived"
       >
         <RelatedUseCases
           title="More from this agency"
@@ -790,6 +815,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
       <Section
         number={linkedProducts.length > 0 ? "VI" : "V"}
         title="Raw record"
+        source="omb"
       >
         <RawJsonViewer json={data.raw_json} />
       </Section>
@@ -838,18 +864,33 @@ function Row({
   value,
   multiline = false,
   raw = false,
+  source,
 }: {
   label: string;
   value: React.ReactNode;
   multiline?: boolean;
   raw?: boolean;
+  source?: SectionSource;
 }) {
   const isEmpty =
     value == null || (typeof value === "string" && value.trim().length === 0);
+  const sourceTag =
+    source === "omb"
+      ? "OMB"
+      : source === "derived"
+        ? "IFP"
+        : source === "omb-derived"
+          ? "OMB → IFP"
+          : null;
   return (
     <div className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-6 sm:py-3.5">
-      <dt className="w-full shrink-0 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:w-56">
-        {label}
+      <dt className="flex w-full shrink-0 items-baseline gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground sm:w-56">
+        <span>{label}</span>
+        {sourceTag ? (
+          <span className="font-mono text-[8px] font-normal tracking-[0.1em] text-muted-foreground/70">
+            {sourceTag}
+          </span>
+        ) : null}
       </dt>
       <dd
         className={

@@ -77,16 +77,19 @@ export function UseCaseTable({ rows }: UseCaseTableProps) {
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-t-2 border-foreground border-b border-border">
-            <SortableHead label="Agency" k="agency" activeKey={sortKey} dir={sortDir} onSort={onSort} />
-            <SortableHead label="Use case" k="name" activeKey={sortKey} dir={sortDir} onSort={onSort} className="min-w-[280px]" />
-            <SortableHead label="Bureau" k="bureau" activeKey={sortKey} dir={sortDir} onSort={onSort} />
-            <SortableHead label="Stage" k="stage" activeKey={sortKey} dir={sortDir} onSort={onSort} />
-            <SortableHead label="Class." k="classification" activeKey={sortKey} dir={sortDir} onSort={onSort} />
-            <SortableHead label="Vendor" k="vendor" activeKey={sortKey} dir={sortDir} onSort={onSort} />
-            <SortableHead label="Entry" k="entry_type" activeKey={sortKey} dir={sortDir} onSort={onSort} />
-            <SortableHead label="Scope" k="scope" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Agency" source="omb" k="agency" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Use case" source="omb" k="name" activeKey={sortKey} dir={sortDir} onSort={onSort} className="min-w-[280px]" />
+            <SortableHead label="Bureau" source="omb" k="bureau" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Stage" source="omb" k="stage" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Class." source="omb" k="classification" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Vendor" source="omb" k="vendor" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Entry" source="ifp" k="entry_type" activeKey={sortKey} dir={sortDir} onSort={onSort} />
+            <SortableHead label="Scope" source="ifp" k="scope" activeKey={sortKey} dir={sortDir} onSort={onSort} />
             <th className="w-16 px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-              Flags
+              <span className="inline-flex items-baseline gap-1">
+                Flags
+                <span className="font-mono text-[8px] font-normal tracking-[0.1em] text-muted-foreground/60">IFP</span>
+              </span>
             </th>
           </tr>
         </thead>
@@ -182,6 +185,7 @@ export function UseCaseTable({ rows }: UseCaseTableProps) {
 
 function SortableHead({
   label,
+  source,
   k,
   activeKey,
   dir,
@@ -189,6 +193,7 @@ function SortableHead({
   className,
 }: {
   label: string;
+  source?: "omb" | "ifp";
   k: SortKey;
   activeKey: SortKey;
   dir: SortDir;
@@ -212,6 +217,11 @@ function SortableHead({
         )}
       >
         {label}
+        {source ? (
+          <span className="font-mono text-[8px] font-normal tracking-[0.1em] text-muted-foreground/60">
+            {source === "omb" ? "OMB" : "IFP"}
+          </span>
+        ) : null}
         {isActive ? (
           dir === "asc" ? (
             <ArrowUp className="size-3" aria-hidden />

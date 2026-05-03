@@ -156,7 +156,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
   const columns = useMemo(
     () => [
       columnHelper.accessor("abbreviation", {
-        header: "Code",
+        header: () => <SourceHead label="Code" source="omb" />,
         enableSorting: false,
         cell: (info) => (
           <MonoChip tone="ink" size="xs">
@@ -165,7 +165,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         ),
       }),
       columnHelper.accessor("name", {
-        header: "Agency",
+        header: () => <SourceHead label="Agency" source="omb" />,
         cell: (info) => (
           <span className="font-display text-[1.05rem] italic leading-tight text-foreground transition-[letter-spacing] group-hover:tracking-[-0.01em] group-hover:underline decoration-[var(--stamp)] underline-offset-[3px]">
             {info.getValue()}
@@ -173,7 +173,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         ),
       }),
       columnHelper.accessor("agency_type", {
-        header: "Type",
+        header: () => <SourceHead label="Type" source="omb" />,
         cell: (info) => {
           const v = info.getValue();
           if (!v)
@@ -193,7 +193,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         (r) => r.total_use_cases + r.total_consolidated_entries,
         {
           id: "total_use_cases",
-          header: "Use cases",
+          header: () => <SourceHead label="Use cases" source="omb" />,
           cell: (info) => {
             const r = info.row.original;
             return (
@@ -215,7 +215,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         },
       ),
       columnHelper.accessor("distinct_products_deployed", {
-        header: "Products",
+        header: () => <SourceHead label="Products" source="ifp" />,
         cell: (info) => (
           <div className="text-right font-mono text-[13px] tabular-nums text-foreground">
             {formatNumber(info.getValue())}
@@ -223,7 +223,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         ),
       }),
       columnHelper.accessor("maturity_tier", {
-        header: "Maturity",
+        header: () => <SourceHead label="Maturity" source="ifp" />,
         cell: (info) => {
           const v = info.getValue();
           return (
@@ -234,7 +234,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         },
       }),
       columnHelper.accessor("year_over_year_growth", {
-        header: "YoY",
+        header: () => <SourceHead label="YoY" source="ifp" />,
         cell: (info) => {
           const v = info.getValue();
           if (v == null)
@@ -261,7 +261,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         sortingFn: "basic",
       }),
       columnHelper.accessor("has_enterprise_llm", {
-        header: "LLM",
+        header: () => <SourceHead label="LLM" source="ifp" />,
         cell: (info) =>
           info.getValue() === 1 ? (
             <Check
@@ -276,7 +276,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
           ),
       }),
       columnHelper.accessor("has_coding_assistants", {
-        header: "Coding",
+        header: () => <SourceHead label="Coding" source="ifp" />,
         cell: (info) =>
           info.getValue() === 1 ? (
             <Check
@@ -291,7 +291,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
           ),
       }),
       columnHelper.accessor("status", {
-        header: "Status",
+        header: () => <SourceHead label="Status" source="omb" />,
         cell: (info) => {
           const v = info.getValue();
           if (!v)
@@ -502,6 +502,23 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         </table>
       </div>
     </div>
+  );
+}
+
+function SourceHead({
+  label,
+  source,
+}: {
+  label: string;
+  source: "omb" | "ifp";
+}) {
+  return (
+    <span className="inline-flex items-baseline gap-1">
+      {label}
+      <span className="font-mono text-[8px] font-normal tracking-[0.1em] text-muted-foreground/60">
+        {source === "omb" ? "OMB" : "IFP"}
+      </span>
+    </span>
   );
 }
 

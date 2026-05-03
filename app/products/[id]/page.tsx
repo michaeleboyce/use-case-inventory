@@ -11,7 +11,7 @@ import {
   getUseCasesForProduct,
 } from "@/lib/db";
 import { ProductCard } from "@/components/product-card";
-import { Section, MonoChip, Eyebrow } from "@/components/editorial";
+import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial";
 import { Badge } from "@/components/ui/badge";
 import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
@@ -174,6 +174,8 @@ export default async function ProductDetailPage(props: ProductPageProps) {
         </div>
       </header>
 
+      <SourceLegend />
+
       {/* ------------------------------------------------------------ */}
       {/* § I — ALIASES + SUBPRODUCTS                                  */}
       {/* ------------------------------------------------------------ */}
@@ -181,6 +183,7 @@ export default async function ProductDetailPage(props: ProductPageProps) {
         <Section
           number="I"
           title="Also filed as"
+          source="derived"
           lede="Raw names and sub-products folded into this canonical record."
         >
           <div className="space-y-8">
@@ -229,6 +232,7 @@ export default async function ProductDetailPage(props: ProductPageProps) {
       <Section
         number="II"
         title="Who runs it"
+        source="derived"
         lede={`${formatNumber(product.agencies.length)} agencies report this product. Ranked by distinct entries.`}
       >
         {product.agencies.length === 0 ? (
@@ -275,6 +279,7 @@ export default async function ProductDetailPage(props: ProductPageProps) {
       <Section
         number="III"
         title="Linked entries"
+        source="derived"
         lede={`${formatNumber(useCases.length)} individual use cases reference this product.`}
       >
         {useCases.length === 0 ? (
@@ -341,6 +346,7 @@ export default async function ProductDetailPage(props: ProductPageProps) {
         <Section
           number="IV"
           title={`More from ${product.vendor}`}
+          source="derived"
           lede="Other products by the same vendor filed in this year's inventory."
         >
           <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -357,6 +363,7 @@ export default async function ProductDetailPage(props: ProductPageProps) {
       <Section
         number="V"
         title="FedRAMP authorization"
+        source="derived"
         lede={
           fedrampAuthsByProduct.length > 0
             ? `${fedrampAuthsByProduct.length === 1 ? "Mapped to" : `${fedrampAuthsByProduct.length} matches in`} the FedRAMP marketplace.`

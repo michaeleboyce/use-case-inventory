@@ -9,16 +9,48 @@ import type { ReactNode } from "react";
 /* page-section primitive across the dashboard.                           */
 /* --------------------------------------------------------------------- */
 
+/** Where a section's data comes from.
+ *
+ *   omb           Filed directly by the agency in its M-25-21 inventory.
+ *   derived       Computed or added by IFP (tags, hierarchy, evidence,
+ *                 products, maturity tiers).
+ *   omb-derived   Aggregations / counts whose inputs are OMB-filed but
+ *                 whose computation logic is IFP's (e.g., "9 LLM-tagged
+ *                 use cases" rolls up OMB rows via our tagging rubric).
+ *   mixed         Section displays a mix of OMB and IFP fields.
+ *
+ * Used by the dashboard's OMB-vs-IFP labeling system. See SourceLegend
+ * for the reader-facing explanation.
+ */
+export type SectionSource = "omb" | "derived" | "omb-derived" | "mixed";
+
+const SOURCE_CHIP: Record<SectionSource, { label: string; tone: "muted" | "stamp" }> = {
+  omb: { label: "OMB", tone: "muted" },
+  derived: { label: "IFP", tone: "stamp" },
+  "omb-derived": { label: "OMB → IFP", tone: "stamp" },
+  mixed: { label: "OMB + IFP", tone: "stamp" },
+};
+
+const SOURCE_TITLE: Record<SectionSource, string> = {
+  omb: "Filed by the agency in its OMB M-25-21 inventory.",
+  derived: "Computed or added by IFP — not in the original OMB filing.",
+  "omb-derived":
+    "Computed by IFP from OMB-filed inputs (e.g., counts, rollups, maturity tiers).",
+  mixed: "This section displays a mix of OMB-filed and IFP-derived fields.",
+};
+
 export function Section({
   number,
   title,
   lede,
+  source,
   children,
   className = "mt-16 md:mt-24",
 }: {
   number: string;
   title: string;
   lede?: string;
+  source?: SectionSource;
   children: ReactNode;
   className?: string;
 }) {
@@ -32,6 +64,17 @@ export function Section({
           <h2 className="font-display italic text-[2rem] leading-[0.95] tracking-[-0.02em] text-foreground md:text-[2.6rem]">
             {title}
           </h2>
+          {source ? (
+            <div className="pt-2">
+              <MonoChip
+                tone={SOURCE_CHIP[source].tone}
+                size="xs"
+                title={SOURCE_TITLE[source]}
+              >
+                {SOURCE_CHIP[source].label}
+              </MonoChip>
+            </div>
+          ) : null}
           {lede ? (
             <p className="mt-3 max-w-xs text-sm leading-snug text-muted-foreground md:pr-6">
               {lede}
@@ -41,6 +84,52 @@ export function Section({
       </header>
       <div className="col-span-12 md:col-span-9">{children}</div>
     </section>
+  );
+}
+
+/* --------------------------------------------------------------------- */
+/* SourceLegend                                                           */
+/* --------------------------------------------------------------------- */
+/* A compact legend explaining the OMB/IFP source chips, intended for    */
+/* placement near the top of detail pages so readers see it once.        */
+/* --------------------------------------------------------------------- */
+
+export function SourceLegend({
+  className = "mt-6",
+}: {
+  className?: string;
+}) {
+  return (
+    <aside
+      className={`flex flex-wrap items-baseline gap-x-3 gap-y-2 border-l-2 border-border pl-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground ${className}`}
+      aria-label="Data source legend"
+    >
+      <span className="text-foreground">Source legend ·</span>
+      <span className="inline-flex items-baseline gap-1.5">
+        <MonoChip tone="muted" size="xs">
+          OMB
+        </MonoChip>
+        <span>filed by the agency to OMB</span>
+      </span>
+      <span aria-hidden className="text-muted-foreground/50">
+        ·
+      </span>
+      <span className="inline-flex items-baseline gap-1.5">
+        <MonoChip tone="stamp" size="xs">
+          IFP
+        </MonoChip>
+        <span>added by IFP analytical layer</span>
+      </span>
+      <span aria-hidden className="text-muted-foreground/50">
+        ·
+      </span>
+      <span className="inline-flex items-baseline gap-1.5">
+        <MonoChip tone="stamp" size="xs">
+          OMB → IFP
+        </MonoChip>
+        <span>OMB inputs, IFP computation</span>
+      </span>
+    </aside>
   );
 }
 

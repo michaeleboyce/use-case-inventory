@@ -65,7 +65,7 @@ export interface UseCase {
   use_case_name: string;
   bureau_component: string | null;
   email_address: string | null;
-  withheld_from_public: string | null;
+  is_withheld: string | null;
   stage_of_development: string | null;
   is_high_impact: string | null;
   justification: string | null;
@@ -86,23 +86,23 @@ export interface UseCase {
   training_data_description: string | null;
 
   // Section 4
-  federal_data_catalog_link: string | null;
-  involves_pii: string | null;
-  pia_link: string | null;
-  demographic_variables: string | null;
+  link_to_data: string | null;
+  has_pii: string | null;
+  pia_url: string | null;
+  demographic_features: string | null;
   has_custom_code: string | null;
-  open_source_link: string | null;
+  code_url: string | null;
 
   // Section 5
-  pre_deployment_testing: string | null;
-  impact_assessment: string | null;
-  potential_impacts: string | null;
-  independent_review: string | null;
-  ongoing_monitoring: string | null;
-  operator_training: string | null;
-  has_fail_safe: string | null;
-  appeal_process: string | null;
-  end_user_feedback: string | null;
+  hi_testing_conducted: string | null;
+  hi_assessment_completed: string | null;
+  hi_potential_impacts: string | null;
+  hi_independent_review: string | null;
+  hi_ongoing_monitoring: string | null;
+  hi_training_established: string | null;
+  hi_failsafe_presence: string | null;
+  hi_appeal_process: string | null;
+  hi_public_consultation: string | null;
 
   product_id: number | null;
   template_id: number | null;
