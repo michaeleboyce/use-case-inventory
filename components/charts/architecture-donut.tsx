@@ -51,6 +51,11 @@ const LLM_VENDOR_COLORS: Record<string, string> = {
   xAI: "#475569", // slate-600
   Meta: "#1d4ed8", // blue-700
   "In-house": "#8b5cf6", // violet-500
+  // Agency-built LLM platforms wrapping commercial models (EDAV, VA GPT,
+  // ELSA, USAi, LibreChat, etc.). Distinct color so the editorial pattern
+  // — "agencies are quietly standing up their own LLM frontends" — reads
+  // visually distinct from the commercial-vendor slices.
+  "Agency platform": "#a3e635", // lime-400
   "Other named": "#64748b", // slate-500
   // "Vendor unspecified" — agency reports general-LLM access without
   // naming the tool. Distinct from "Other named" (a real vendor, just
