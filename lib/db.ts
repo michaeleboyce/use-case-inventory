@@ -498,6 +498,21 @@ export function getUseCasesFiltered(
     );
     params.push(...filters.topicAreas);
   }
+  if (filters.productCategories && filters.productCategories.length > 0) {
+    // Filter by IFP-curated products.product_type via the
+    // use_case_products edge table. Mirrors the productIds branch above
+    // but resolves products by category instead of id.
+    const placeholders = filters.productCategories.map(() => "?").join(",");
+    where.push(
+      `uc.id IN (
+        SELECT ucp.use_case_id
+          FROM use_case_products ucp
+          JOIN products p ON p.id = ucp.product_id
+         WHERE p.product_type IN (${placeholders})
+      )`,
+    );
+    params.push(...filters.productCategories);
+  }
 
   const joinTags =
     filters.entryType != null ||
@@ -1682,6 +1697,7 @@ export function getUseCaseFacets(): {
   tagUseTypes: string[];
   tagHighImpactDesignations: string[];
   topicAreas: string[];
+  productCategories: string[];
 } {
   const db = getDb();
   const distinct = (table: string, col: string) =>
@@ -1708,6 +1724,26 @@ export function getUseCaseFacets(): {
     .all()
     .map((r) => r.v);
 
+  // IFP-curated product_type, ranked by reach (distinct use-cases that
+  // reference any product in that category). Excludes 'unclassified' since
+  // that's a placeholder, not a real category — the recategorization
+  // proposal in audit/product_categorization assigned every product to a
+  // concrete bucket.
+  const productCategories = db
+    .prepare<[], { v: string }>(
+      `SELECT p.product_type AS v
+         FROM use_case_products ucp
+         JOIN products p ON p.id = ucp.product_id
+        WHERE p.product_type IS NOT NULL
+          AND TRIM(p.product_type) <> ''
+          AND LOWER(TRIM(p.product_type)) <> 'unclassified'
+        GROUP BY p.product_type
+        ORDER BY COUNT(DISTINCT ucp.use_case_id) DESC,
+                 p.product_type COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
+
   return {
     stages: distinct("use_cases", "stage_of_development"),
     aiClassifications: distinct("use_cases", "ai_classification"),
@@ -1720,6 +1756,7 @@ export function getUseCaseFacets(): {
     tagUseTypes: distinct("use_case_tags", "use_type"),
     tagHighImpactDesignations: distinct("use_case_tags", "high_impact_designation"),
     topicAreas,
+    productCategories,
   };
 }
 

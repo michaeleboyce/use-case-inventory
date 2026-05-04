@@ -418,6 +418,10 @@ export interface UseCaseFilterInput {
    *  Exact-match against use_cases.topic_area. Consolidated rows have
    *  no topic_area, so this filter implicitly excludes them. */
   topicAreas?: string[];
+  /** IFP-curated `products.product_type` (general_llm, security_tool,
+   *  physical_security, etc.). NOT the OMB ai_classification field.
+   *  Joins through use_case_products → products. Multiple values = OR. */
+  productCategories?: string[];
   // Normalized OMB M-25-21 stage buckets: 'pre_deployment' | 'pilot' |
   // 'deployed' | 'retired' | 'unknown'. Bucketing is done via SQL CASE
   // against LOWER(uc.stage_of_development) because the raw column has 30+

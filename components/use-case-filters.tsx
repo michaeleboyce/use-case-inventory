@@ -44,6 +44,7 @@ export interface UseCaseFiltersProps {
     tagUseTypes: string[];
     tagHighImpactDesignations: string[];
     topicAreas: string[];
+    productCategories: string[];
   };
 }
 
@@ -201,6 +202,7 @@ export function UseCaseFilters({
   const selectedUseTypes = parseCsv(currentParams.get("use_type"));
   const selectedHighImpact = parseCsv(currentParams.get("high_impact"));
   const selectedTopicAreas = parseCsv(currentParams.get("topic_area"));
+  const selectedProductCategories = parseCsv(currentParams.get("product_category"));
 
   const activeCount =
     Array.from(currentParams.keys()).filter((k) => k !== "view" && k !== "page")
@@ -512,6 +514,30 @@ export function UseCaseFilters({
               checked={selectedTopicAreas.includes(v)}
               onToggle={() => toggleMulti("topic_area", v)}
               label={v}
+            />
+          ))}
+        </div>
+      </FilterGroup>
+
+      {/* Product category (IFP-curated). Joins through use_case_products
+          to products.product_type — independent of OMB ai_classification.
+          Default-open when something is selected (e.g. arrived from a
+          /products?category=X drill-through). */}
+      <FilterGroup
+        title={
+          selectedProductCategories.length > 0
+            ? `Product category · ${selectedProductCategories.length} selected`
+            : "Product category"
+        }
+        defaultOpen={selectedProductCategories.length > 0}
+      >
+        <div className="max-h-56 overflow-y-auto pr-1">
+          {facets.productCategories.map((v) => (
+            <CheckRow
+              key={v}
+              checked={selectedProductCategories.includes(v)}
+              onToggle={() => toggleMulti("product_category", v)}
+              label={labelFor(v)}
             />
           ))}
         </div>

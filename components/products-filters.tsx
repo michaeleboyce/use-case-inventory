@@ -8,9 +8,12 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { humanize, formatNumber } from "@/lib/formatting";
+import { buildUseCasesUrl } from "@/lib/urls";
 import type { ProductWithCounts } from "@/lib/types";
 
 type SortKey = "agency_count" | "use_case_count" | "name";
@@ -23,6 +26,9 @@ type Props = {
 
 const ALL = "__all__";
 const UNCLASSIFIED = "__unclassified__";
+// URL value used for the uncategorized bucket so the param is human-readable
+// (?category=uncategorized) without exposing the internal sentinel string.
+const URL_UNCATEGORIZED = "uncategorized";
 
 // `products.product_type` is an IFP-curated category (general_llm,
 // security_tool, etc.) — NOT the OMB M-25-21 `ai_classification` field, which
@@ -39,12 +45,42 @@ const fieldClass =
   "h-8 min-w-0 border border-border bg-background px-2 font-mono text-[11px] uppercase tracking-[0.08em] text-foreground focus:border-foreground focus:outline-none";
 
 export function ProductsFilters({ products, parentNames }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Read ?category=X on first render so a deep link from a product detail
+  // page lands on the right filter. We use the URL value as the source of
+  // truth on mount but then drive subsequent updates from local state +
+  // a one-way write back to the URL via router.replace.
+  const initialCategory = (() => {
+    const raw = searchParams.get("category");
+    if (!raw) return ALL;
+    return raw === URL_UNCATEGORIZED ? UNCLASSIFIED : raw;
+  })();
+
   const [search, setSearch] = useState("");
   const [vendor, setVendor] = useState<string>(ALL);
-  const [productType, setProductType] = useState<string>(ALL);
+  const [productType, setProductType] = useState<string>(initialCategory);
   const [frontierOnly, setFrontierOnly] = useState(false);
   const [genaiOnly, setGenaiOnly] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("agency_count");
+
+  // Keep the URL in sync with the productType filter so users can copy/share
+  // the URL or hit back/forward. Other filters are intentionally NOT URL-
+  // backed yet — only the category one, since that's the deep-link target.
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (productType === ALL) {
+      params.delete("category");
+    } else if (productType === UNCLASSIFIED) {
+      params.set("category", URL_UNCATEGORIZED);
+    } else {
+      params.set("category", productType);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `/products?${qs}` : "/products", { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productType]);
 
   const vendors = useMemo(() => {
     const set = new Set<string>();
@@ -170,6 +206,15 @@ export function ProductsFilters({ products, parentNames }: Props) {
             />
             Generative AI only
           </label>
+          {productType !== ALL && productType !== UNCLASSIFIED ? (
+            <Link
+              href={buildUseCasesUrl({ productCategories: [productType] })}
+              className="border border-dotted border-border px-2 py-0.5 text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
+              title={`Drill into all use cases that reference any product in the '${productType}' category`}
+            >
+              → See use cases in {humanize(productType)}
+            </Link>
+          ) : null}
           <span className="ml-auto">
             <span className="tabular-nums text-foreground">
               {formatNumber(filtered.length)}

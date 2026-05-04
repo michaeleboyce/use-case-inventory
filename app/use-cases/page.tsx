@@ -101,6 +101,9 @@ function buildFilters(sp: Search): UseCaseFilterInput & { page: number } {
   const topicAreas = parseCsv(sp.topic_area);
   if (topicAreas.length > 0) filters.topicAreas = topicAreas;
 
+  const productCategories = parseCsv(sp.product_category);
+  if (productCategories.length > 0) filters.productCategories = productCategories;
+
   // Vendor is a single-value substring filter (filters.vendor on the
   // DB side does LIKE %v%). Surfaced via /browse/vendor heatmap cells.
   const vendor = first(sp.vendor);
@@ -247,6 +250,7 @@ export default async function UseCasesPage({
                   tagUseTypes: facets.tagUseTypes,
                   tagHighImpactDesignations: facets.tagHighImpactDesignations,
                   topicAreas: facets.topicAreas,
+                  productCategories: facets.productCategories,
                 }}
               />
             </MobileFiltersSheet>

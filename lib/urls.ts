@@ -27,6 +27,7 @@ const ARRAY_PARAMS: Array<
   ["maturityTiers", "tier", "string"],
   ["stageBuckets", "stage_bucket", "string"],
   ["topicAreas", "topic_area", "string"],
+  ["productCategories", "product_category", "string"],
 ];
 
 const BOOL_PARAMS: Array<

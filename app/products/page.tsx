@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   getAllProducts,
@@ -210,7 +211,13 @@ export default function ProductsPage() {
         title="The catalogue"
         lede="Every canonical product, searchable by name, vendor, type, and capability."
       >
-        <ProductsFilters products={products} parentNames={parentNames} />
+        {/* Suspense boundary required because ProductsFilters reads
+            useSearchParams() (for `?category=X` deep linking) and this
+            page is statically prerendered. Without it, Next bails on
+            client-side rendering for the whole page. */}
+        <Suspense fallback={null}>
+          <ProductsFilters products={products} parentNames={parentNames} />
+        </Suspense>
       </Section>
 
       {/* ------------------------------------------------------------ */}

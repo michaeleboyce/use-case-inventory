@@ -95,12 +95,13 @@ export default async function ProductDetailPage(props: ProductPageProps) {
               </div>
               {product.product_type &&
               product.product_type.trim().toLowerCase() !== "unclassified" ? (
-                <div
-                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
-                  title="IFP-curated product category. Not the OMB ai_classification field."
+                <Link
+                  href={`/products?category=${encodeURIComponent(product.product_type)}`}
+                  className="block font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                  title="IFP-curated product category — click to see all products in this category. Not the OMB ai_classification field."
                 >
                   {humanize(product.product_type)}
-                </div>
+                </Link>
               ) : null}
             </div>
 
