@@ -33,9 +33,17 @@ export function ProductCard({ product, parentName }: Props) {
             {product.vendor ?? "— unknown vendor"}
           </div>
         </div>
+        {/* Category chip is intentionally rendered as plain text inside
+            the parent <Link> rather than a nested <a> (HTML disallows
+            nested anchors). The dropdown filter on /products is the
+            click-target for category navigation; the product detail
+            page's category line links to the filtered list. */}
         {product.product_type &&
         product.product_type.trim().toLowerCase() !== "unclassified" ? (
-          <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
+          <span
+            className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]"
+            title="IFP-curated category — click the card to open this product, then click the category line to see siblings."
+          >
             {humanize(product.product_type)}
           </span>
         ) : null}

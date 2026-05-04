@@ -448,7 +448,15 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
         >
           <ul className="flex flex-col divide-y divide-border border-t-2 border-foreground">
             {(linkedProducts.length > 0
-              ? linkedProducts
+              ? linkedProducts.map((lp) => ({
+                  id: lp.id,
+                  canonical_name: lp.canonical_name,
+                  vendor: lp.vendor,
+                  description: lp.description,
+                  evidence_text: lp.evidence_text,
+                  confidence: lp.confidence,
+                  product_type: lp.product_type,
+                }))
               : product
                 ? [
                     {
@@ -458,16 +466,21 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
                       description: product.description,
                       evidence_text: null,
                       confidence: null,
+                      product_type: product.product_type,
                     },
                   ]
                 : []
-            ).map((p) => (
+            ).map((p) => {
+              const showCategory =
+                p.product_type &&
+                p.product_type.trim().toLowerCase() !== "unclassified";
+              return (
               <li key={p.id} className="py-4 first:pt-4">
-                <Link
-                  href={`/products/${p.id}`}
-                  className="group flex items-start justify-between gap-3 hover:text-[var(--stamp)]"
-                >
-                  <div>
+                <div className="flex items-start justify-between gap-3">
+                  <Link
+                    href={`/products/${p.id}`}
+                    className="group flex-1 hover:text-[var(--stamp)]"
+                  >
                     <p className="font-display italic text-[1.4rem] leading-tight tracking-[-0.01em] text-foreground group-hover:text-[var(--stamp)]">
                       {p.canonical_name}
                     </p>
@@ -477,19 +490,32 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
                         {p.confidence ? ` · ${p.confidence} evidence` : ""}
                       </p>
                     )}
+                    {showCategory && (
+                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                        Category ·{" "}
+                        <Link
+                          href={`/products?category=${encodeURIComponent(p.product_type as string)}`}
+                          className="text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                          title="IFP-curated product category. Click to see all products in this category."
+                        >
+                          {(p.product_type as string).replace(/_/g, " ")}
+                        </Link>
+                      </p>
+                    )}
                     {p.description && (
                       <p className="mt-2 line-clamp-3 max-w-[62ch] text-[13px] leading-snug text-muted-foreground">
                         {p.description}
                       </p>
                     )}
-                  </div>
+                  </Link>
                   <ExternalLink
                     className="size-4 shrink-0 text-muted-foreground"
                     aria-hidden
                   />
-                </Link>
+                </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </Section>
       )}
