@@ -61,7 +61,12 @@ next-env.d.ts
 
 # ad-hoc scratch
 /tmp/
-.claude/
+# Ignore .claude/ contents but keep project-scoped skills — they should ship
+# with the repo for collaborators and CI agents. Note: must use `.claude/*`
+# (not `.claude/`) so the parent dir is not excluded; gitignore can't re-add
+# children of an excluded directory.
+.claude/*
+!.claude/skills/
 /data/audit/
 
 # SQLite snapshots — never commit binary backups.
