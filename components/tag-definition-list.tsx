@@ -9,6 +9,7 @@
 
 import type { UseCaseTag } from "@/lib/types";
 import { formatBoolFlag } from "@/lib/formatting";
+import { NOT_ASSERTED } from "@/lib/derived-display";
 
 interface TagSpec {
   key: keyof UseCaseTag;
@@ -199,12 +200,9 @@ const SPECS: TagSpec[] = [
     explanation: "M-25-21 high-impact classification.",
     kind: "text",
   },
-  {
-    key: "deployment_environment",
-    label: "Deployment environment",
-    explanation: "Cloud / on-premises / hybrid context if parseable.",
-    kind: "text",
-  },
+  // deployment_environment is intentionally omitted: the upstream tagger
+  // currently writes 'unknown' for every row, so surfacing it adds noise
+  // without information. Re-enable when the cloud / on-prem heuristic lands.
   {
     key: "has_ato_or_fedramp",
     label: "ATO / FedRAMP",
@@ -229,8 +227,14 @@ export function TagDefinitionList({ tags }: { tags: UseCaseTag | null }) {
           raw == null ||
           raw === "" ||
           (spec.kind === "bool" && raw !== 0 && raw !== 1);
+        // Special-case fields where blank means "we haven't classified this"
+        // rather than "the answer is no." Render the not-asserted sentinel.
+        const isSoftField =
+          spec.key === "high_impact_designation" || spec.key === "is_generative_ai";
         const displayValue = isEmpty
-          ? "—"
+          ? isSoftField
+            ? NOT_ASSERTED
+            : "—"
           : spec.kind === "bool"
             ? formatBoolFlag(raw as number)
             : String(raw);

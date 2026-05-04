@@ -15,7 +15,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { UseCaseWithTags } from "@/lib/types";
+import type { UseCaseRow } from "@/lib/types";
 import { truncate } from "@/lib/formatting";
 import { MonoChip, TagChip } from "@/components/editorial";
 import { ArrowDown, ArrowUp, ArrowUpDown, Code2, Sparkles } from "lucide-react";
@@ -33,7 +33,7 @@ type SortKey =
 type SortDir = "asc" | "desc";
 
 export interface UseCaseTableProps {
-  rows: UseCaseWithTags[];
+  rows: UseCaseRow[];
   /** Show an additional `Topic` column (use-case `topic_area`) to the right
    *  of the high-impact / flags area. Default false. */
   showTopicArea?: boolean;
@@ -105,112 +105,127 @@ export function UseCaseTable({ rows, showTopicArea = false }: UseCaseTableProps)
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row) => (
-            <tr
-              key={row.id}
-              className="border-b border-border align-top transition-colors hover:bg-[color-mix(in_oklab,var(--highlight)_14%,transparent)]"
-            >
-              <td className="px-3 py-3">
-                {row.agency_abbreviation && (
-                  <MonoChip
-                    href={`/agencies/${row.agency_abbreviation}`}
-                    tone="stamp"
-                    size="xs"
-                  >
-                    {row.agency_abbreviation}
-                  </MonoChip>
-                )}
-              </td>
-              <td className="max-w-[360px] whitespace-normal px-3 py-3">
-                <Link
-                  href={row.slug ? `/use-cases/${row.slug}` : "#"}
-                  className="font-display italic text-[1.05rem] leading-snug text-foreground hover:text-[var(--stamp)] hover:underline"
-                >
-                  {row.use_case_name}
-                </Link>
-                {row.problem_statement && (
-                  <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-                    {truncate(row.problem_statement, 120)}
-                  </p>
-                )}
-              </td>
-              <td className="px-3 py-3 text-[12px] text-muted-foreground">
-                {row.bureau_component ?? "—"}
-              </td>
-              <td className="px-3 py-3">
-                {row.stage_of_development ? (
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                    {truncate(stageLabel(row.stage_of_development), 28)}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </td>
-              <td className="px-3 py-3 text-[12px] text-muted-foreground">
-                {truncate(row.ai_classification ?? "—", 32)}
-              </td>
-              <td className="px-3 py-3 font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
-                {row.vendor_name ?? "—"}
-              </td>
-              <td className="px-3 py-3">
-                {row.tags?.entry_type ? (
-                  <TagChip
-                    dimension="entry_type"
-                    value={row.tags.entry_type}
-                  />
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </td>
-              <td className="px-3 py-3">
-                {row.tags?.deployment_scope ? (
-                  <TagChip
-                    dimension="scope"
-                    value={row.tags.deployment_scope}
-                  />
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </td>
-              <td className="px-3 py-3">
-                <div className="flex items-center gap-1.5">
-                  {row.tags?.high_impact_designation === "high_impact" && (
-                    <TagChip
-                      dimension="high_impact"
-                      value="high_impact"
-                      tone="stamp"
-                      label="High"
-                      title="High-impact use cases"
-                    />
-                  )}
-                  {row.tags?.is_coding_tool === 1 && (
-                    <Code2
-                      className="size-3.5 text-[var(--stamp)]"
-                      aria-label="Coding tool"
-                    />
-                  )}
-                  {row.tags?.is_general_llm_access === 1 && (
-                    <Sparkles
-                      className="size-3.5 text-[var(--verified)]"
-                      aria-label="General LLM access"
-                    />
-                  )}
-                </div>
-              </td>
-              {showTopicArea ? (
+          {sorted.map((row) => {
+            const isConsolidated = row.kind === "consolidated";
+            const title = isConsolidated ? row.ai_use_case : row.use_case_name;
+            const lede = isConsolidated
+              ? row.commercial_product
+              : row.problem_statement;
+            return (
+              <tr
+                key={`${row.kind}-${row.id}`}
+                className="border-b border-border align-top transition-colors hover:bg-[color-mix(in_oklab,var(--highlight)_14%,transparent)]"
+              >
                 <td className="px-3 py-3">
-                  {row.topic_area ? (
+                  {row.agency_abbreviation && (
+                    <MonoChip
+                      href={`/agencies/${row.agency_abbreviation}`}
+                      tone="stamp"
+                      size="xs"
+                    >
+                      {row.agency_abbreviation}
+                    </MonoChip>
+                  )}
+                </td>
+                <td className="max-w-[360px] whitespace-normal px-3 py-3">
+                  <Link
+                    href={row.slug ? `/use-cases/${row.slug}` : "#"}
+                    className="font-display italic text-[1.05rem] leading-snug text-foreground hover:text-[var(--stamp)] hover:underline"
+                  >
+                    {title}
+                  </Link>
+                  {isConsolidated ? (
+                    <span
+                      className="ml-2 inline-block translate-y-[-1px] border border-border bg-muted/40 px-1.5 py-px font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground align-middle"
+                      title="OMB-consolidated entry — agency-wide reporting of commercial AI products"
+                    >
+                      Consolidated
+                    </span>
+                  ) : null}
+                  {lede ? (
+                    <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                      {truncate(lede, 120)}
+                    </p>
+                  ) : null}
+                </td>
+                <td className="px-3 py-3 text-[12px] text-muted-foreground">
+                  {isConsolidated ? "—" : row.bureau_component ?? "—"}
+                </td>
+                <td className="px-3 py-3">
+                  {!isConsolidated && row.stage_of_development ? (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
+                      {truncate(stageLabel(row.stage_of_development), 28)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-[12px] text-muted-foreground">
+                  {isConsolidated ? "—" : truncate(row.ai_classification ?? "—", 32)}
+                </td>
+                <td className="px-3 py-3 font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+                  {isConsolidated ? row.commercial_product ?? "—" : row.vendor_name ?? "—"}
+                </td>
+                <td className="px-3 py-3">
+                  {row.tags?.entry_type ? (
                     <TagChip
-                      dimension="topic_area"
-                      value={row.topic_area}
+                      dimension="entry_type"
+                      value={row.tags.entry_type}
                     />
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-              ) : null}
-            </tr>
-          ))}
+                <td className="px-3 py-3">
+                  {row.tags?.deployment_scope ? (
+                    <TagChip
+                      dimension="scope"
+                      value={row.tags.deployment_scope}
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-1.5">
+                    {row.tags?.high_impact_designation === "high_impact" && (
+                      <TagChip
+                        dimension="high_impact"
+                        value="high_impact"
+                        tone="stamp"
+                        label="High"
+                        title="High-impact use cases"
+                      />
+                    )}
+                    {row.tags?.is_coding_tool === 1 && (
+                      <Code2
+                        className="size-3.5 text-[var(--stamp)]"
+                        aria-label="Coding tool"
+                      />
+                    )}
+                    {row.tags?.is_general_llm_access === 1 && (
+                      <Sparkles
+                        className="size-3.5 text-[var(--verified)]"
+                        aria-label="General LLM access"
+                      />
+                    )}
+                  </div>
+                </td>
+                {showTopicArea ? (
+                  <td className="px-3 py-3">
+                    {!isConsolidated && row.topic_area ? (
+                      <TagChip
+                        dimension="topic_area"
+                        value={row.topic_area}
+                      />
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -275,24 +290,26 @@ function stageLabel(s: string): string {
 }
 
 function compareRows(
-  a: UseCaseWithTags,
-  b: UseCaseWithTags,
+  a: UseCaseRow,
+  b: UseCaseRow,
   key: SortKey,
 ): number {
-  const pick = (r: UseCaseWithTags): string => {
+  const pick = (r: UseCaseRow): string => {
     switch (key) {
       case "agency":
         return r.agency_abbreviation ?? "";
       case "name":
-        return r.use_case_name ?? "";
+        return r.kind === "consolidated" ? r.ai_use_case : r.use_case_name;
       case "bureau":
-        return r.bureau_component ?? "";
+        return r.kind === "consolidated" ? "" : r.bureau_component ?? "";
       case "stage":
-        return r.stage_of_development ?? "";
+        return r.kind === "consolidated" ? "" : r.stage_of_development ?? "";
       case "classification":
-        return r.ai_classification ?? "";
+        return r.kind === "consolidated" ? "" : r.ai_classification ?? "";
       case "vendor":
-        return r.vendor_name ?? "";
+        return r.kind === "consolidated"
+          ? r.commercial_product ?? ""
+          : r.vendor_name ?? "";
       case "entry_type":
         return r.tags?.entry_type ?? "";
       case "scope":

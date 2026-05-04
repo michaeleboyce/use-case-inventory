@@ -118,6 +118,12 @@ function buildFilters(sp: Search): UseCaseFilterInput & { page: number } {
   if (first(sp.has_ato) === "1") filters.hasATOorFedRAMP = true;
   if (first(sp.risk_docs) === "1") filters.hasMeaningfulRiskDocs = true;
 
+  // Entry-kind toggle. Absent → individual-only (default). The drill-through
+  // helpers in lib/urls.ts emit `entry_kind=all` so product / agency / template
+  // links land on the full inventory_entries union.
+  const ek = first(sp.entry_kind);
+  if (ek === "consolidated" || ek === "all") filters.entryKind = ek;
+
   return filters;
 }
 
@@ -215,10 +221,10 @@ export default async function UseCasesPage({
             uses of artificial intelligence, reported by federal agencies.
           </p>
           <p className="mt-6 max-w-[56ch] text-[0.95rem] leading-relaxed text-foreground/80">
-            Every individual and consolidated entry disclosed under OMB
-            Memorandum M-25-21. Filter in the left rail; the table and grid
-            views below update instantly. Export the current page as CSV at
-            any time.
+            Every entry disclosed under OMB Memorandum M-25-21 — {formatNumber(stats.total_use_cases)} individual
+            use cases plus {formatNumber(stats.total_consolidated)} consolidated
+            rows. The explorer below shows individual use cases by default; use the entry-kind
+            toggle in the left rail to include consolidated entries.
           </p>
         </div>
       </header>
@@ -269,13 +275,14 @@ export default async function UseCasesPage({
               <span className="tabular-nums text-foreground">
                 {formatNumber(total)}
               </span>
-              {total !== stats.total_use_cases && (
+              {total !== totalInDb && (
                 <>
-                  {" · "}
+                  {" · "}of{" "}
                   <span className="tabular-nums">
-                    {formatNumber(stats.total_use_cases)}
+                    {formatNumber(totalInDb)}
                   </span>
-                  {" "}total records
+                  {" "}total ({formatNumber(stats.total_use_cases)} individual
+                  + {formatNumber(stats.total_consolidated)} consolidated)
                 </>
               )}
             </p>

@@ -287,11 +287,11 @@ export default function AnalyticsPage() {
             accent="ink"
             headline={
               <>
-                Distinct products deployed across the entire federal
+                Distinct products linked across the entire federal
                 government.
               </>
             }
-            subtext="After canonical-name deduplication across 3,600+ raw entries."
+            subtext="Resolved by canonical-name deduplication. Linkage coverage is improving but not complete."
             href="/products"
           />
           <InsightCard
@@ -475,7 +475,7 @@ export default function AnalyticsPage() {
           <div id="enterprise-llm" className="scroll-mt-32">
             <Figure
               eyebrow="Fig. 09 · Enterprise LLM distribution"
-              caption="Agencies with enterprise-wide LLM access, sorted by general-LLM entries in their inventory."
+              caption="Agencies with enterprise-wide LLM access, sorted by the number of general-LLM entries in their inventory (entries per agency, not number of agencies)."
             >
               <CodingLeaderboard
                 rows={enterpriseLLMRows}

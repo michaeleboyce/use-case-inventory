@@ -301,6 +301,28 @@ export function UseCaseFilters({
         </p>
       </form>
 
+      {/* Entry-kind toggle. Default = individual (3,549 rows); switch to
+          consolidated (900) for OMB enterprise-license rows; "All" combines
+          both (4,449). Drill-throughs from product/agency pages arrive with
+          entry_kind=all so the page count matches the link's count. */}
+      <div className="flex flex-col gap-1.5 pt-4">
+        <MonoLabel>Entry kind</MonoLabel>
+        <EntryKindToggle
+          value={
+            currentParams.get("entry_kind") === "consolidated"
+              ? "consolidated"
+              : currentParams.get("entry_kind") === "all"
+                ? "all"
+                : "individual"
+          }
+          onChange={(v) => {
+            // "individual" is the default — represented by absence of the
+            // URL param. "consolidated" / "all" are explicit.
+            setSingle("entry_kind", v === "individual" ? null : v);
+          }}
+        />
+      </div>
+
       {/* Agency Type */}
       <FilterGroup title="Agency type">
         {facets.agencyTypes.map((v) => (
@@ -630,6 +652,46 @@ function FilterGroup({
         />
       </button>
       {open && <div className="flex flex-col gap-0.5">{children}</div>}
+    </div>
+  );
+}
+
+function EntryKindToggle({
+  value,
+  onChange,
+}: {
+  value: "individual" | "consolidated" | "all";
+  onChange: (v: "individual" | "consolidated" | "all") => void;
+}) {
+  const opts: Array<{
+    v: "individual" | "consolidated" | "all";
+    label: string;
+  }> = [
+    { v: "individual", label: "Individual" },
+    { v: "consolidated", label: "Consolidated" },
+    { v: "all", label: "All" },
+  ];
+  return (
+    <div className="inline-flex w-full divide-x divide-border border border-border">
+      {opts.map((o) => {
+        const active = o.v === value;
+        return (
+          <button
+            key={o.v}
+            type="button"
+            onClick={() => onChange(o.v)}
+            aria-pressed={active}
+            className={cn(
+              "flex-1 px-2 py-1 text-center font-mono text-[10px] uppercase tracking-[0.12em] transition-colors",
+              active
+                ? "bg-foreground text-background"
+                : "bg-transparent text-muted-foreground hover:text-[var(--stamp)]",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

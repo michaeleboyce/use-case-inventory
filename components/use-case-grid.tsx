@@ -7,10 +7,10 @@
  */
 
 import Link from "next/link";
-import type { UseCaseWithTags } from "@/lib/types";
+import type { UseCaseRow } from "@/lib/types";
 import { UseCaseCard } from "./use-case-card";
 
-export function UseCaseGrid({ rows }: { rows: UseCaseWithTags[] }) {
+export function UseCaseGrid({ rows }: { rows: UseCaseRow[] }) {
   if (rows.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 border-t-2 border-foreground py-14 text-center">
@@ -30,7 +30,7 @@ export function UseCaseGrid({ rows }: { rows: UseCaseWithTags[] }) {
     <div className="border-t-2 border-foreground">
       <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map((row) => (
-          <UseCaseCard key={row.id} useCase={row} />
+          <UseCaseCard key={`${row.kind}-${row.id}`} useCase={row} />
         ))}
       </div>
     </div>

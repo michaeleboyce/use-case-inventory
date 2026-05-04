@@ -113,6 +113,14 @@ export interface UseCase {
 
   raw_json: string | null;
   created_at: string | null;
+
+  // OMB consolidated provenance (m004; populated by load_omb_consolidated.py).
+  // Null when the use case wasn't matched to any OMB row, or when OMB filed
+  // an empty Use Case ID column (true for ED, GSA, HHS, SSA, STATE, TVA).
+  omb_consolidated_id: string | null;
+  omb_consolidated_source: string | null;
+  omb_consolidated_first_seen: string | null;
+  omb_consolidated_last_seen: string | null;
 }
 
 export interface ConsolidatedUseCase {
@@ -685,4 +693,69 @@ export interface LinkQueueRow {
   inventory_name: string | null;
   /** Convenience join — vendor / agency_type for grouping. */
   inventory_group: string | null;
+}
+
+// ─── OMB consolidated discrepancy types ────────────────────────────────────
+// Populated by load_omb_consolidated.py (omb_match_audit table). Read by the
+// /discrepancies page. See docs/plans/2026-05-03-omb-consolidated-ingest.md.
+
+export type DiscrepancyStatus =
+  | "matched_exact"
+  | "matched_fuzzy"
+  | "suggested_rename"
+  | "omb_only"
+  | "db_only"
+  | "duplicate_in_omb";
+
+export interface DiscrepancySummary {
+  matched_exact: number;
+  matched_fuzzy: number;
+  suggested_rename: number;
+  omb_only: number;
+  db_only: number;
+  duplicate_in_omb: number;
+  total_with_drift: number;
+  total_pairs_compared: number;
+}
+
+export interface DiscrepancyRow {
+  audit_id: number;
+  match_status: DiscrepancyStatus;
+  match_score: number | null;
+  agency_abbreviation: string | null;
+  use_case_name: string | null;
+  /** FK into use_cases.id; null for omb_only and duplicate_in_omb statuses. */
+  db_use_case_id: number | null;
+  /** Agency-as-filed string id from use_cases.use_case_id. */
+  db_use_case_id_text: string | null;
+  /** Slug for linking to /use-cases/[slug]. */
+  db_use_case_slug: string | null;
+  /** FK into omb_consolidated_rows.id; null for db_only status. */
+  omb_row_id: number | null;
+  /** OMB-assigned use case id from the consolidated XLSX (may be null/empty). */
+  omb_use_case_id: string | null;
+  drift_field_count: number;
+  resolved_at: string | null;
+}
+
+export interface DiscrepancyDriftField {
+  field: string;
+  db_value: string | null;
+  omb_value: string | null;
+}
+
+export interface DiscrepancyDetail {
+  audit: DiscrepancyRow;
+  drift: DiscrepancyDriftField[];
+  /** Side-by-side render values for the 10 canonical fields. Null when the
+   * use case has no DB row (i.e., omb_only) or no OMB row (db_only). */
+  db_row: Record<string, string | null> | null;
+  omb_row: Record<string, string | null> | null;
+}
+
+export interface DiscrepancyFilter {
+  status?: DiscrepancyStatus[];
+  agency?: string;
+  hasDrift?: boolean;
+  unresolvedOnly?: boolean;
 }

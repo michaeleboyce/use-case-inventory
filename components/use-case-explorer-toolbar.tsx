@@ -15,7 +15,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import type { UseCaseWithTags } from "@/lib/types";
+import type { UseCaseRow } from "@/lib/types";
 import { Download, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -70,15 +70,19 @@ export function ViewToggle() {
   );
 }
 
-/** Pure client-side CSV export of the currently-loaded page. */
-export function ExportCsvButton({ rows }: { rows: UseCaseWithTags[] }) {
+/** Pure client-side CSV export of the currently-loaded page. Includes a
+ *  leading `kind` column so consumers can tell individual rows apart from
+ *  consolidated entries; columns that only exist on individual rows are blank
+ *  for consolidated. */
+export function ExportCsvButton({ rows }: { rows: UseCaseRow[] }) {
   const onClick = useCallback(() => {
     const headers = [
+      "kind",
       "agency_abbreviation",
       "agency_name",
       "use_case_id",
       "slug",
-      "use_case_name",
+      "name",
       "bureau_component",
       "stage_of_development",
       "ai_classification",
@@ -95,28 +99,32 @@ export function ExportCsvButton({ rows }: { rows: UseCaseWithTags[] }) {
       "is_generative_ai",
       "has_ato_or_fedramp",
     ];
-    const body = rows.map((r) => [
-      r.agency_abbreviation ?? "",
-      r.agency_name ?? "",
-      r.use_case_id ?? "",
-      r.slug ?? "",
-      r.use_case_name ?? "",
-      r.bureau_component ?? "",
-      r.stage_of_development ?? "",
-      r.ai_classification ?? "",
-      r.vendor_name ?? "",
-      r.product_name ?? "",
-      r.is_high_impact ?? "",
-      r.tags?.entry_type ?? "",
-      r.tags?.ai_sophistication ?? "",
-      r.tags?.deployment_scope ?? "",
-      r.tags?.architecture_type ?? "",
-      r.tags?.use_type ?? "",
-      r.tags?.is_coding_tool ?? "",
-      r.tags?.is_general_llm_access ?? "",
-      r.tags?.is_generative_ai ?? "",
-      r.tags?.has_ato_or_fedramp ?? "",
-    ]);
+    const body = rows.map((r) => {
+      const isC = r.kind === "consolidated";
+      return [
+        r.kind,
+        r.agency_abbreviation ?? "",
+        r.agency_name ?? "",
+        isC ? "" : r.use_case_id ?? "",
+        r.slug ?? "",
+        isC ? r.ai_use_case : r.use_case_name,
+        isC ? "" : r.bureau_component ?? "",
+        isC ? "" : r.stage_of_development ?? "",
+        isC ? "" : r.ai_classification ?? "",
+        isC ? r.commercial_product ?? "" : r.vendor_name ?? "",
+        isC ? "" : r.product_name ?? "",
+        isC ? "" : r.is_high_impact ?? "",
+        r.tags?.entry_type ?? "",
+        r.tags?.ai_sophistication ?? "",
+        r.tags?.deployment_scope ?? "",
+        r.tags?.architecture_type ?? "",
+        r.tags?.use_type ?? "",
+        r.tags?.is_coding_tool ?? "",
+        r.tags?.is_general_llm_access ?? "",
+        r.tags?.is_generative_ai ?? "",
+        r.tags?.has_ato_or_fedramp ?? "",
+      ];
+    });
     const csv = [headers, ...body]
       .map((row) =>
         row

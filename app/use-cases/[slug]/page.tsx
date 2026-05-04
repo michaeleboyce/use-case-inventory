@@ -39,6 +39,7 @@ import {
   ExternalEvidenceList,
 } from "@/components/external-evidence";
 import { formatBoolFlag } from "@/lib/formatting";
+import { genaiDisplayText } from "@/lib/derived-display";
 import { tagFilterUrl } from "@/lib/urls";
 import {
   ArrowLeft,
@@ -302,7 +303,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
           />
           <Row
             label="Generative AI"
-            value={boolText(tags?.is_generative_ai)}
+            value={genaiDisplayText(tags)}
             source="derived"
           />
           <Row
@@ -877,7 +878,7 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
           source="derived"
           lede={
             linkedProducts.length > 1
-              ? "Every canonical product evidenced by this entry's commercial-product, examples, or agency-uses text."
+              ? "Every canonical product evidenced by this entry's commercial-product or agency-uses text."
               : "The commercial product this consolidated entry deploys."
           }
         >

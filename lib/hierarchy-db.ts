@@ -197,12 +197,12 @@ export function getChildOrgRollups(parentId: number): OrgWithUseCaseCount[] {
     SELECT c.*,
 	           (
 	             SELECT COUNT(*)
-	               FROM use_cases u
+	               FROM inventory_entries u
 	              WHERE COALESCE(u.bureau_organization_id, u.organization_id) = c.id
 	           ) AS use_case_count,
 	           (
 	             SELECT COUNT(*)
-	               FROM use_cases u
+	               FROM inventory_entries u
 	               JOIN federal_organizations fo
 	                 ON fo.id = COALESCE(u.bureau_organization_id, u.organization_id)
 	              WHERE fo.hierarchy_path LIKE c.hierarchy_path || '%'
@@ -232,7 +232,7 @@ export function getOrgUseCaseCount(
     const r = rawDb()
 	      .prepare<[number], { n: number }>(
 	        `SELECT COUNT(*) AS n
-	           FROM use_cases
+	           FROM inventory_entries
 	          WHERE COALESCE(bureau_organization_id, organization_id) = ?`,
 	      )
       .get(orgId);
@@ -244,7 +244,7 @@ export function getOrgUseCaseCount(
   const r = rawDb()
     .prepare<number[], { n: number }>(
       `SELECT COUNT(*) AS n
-         FROM use_cases
+         FROM inventory_entries
         WHERE COALESCE(bureau_organization_id, organization_id) IN (${placeholders})`,
     )
     .get(...ids);
@@ -306,16 +306,16 @@ export function getFullHierarchyWithCounts(): OrgWithUseCaseCount[] {
         FROM federal_organizations fo
         LEFT JOIN (
 	          SELECT COALESCE(bureau_organization_id, organization_id) AS id, COUNT(*) AS n
-	            FROM use_cases
+	            FROM inventory_entries
 	           WHERE COALESCE(bureau_organization_id, organization_id) IS NOT NULL
 	           GROUP BY COALESCE(bureau_organization_id, organization_id)
 	        ) direct ON direct.id = fo.id
         LEFT JOIN (
-          SELECT fo2.id, COUNT(uc.id) AS n
+          SELECT fo2.id, COUNT(uc.entry_id) AS n
             FROM federal_organizations fo2
             LEFT JOIN federal_organizations descs
               ON descs.hierarchy_path LIKE fo2.hierarchy_path || '%'
-	            LEFT JOIN use_cases uc
+	            LEFT JOIN inventory_entries uc
 	              ON COALESCE(uc.bureau_organization_id, uc.organization_id) = descs.id
            GROUP BY fo2.id
         ) subtree ON subtree.id = fo.id

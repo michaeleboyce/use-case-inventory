@@ -53,6 +53,13 @@ export function buildUseCasesUrl(
   const maybeQ = (filters as { q?: string }).q;
   if (maybeQ && !filters.search) params.set("q", maybeQ);
 
+  // Entry-kind toggle. The explorer defaults to individual-only when this
+  // param is absent; we only emit it when it differs from that default, so
+  // default-state URLs stay clean.
+  if (filters.entryKind === "consolidated" || filters.entryKind === "all") {
+    params.set("entry_kind", filters.entryKind);
+  }
+
   for (const [key, param] of ARRAY_PARAMS) {
     const value = filters[key] as unknown;
     if (Array.isArray(value) && value.length > 0) {
@@ -92,28 +99,33 @@ export function buildAgenciesUrl(opts: {
   return qs ? `/agencies?${qs}` : "/agencies";
 }
 
-/** Convenience: single-agency drill-through to use-cases. */
+/** Convenience: single-agency drill-through to use-cases. Defaults to
+ *  `entryKind: "all"` so the resulting page count matches the agency's
+ *  inventory_entries-based total. Callers can override via `extra`. */
 export function agencyUseCasesUrl(
   agencyId: number,
   extra: Partial<UseCaseFilterInput> = {},
 ): string {
-  return buildUseCasesUrl({ ...extra, agencyIds: [agencyId] });
+  return buildUseCasesUrl({ entryKind: "all", ...extra, agencyIds: [agencyId] });
 }
 
-/** Convenience: single-product drill-through to use-cases. */
+/** Convenience: single-product drill-through to use-cases. Defaults to
+ *  `entryKind: "all"` so a click on "195 entries" lands on a view that
+ *  contains all 195 (use_case + consolidated edges). */
 export function productUseCasesUrl(
   productId: number,
   extra: Partial<UseCaseFilterInput> = {},
 ): string {
-  return buildUseCasesUrl({ ...extra, productIds: [productId] });
+  return buildUseCasesUrl({ entryKind: "all", ...extra, productIds: [productId] });
 }
 
-/** Convenience: single-template drill-through to use-cases. */
+/** Convenience: single-template drill-through to use-cases. Defaults to
+ *  `entryKind: "all"` for the same reason as `productUseCasesUrl`. */
 export function templateUseCasesUrl(
   templateId: number,
   extra: Partial<UseCaseFilterInput> = {},
 ): string {
-  return buildUseCasesUrl({ ...extra, templateIds: [templateId] });
+  return buildUseCasesUrl({ entryKind: "all", ...extra, templateIds: [templateId] });
 }
 
 /* --------------------------------------------------------------------- */

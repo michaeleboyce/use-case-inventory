@@ -9,33 +9,58 @@
  */
 
 import Link from "next/link";
-import type { UseCaseWithTags } from "@/lib/types";
-import { MonoChip } from "@/components/editorial";
+import type { UseCaseRow, UseCaseWithTags } from "@/lib/types";
+import { MonoChip, TagChip } from "@/components/editorial";
 import { truncate } from "@/lib/formatting";
 import { Code2, Sparkles, ShieldCheck } from "lucide-react";
+
+/** Accepts either a discriminated UseCaseRow (from the explorer) or a bare
+ *  UseCaseWithTags (from the older "related use cases" call sites). The
+ *  bare shape is treated as `{ kind: "use_case", ... }`. */
+type CardInput = UseCaseRow | UseCaseWithTags;
 
 export function UseCaseCard({
   useCase,
   compact = false,
 }: {
-  useCase: UseCaseWithTags;
+  useCase: CardInput;
   compact?: boolean;
 }) {
+  const isConsolidated = "kind" in useCase && useCase.kind === "consolidated";
   const tags = useCase.tags;
   const href = useCase.slug ? `/use-cases/${useCase.slug}` : "#";
+  const title = isConsolidated
+    ? useCase.ai_use_case
+    : (useCase as UseCaseWithTags).use_case_name;
+  const lede = isConsolidated
+    ? useCase.commercial_product
+    : (useCase as UseCaseWithTags).problem_statement;
+  const vendor = isConsolidated
+    ? useCase.commercial_product
+    : (useCase as UseCaseWithTags).vendor_name;
 
   return (
     <article className="group flex h-full flex-col gap-3 border-b border-r border-border p-4 transition-colors hover:bg-[color-mix(in_oklab,var(--highlight)_12%,transparent)]">
       <div className="flex items-start justify-between gap-2">
-        {useCase.agency_abbreviation && (
-          <MonoChip
-            href={`/agencies/${useCase.agency_abbreviation}`}
-            tone="stamp"
-            size="xs"
-          >
-            {useCase.agency_abbreviation}
-          </MonoChip>
-        )}
+        <div className="flex items-center gap-2">
+          {useCase.agency_abbreviation && (
+            <MonoChip
+              href={`/agencies/${useCase.agency_abbreviation}`}
+              tone="stamp"
+              size="xs"
+            >
+              {useCase.agency_abbreviation}
+            </MonoChip>
+          )}
+          {isConsolidated ? (
+            <span
+              className="border border-border bg-muted/40 px-1.5 py-px font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
+              title="OMB-consolidated entry"
+            >
+              Consolidated
+            </span>
+          ) : null}
+        </div>
         <div className="flex items-center gap-1">
           {tags?.is_coding_tool === 1 && (
             <Code2
@@ -60,32 +85,40 @@ export function UseCaseCard({
 
       <Link href={href} className="group/name">
         <h3 className="font-display italic text-[1.15rem] leading-[1.15] tracking-[-0.01em] text-foreground group-hover/name:text-[var(--stamp)] line-clamp-3">
-          {useCase.use_case_name}
+          {title}
         </h3>
       </Link>
 
-      {!compact && useCase.problem_statement && (
+      {!compact && lede && (
         <p className="line-clamp-3 text-[12.5px] leading-snug text-muted-foreground">
-          {truncate(useCase.problem_statement, 200)}
+          {truncate(lede, 200)}
         </p>
       )}
 
       <div className="mt-auto flex flex-wrap gap-1.5 border-t border-dotted border-border pt-2 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
         {tags?.entry_type && (
-          <span>{tags.entry_type.replace(/_/g, " ")}</span>
+          <TagChip
+            dimension="entry_type"
+            value={tags.entry_type}
+            showProvenance={false}
+          />
         )}
         {tags?.entry_type && tags?.ai_sophistication && <span>·</span>}
         {tags?.ai_sophistication && (
-          <span>{tags.ai_sophistication.replace(/_/g, " ")}</span>
+          <TagChip
+            dimension="sophistication"
+            value={tags.ai_sophistication}
+            showProvenance={false}
+          />
         )}
         {(tags?.entry_type || tags?.ai_sophistication) &&
           tags?.deployment_scope && <span>·</span>}
         {tags?.deployment_scope && (
           <span>{tags.deployment_scope.replace(/_/g, " ")}</span>
         )}
-        {useCase.vendor_name && (
+        {vendor && (
           <span className="ml-auto max-w-[60%] truncate text-foreground">
-            {truncate(useCase.vendor_name, 30)}
+            {truncate(vendor, 30)}
           </span>
         )}
       </div>
