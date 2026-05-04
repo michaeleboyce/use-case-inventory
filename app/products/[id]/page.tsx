@@ -89,8 +89,12 @@ export default async function ProductDetailPage(props: ProductPageProps) {
               <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                 {product.vendor ?? "Unknown vendor"}
               </div>
-              {product.product_type ? (
-                <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              {product.product_type &&
+              product.product_type.trim().toLowerCase() !== "unclassified" ? (
+                <div
+                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+                  title="IFP-curated product category. Not the OMB ai_classification field."
+                >
                   {humanize(product.product_type)}
                 </div>
               ) : null}

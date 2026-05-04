@@ -24,6 +24,17 @@ type Props = {
 const ALL = "__all__";
 const UNCLASSIFIED = "__unclassified__";
 
+// `products.product_type` is an IFP-curated category (general_llm,
+// security_tool, etc.) — NOT the OMB M-25-21 `ai_classification` field, which
+// lives on use_cases. Backfill in scripts/cleanup_products_taxonomy.py sets
+// missing values to the literal string 'unclassified'; we treat that and
+// null/empty identically here so the filter has one "uncategorized" bucket.
+const isUncategorized = (t: string | null | undefined): boolean => {
+  if (!t) return true;
+  const trimmed = t.trim().toLowerCase();
+  return trimmed === "" || trimmed === "unclassified";
+};
+
 const fieldClass =
   "h-8 min-w-0 border border-border bg-background px-2 font-mono text-[11px] uppercase tracking-[0.08em] text-foreground focus:border-foreground focus:outline-none";
 
@@ -43,14 +54,16 @@ export function ProductsFilters({ products, parentNames }: Props) {
 
   const productTypes = useMemo(() => {
     const set = new Set<string>();
-    let hasUnclassified = false;
+    let hasUncategorized = false;
     for (const p of products) {
-      const t = p.product_type?.trim();
-      if (t) set.add(t);
-      else hasUnclassified = true;
+      if (isUncategorized(p.product_type)) {
+        hasUncategorized = true;
+      } else {
+        set.add(p.product_type!.trim());
+      }
     }
     const types = Array.from(set).sort((a, b) => a.localeCompare(b));
-    return hasUnclassified ? [...types, UNCLASSIFIED] : types;
+    return hasUncategorized ? [...types, UNCLASSIFIED] : types;
   }, [products]);
 
   const filtered = useMemo(() => {
@@ -59,7 +72,7 @@ export function ProductsFilters({ products, parentNames }: Props) {
       if (q && !p.canonical_name.toLowerCase().includes(q)) return false;
       if (vendor !== ALL && p.vendor !== vendor) return false;
       if (productType === UNCLASSIFIED) {
-        if (p.product_type && p.product_type.trim() !== "") return false;
+        if (!isUncategorized(p.product_type)) return false;
       } else if (productType !== ALL && p.product_type !== productType) {
         return false;
       }
@@ -106,16 +119,20 @@ export function ProductsFilters({ products, parentNames }: Props) {
             </select>
           </FilterField>
 
-          <FilterField label="Type">
+          <FilterField
+            label="Category"
+            hint="IFP-curated"
+            title="Internal product category curated by IFP (e.g. general_llm, security_tool). Not the OMB M-25-21 ai_classification field, which lives on individual use cases."
+          >
             <select
               value={productType}
               onChange={(e) => setProductType(e.target.value)}
               className={fieldClass + " w-full"}
             >
-              <option value={ALL}>All types</option>
+              <option value={ALL}>All categories</option>
               {productTypes.map((t) => (
                 <option key={t} value={t}>
-                  {t === UNCLASSIFIED ? "Unclassified" : humanize(t)}
+                  {t === UNCLASSIFIED ? "Uncategorized" : humanize(t)}
                 </option>
               ))}
             </select>
@@ -187,15 +204,30 @@ export function ProductsFilters({ products, parentNames }: Props) {
 
 function FilterField({
   label,
+  hint,
+  title,
   children,
 }: {
   label: string;
+  hint?: string;
+  title?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
+      <span
+        className="flex items-baseline gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]"
+        title={title}
+      >
         {label}
+        {hint ? (
+          <span
+            className="font-mono text-[9px] tracking-[0.16em] text-muted-foreground/80"
+            aria-hidden
+          >
+            ({hint})
+          </span>
+        ) : null}
       </span>
       {children}
     </label>

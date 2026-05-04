@@ -18,7 +18,10 @@ export default function TemplatesPage() {
   // Aggregate usage by capability_category for the bar chart.
   const byCategory = new Map<string, number>();
   for (const t of templates) {
-    const cat = t.capability_category ?? "uncategorized";
+    // capability_category is an IFP-curated grouping of OMB Appendix B
+    // templates (writing, coding, security, etc.). Templates without a
+    // category fall into a single "Other" bucket on the chart.
+    const cat = t.capability_category ?? "other";
     byCategory.set(cat, (byCategory.get(cat) ?? 0) + t.use_case_count);
   }
   const chartData = Array.from(byCategory.entries())

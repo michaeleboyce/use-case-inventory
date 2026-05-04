@@ -33,7 +33,8 @@ export function ProductCard({ product, parentName }: Props) {
             {product.vendor ?? "— unknown vendor"}
           </div>
         </div>
-        {product.product_type ? (
+        {product.product_type &&
+        product.product_type.trim().toLowerCase() !== "unclassified" ? (
           <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
             {humanize(product.product_type)}
           </span>

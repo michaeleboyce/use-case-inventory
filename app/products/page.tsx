@@ -123,8 +123,15 @@ export default function ProductsPage() {
               entries and {formatNumber(products.length)} canonical products.
               Agency-internal platforms are labeled separately from commercial
               tools, and {formatNumber(catalogStats.pending_product_reviews)}
-              rows remain in the product review queue. Filter below by vendor,
-              type, or capability; click any card to open agency-level adoption.
+              rows remain in the product review queue. Filter below by vendor
+              or by{" "}
+              <span
+                title="IFP-curated category (general_llm, security_tool, productivity, etc.). Distinct from OMB's ai_classification field, which is recorded per use case."
+                className="cursor-help underline decoration-dotted underline-offset-2"
+              >
+                category
+              </span>
+              ; click any card to open agency-level adoption.
             </p>
 
             <div className="col-span-12 md:col-span-4 md:col-start-9 md:self-end">
