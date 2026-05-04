@@ -23,6 +23,7 @@ const MORE: Array<{ href: string; label: string }> = [
   { href: "/fedramp", label: "FedRAMP" },
   { href: "/compare", label: "Compare" },
   { href: "/templates", label: "Templates" },
+  { href: "/discrepancies", label: "Discrepancies" },
   { href: "/about", label: "Colophon" },
 ];
 
