@@ -3556,8 +3556,11 @@ export function getCrossCutSummary(dim: CrossCutKey): CrossCutValueRow[] {
 }
 
 /** value × agency cell counts for the heatmap view. Caller picks the agency
- *  cap (default 15) and rows are returned for those agencies only, ranked
- *  by total use-case count descending. */
+ *  cap (default 15) and cells are returned for those agencies only. The
+ *  `valueTotals` map carries the TRUE per-value count across ALL agencies
+ *  (not just the top 15) so the heatmap UI can show an accurate row total
+ *  even when a value's use cases are concentrated at small agencies
+ *  outside the visible columns. */
 export function getCrossCutHeatmap(
   dim: CrossCutKey,
   agencyLimit = 15,
@@ -3565,6 +3568,7 @@ export function getCrossCutHeatmap(
   agencies: Array<{ id: number; abbreviation: string; total: number }>;
   values: string[];
   cells: CrossCutHeatmapCell[];
+  valueTotals: Record<string, number>;
 } {
   const db = getDb();
   const { fromJoin, groupCol, whereGroupNotEmpty } = _crossCutSql(dim);
@@ -3581,19 +3585,21 @@ export function getCrossCutHeatmap(
     .all(agencyLimit);
 
   if (agencies.length === 0) {
-    return { agencies: [], values: [], cells: [] };
+    return { agencies: [], values: [], cells: [], valueTotals: {} };
   }
 
-  const values = db
-    .prepare<[], { value: string }>(
-      `SELECT ${groupCol} AS value
+  const valueRows = db
+    .prepare<[], { value: string; total: number }>(
+      `SELECT ${groupCol} AS value, COUNT(DISTINCT uc.id) AS total
          ${fromJoin}
         WHERE ${whereGroupNotEmpty}
         GROUP BY ${groupCol}
-        ORDER BY COUNT(DISTINCT uc.id) DESC, value COLLATE NOCASE ASC`,
+        ORDER BY total DESC, value COLLATE NOCASE ASC`,
     )
-    .all()
-    .map((r) => r.value);
+    .all();
+  const values = valueRows.map((r) => r.value);
+  const valueTotals: Record<string, number> = {};
+  for (const r of valueRows) valueTotals[r.value] = r.total;
 
   const agencyIds = agencies.map((a) => a.id);
   const placeholders = agencyIds.map(() => "?").join(",");
@@ -3613,7 +3619,7 @@ export function getCrossCutHeatmap(
     )
     .all(...agencyIds);
 
-  return { agencies, values, cells };
+  return { agencies, values, cells, valueTotals };
 }
 
 // -----------------------------------------------------------------------------

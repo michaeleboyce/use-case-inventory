@@ -17,9 +17,48 @@ import {
   getCrossCutHeatmap,
   type CrossCutKey,
 } from "@/lib/db";
-import { Section } from "@/components/editorial";
+import { Section, MonoChip } from "@/components/editorial";
 import { CrossCutList } from "@/components/cross-cut-list";
 import { CrossCutHeatmap } from "@/components/cross-cut-heatmap";
+
+/** Where each dimension's *values* originate. Drives the OMB / IFP chip
+ *  + provenance lede in the page header. Sophistication, scope, use_type,
+ *  high_impact, entry_type are auto-derived by IFP from OMB-filed text
+ *  (see auto_tag.py heuristics). topic_area and vendor are OMB-filed by
+ *  the agency (vendor via the products it lists). */
+const DIMENSION_PROVENANCE: Record<
+  CrossCutKey,
+  { source: "omb" | "derived"; note: string }
+> = {
+  entry_type: {
+    source: "derived",
+    note: "Entry type is an IFP-derived classification — every reported entry is bucketed (custom_system / product_deployment / bespoke_application / generic_use_pattern / product_feature) by auto_tag.py based on the OMB-filed system_name, vendor, and problem statement.",
+  },
+  sophistication: {
+    source: "derived",
+    note: "AI sophistication is an IFP-derived tier — auto_tag.py inspects each entry's OMB-filed text (problem statement, system outputs, ai_classification) and the linked product's vendor/category to assign one of: classical_ml · general_llm · coding_assistant · agentic · computer_vision · nlp_specific · predictive_analytics. \"Agentic\" requires evidence of multi-step orchestration; \"coding_assistant\" requires explicit coding intent (so a generic Copilot rollout is NOT counted, but a coding-specific Copilot deployment IS).",
+  },
+  scope: {
+    source: "derived",
+    note: "Deployment scope is an IFP-derived classification — auto_tag.py reads the OMB-filed deployment narrative to bucket each entry as enterprise_wide / department / bureau / office / team / pilot.",
+  },
+  use_type: {
+    source: "derived",
+    note: "Use type is an IFP-derived classification — auto_tag.py categorizes each entry's intent as administrative / mission_critical / it_operations / cybersecurity / research from the OMB-filed problem statement.",
+  },
+  high_impact: {
+    source: "omb",
+    note: "High-impact designation is OMB-filed (M-25-21 §I.7) — agencies self-classify each entry as High impact, Presumed-not-high-impact, or Not high impact based on whether the use case affects rights or safety.",
+  },
+  topic_area: {
+    source: "omb",
+    note: "Topic area is OMB-filed verbatim (M-25-21 §II.1) — agencies pick from a controlled vocabulary plus free-text fallbacks. Some values are agency-specific (e.g., \"Loan Program Operations\" appears only at SBA).",
+  },
+  vendor: {
+    source: "omb",
+    note: "Vendor is OMB-filed via each entry's linked product. IFP normalizes vendor strings across spelling variants (e.g., \"OpenAI\", \"OpenAI Inc.\", \"openai\" all map to one canonical vendor).",
+  },
+};
 
 type View = "list" | "heatmap";
 
@@ -116,6 +155,22 @@ export default async function BrowseDimensionPage({
           <p className="mt-4 max-w-prose text-[1rem] leading-[1.55] text-foreground/85">
             {lede}
           </p>
+
+          {/* Provenance — make it obvious whether values come from OMB
+              filings or from IFP's analytical layer. */}
+          <div className="mt-5 flex max-w-prose items-baseline gap-3 border-l-2 border-border pl-3">
+            <MonoChip
+              tone={
+                DIMENSION_PROVENANCE[key].source === "omb" ? "muted" : "stamp"
+              }
+              size="xs"
+            >
+              {DIMENSION_PROVENANCE[key].source === "omb" ? "OMB" : "IFP"}
+            </MonoChip>
+            <p className="text-[0.85rem] leading-[1.5] text-muted-foreground">
+              {DIMENSION_PROVENANCE[key].note}
+            </p>
+          </div>
 
           {/* Tab strip */}
           <nav

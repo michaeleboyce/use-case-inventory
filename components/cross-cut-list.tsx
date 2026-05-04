@@ -70,13 +70,27 @@ export function CrossCutList({
           >
             <div className="flex items-baseline justify-between gap-3">
               <h3 className="font-display italic text-[1.4rem] leading-tight text-foreground">
-                <Link href={href} className="hover:text-[var(--stamp)]">
+                <Link
+                  href={href}
+                  className="group inline-flex items-baseline gap-1.5 hover:text-[var(--stamp)]"
+                  title={`See all ${formatNumber(row.count)} use cases · ${label}`}
+                >
                   {label}
+                  <span
+                    aria-hidden
+                    className="font-mono text-[0.7em] text-muted-foreground transition-colors group-hover:text-[var(--stamp)]"
+                  >
+                    →
+                  </span>
                 </Link>
               </h3>
-              <span className="font-mono text-sm tabular-nums text-foreground">
+              <Link
+                href={href}
+                className="font-mono text-sm tabular-nums text-foreground hover:text-[var(--stamp)]"
+                title={`See all ${formatNumber(row.count)} use cases`}
+              >
                 {formatNumber(row.count)}
-              </span>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-1.5">

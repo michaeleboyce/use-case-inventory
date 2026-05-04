@@ -58,7 +58,19 @@ type Heatmap = {
     agency_abbreviation: string;
     count: number;
   }>;
+  /** TRUE per-value totals across ALL agencies (not just the visible
+   *  top-N columns). The Σ column displays this, not the sum of visible
+   *  cells, so a value concentrated at an agency outside the cap still
+   *  shows an accurate row total. */
+  valueTotals: Record<string, number>;
 };
+
+function rowUrl(dim: CrossCutKey, value: string): string {
+  if (dim === "vendor") {
+    return `/use-cases?vendor=${encodeURIComponent(value)}`;
+  }
+  return tagFilterUrl(dim, value);
+}
 
 export function CrossCutHeatmap({
   dim,
@@ -67,7 +79,7 @@ export function CrossCutHeatmap({
   dim: CrossCutKey;
   data: Heatmap;
 }) {
-  const { agencies, values, cells } = data;
+  const { agencies, values, cells, valueTotals } = data;
 
   if (agencies.length === 0 || values.length === 0) {
     return (
@@ -83,15 +95,15 @@ export function CrossCutHeatmap({
     lookup.set(`${c.value}\x1f${c.agency_id}`, c.count);
   }
 
-  // Per-value totals across the visible (top-15) agencies — handy for the
-  // mobile stacked view rendering "agencies above the cut" inline.
-  const valueTotals = new Map<string, number>();
+  // Sum visible cells per value — used to detect "off-cap" rows where the
+  // true total is positive but no visible cell carries the activity.
+  const visibleSum = new Map<string, number>();
   for (const v of values) {
     let sum = 0;
     for (const a of agencies) {
       sum += lookup.get(`${v}\x1f${a.id}`) ?? 0;
     }
-    valueTotals.set(v, sum);
+    visibleSum.set(v, sum);
   }
 
   return (
@@ -126,14 +138,30 @@ export function CrossCutHeatmap({
           </thead>
           <tbody>
             {values.map((v) => {
-              const total = valueTotals.get(v) ?? 0;
+              const total = valueTotals[v] ?? 0;
+              const visible = visibleSum.get(v) ?? 0;
+              const offCap = total > visible;
               return (
                 <tr key={v} className="border-b border-dotted border-border">
                   <th
                     scope="row"
                     className="sticky left-0 z-10 bg-background px-2 py-1.5 text-left text-foreground"
                   >
-                    {displayLabel(v)}
+                    <Link
+                      href={rowUrl(dim, v)}
+                      className="hover:text-[var(--stamp)]"
+                      title={`See all ${total} use cases · ${displayLabel(v)}`}
+                    >
+                      {displayLabel(v)}
+                    </Link>
+                    {offCap && (
+                      <span
+                        className="ml-1 align-baseline font-mono text-[9px] text-muted-foreground"
+                        title={`${total - visible} of ${total} are at agencies outside the top ${agencies.length} columns. Click the row label to see all of them.`}
+                      >
+                        †
+                      </span>
+                    )}
                   </th>
                   {agencies.map((a) => {
                     const count = lookup.get(`${v}\x1f${a.id}`) ?? 0;
@@ -178,7 +206,8 @@ export function CrossCutHeatmap({
         </table>
         <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           Glyphs · ■ = 10+ · · = 1–9 · blank = 0 · click any cell to filter
-          /use-cases.
+          /use-cases. † = activity at agencies outside the top {agencies.length}{" "}
+          columns; click the row label to see all of them.
         </p>
       </div>
 
@@ -200,11 +229,14 @@ export function CrossCutHeatmap({
               className="flex flex-col gap-1.5 border-t border-foreground pt-2"
             >
               <div className="flex items-baseline justify-between gap-3">
-                <span className="font-display italic text-[1.1rem] text-foreground">
+                <Link
+                  href={rowUrl(dim, v)}
+                  className="font-display italic text-[1.1rem] text-foreground hover:text-[var(--stamp)]"
+                >
                   {displayLabel(v)}
-                </span>
+                </Link>
                 <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {valueTotals.get(v) ?? 0}
+                  {valueTotals[v] ?? 0}
                 </span>
               </div>
               {ranked.length === 0 ? (
