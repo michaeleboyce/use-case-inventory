@@ -462,6 +462,78 @@ export function getLLMVendorShare(): BreakdownRow[] {
 }
 
 /**
+ * Per-agency rollup of the LLM "Vendor unspecified" gap surfaced by
+ * `getLLMVendorShare` / Insight Card G. Same fallback chain as
+ * `getLLMVendorShare` (cots_vendor → tool_vendor → use_cases.vendor_name →
+ * '' with placeholder filtering): an entry counts as "unspecified" when
+ * neither the tag fields nor the OMB-filed vendor_name / system_name name
+ * a vendor or product. Ranked by absolute unspecified count desc so the
+ * worst contributors surface first; the analytics page renders the top 10
+ * as a horizontal bar list under Fig. 07.
+ */
+export function getLLMVendorVisibilityByAgency(): Array<{
+  agency_id: number;
+  abbreviation: string;
+  name: string;
+  total: number;
+  unspecified: number;
+  share: number;
+}> {
+  const stmt = getDb().prepare<
+    [],
+    {
+      agency_id: number;
+      abbreviation: string;
+      name: string;
+      total: number;
+      unspecified: number;
+    }
+  >(`
+    WITH tagged AS (
+      SELECT a.id AS agency_id,
+             a.abbreviation,
+             a.name,
+             LOWER(TRIM(COALESCE(
+               NULLIF(t.cots_vendor,''),
+               NULLIF(t.tool_vendor,''),
+               CASE
+                 WHEN LOWER(TRIM(COALESCE(uc.vendor_name,'')))
+                   IN ('n/a','not available','none','tbd','tbd.','unknown','')
+                 THEN ''
+                 ELSE uc.vendor_name
+               END,
+               ''
+             ))) AS v_lower,
+             LOWER(TRIM(COALESCE(
+               NULLIF(t.cots_product_name,''),
+               NULLIF(t.tool_product_name,''),
+               uc.system_name,
+               ''
+             ))) AS p_lower
+        FROM use_case_tags t
+        JOIN use_cases uc ON uc.id = t.use_case_id
+        JOIN agencies a ON a.id = uc.agency_id
+       WHERE t.ai_sophistication = 'general_llm'
+    )
+    SELECT agency_id,
+           abbreviation,
+           name,
+           COUNT(*) AS total,
+           SUM(CASE WHEN v_lower = '' AND p_lower = '' THEN 1 ELSE 0 END)
+             AS unspecified
+      FROM tagged
+     GROUP BY agency_id, abbreviation, name
+    HAVING unspecified > 0
+     ORDER BY unspecified DESC, total DESC
+  `);
+  const rows = stmt.all();
+  return rows.map((r) => ({
+    ...r,
+    share: r.total > 0 ? r.unspecified / r.total : 0,
+  }));
+}
+
+/**
  * For the entry-type-mix stacked bar. One row per agency (that has data),
  * columns are raw counts of each tag.entry_type. The client normalizes to %.
  */

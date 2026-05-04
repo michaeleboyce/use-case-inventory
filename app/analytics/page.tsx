@@ -6,6 +6,7 @@ import {
   getMaturityScatterData,
   getArchitectureDistribution,
   getLLMVendorShare,
+  getLLMVendorVisibilityByAgency,
   getCodingToolAgencies,
   getEnterpriseLLMAgencies,
   getEntryTypeMixByAgency,
@@ -23,6 +24,7 @@ import {
   LLMVendorDonut,
 } from "@/components/charts/architecture-donut";
 import { CodingLeaderboard } from "@/components/charts/coding-leaderboard";
+import { VisibilityGapList } from "@/components/charts/visibility-gap-list";
 import { EntryTypeMixChart } from "@/components/charts/entry-type-mix-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import {
@@ -66,6 +68,7 @@ export default function AnalyticsPage() {
   const scatter = getMaturityScatterData();
   const architecture = getArchitectureDistribution();
   const llmVendors = getLLMVendorShare();
+  const llmVisibilityGap = getLLMVendorVisibilityByAgency();
   const coding = getCodingToolAgencies();
   const enterpriseLLM = getEnterpriseLLMAgencies();
   const entryMix = getEntryTypeMixByAgency();
@@ -410,6 +413,33 @@ export default function AnalyticsPage() {
                 <LLMVendorDonut data={llmVendors} />
               </div>
             </Figure>
+
+            {/* Companion to Fig. 07 — surfaces who's contributing the
+                "Vendor unspecified" slice. Same SQL bucketing as the
+                donut (see getLLMVendorVisibilityByAgency), so the
+                stacked-bar story carries directly across. */}
+            <div className="mt-2 border-t border-border/60 pt-8">
+              <div className="grid gap-x-6 gap-y-3 md:grid-cols-[200px_1fr]">
+                <div>
+                  <div className="eyebrow !text-[var(--stamp)]">
+                    Fig. 07a · Visibility gap
+                  </div>
+                  <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    Top contributors
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <p className="max-w-prose text-xs text-muted-foreground">
+                    Who&apos;s driving the &quot;Vendor unspecified&quot;
+                    slice. Each row is an agency; the muted slate portion
+                    of the bar is general-LLM-access entries that name no
+                    vendor or product (matching the donut wedge color).
+                    Right column reads <em>unspecified / total · share</em>.
+                  </p>
+                  <VisibilityGapList rows={llmVisibilityGap} limit={10} />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Section>
