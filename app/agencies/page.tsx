@@ -5,6 +5,7 @@ import { getFullHierarchyWithCounts } from "@/lib/hierarchy-db";
 import { AgenciesTable, type AgencyRow } from "@/components/agencies-table";
 import { AgencyHierarchyTree } from "@/components/hierarchy";
 import { MetricTile } from "@/components/metric-tile";
+import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
 import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
 
@@ -52,10 +53,19 @@ export default async function AgenciesPage({
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <PageSubnav
+        tabs={[
+          { id: "overview", label: "Overview" },
+          { id: "directory", label: "Directory" },
+        ]}
+      />
       {/* ---------------------------------------------------------------- */}
       {/* Editorial masthead                                                */}
       {/* ---------------------------------------------------------------- */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12">
+      <header
+        id="overview"
+        className="ink-in grid scroll-mt-32 grid-cols-12 gap-x-6 border-b border-border pb-12"
+      >
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-3">
             <div className="eyebrow !text-[var(--stamp)]">§ I · Agencies</div>
@@ -123,7 +133,7 @@ export default async function AgenciesPage({
       {/* ---------------------------------------------------------------- */}
       {/* Directory table or hierarchy tree                                 */}
       {/* ---------------------------------------------------------------- */}
-      <section className="mt-16 md:mt-20">
+      <section id="directory" className="mt-16 scroll-mt-32 md:mt-20">
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 border-b border-border pb-3">
           <div className="eyebrow">
             Fig. 1 · {view === "tree" ? "Hierarchy" : "Directory"}

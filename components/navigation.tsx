@@ -8,15 +8,22 @@ import Link from "next/link";
 import { NavLink } from "./nav-link";
 import { CommandPaletteHint } from "./command-palette";
 
-const LINKS: Array<{ href: string; label: string; kicker: string }> = [
+// Primary nav: the high-frequency surfaces. Kept inline on the section rail.
+const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/agencies", label: "Agencies", kicker: "I" },
   { href: "/use-cases", label: "Use Cases", kicker: "II" },
   { href: "/products", label: "Products", kicker: "III" },
-  { href: "/templates", label: "Templates", kicker: "IV" },
-  { href: "/analytics", label: "Analytics", kicker: "V" },
-  { href: "/compare", label: "Compare", kicker: "VI" },
-  { href: "/fedramp", label: "FedRAMP", kicker: "VII" },
-  { href: "/about", label: "Colophon", kicker: "§" },
+  { href: "/analytics", label: "Analytics", kicker: "IV" },
+];
+
+// Lower-frequency surfaces, collapsed into a "More" dropdown so the section
+// rail doesn't horizontally overflow at narrow widths. Order: FedRAMP first
+// (a real sub-area users navigate to), then Compare, Templates, Colophon.
+const MORE: Array<{ href: string; label: string }> = [
+  { href: "/fedramp", label: "FedRAMP" },
+  { href: "/compare", label: "Compare" },
+  { href: "/templates", label: "Templates" },
+  { href: "/about", label: "Colophon" },
 ];
 
 const BROWSE_DIMENSIONS: Array<{ slug: string; label: string }> = [
@@ -24,6 +31,7 @@ const BROWSE_DIMENSIONS: Array<{ slug: string; label: string }> = [
   { slug: "high-impact", label: "High-impact" },
   { slug: "topic-area", label: "Topic area" },
   { slug: "vendor", label: "Vendor" },
+  { slug: "category", label: "Product category" },
 ];
 
 export function Navigation() {
@@ -54,7 +62,7 @@ export function Navigation() {
 
         {/* Section rail */}
         <nav className="mt-1 flex items-stretch gap-0 overflow-x-auto border-t border-border/70 text-sm">
-          {LINKS.map((link) => (
+          {PRIMARY.map((link) => (
             <NavLink
               key={link.href}
               href={link.href}
@@ -70,9 +78,53 @@ export function Navigation() {
             </NavLink>
           ))}
           <BrowseMenu />
+          <MoreMenu />
         </nav>
       </div>
     </header>
+  );
+}
+
+/**
+ * "More" overflow menu — same CSS-only hover/focus-within pattern as
+ * BrowseMenu. Holds the lower-frequency surfaces (FedRAMP, Compare,
+ * Templates, Colophon) so the primary section rail doesn't overflow.
+ * The trigger has no destination of its own — keyboard users tab into
+ * it and the dropdown opens on focus-within.
+ */
+function MoreMenu() {
+  return (
+    <div className="group/more relative -mt-px flex items-stretch">
+      {/* Use a real <button> with tabIndex so keyboard users can open the
+          dropdown without a destination link they don't want to navigate to. */}
+      <button
+        type="button"
+        className="group flex cursor-default items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:text-foreground md:px-4"
+      >
+        <span aria-hidden className="text-[9px] font-normal text-muted-foreground/70">
+          ⋯
+        </span>
+        More
+        <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
+          ▾
+        </span>
+      </button>
+      <div
+        role="menu"
+        className="absolute right-0 top-full z-50 mt-0 hidden min-w-[12rem] border border-border bg-background py-1 shadow-md group-hover/more:block group-focus-within/more:block"
+      >
+        {MORE.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            role="menuitem"
+            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -11,6 +11,7 @@ import { ProductsFilters } from "@/components/products-filters";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
 import { CategoryDistributionChart } from "@/components/charts/category-distribution-chart";
 import { Section, Figure } from "@/components/editorial";
+import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
 
@@ -35,10 +36,21 @@ export default function ProductsPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+      <PageSubnav
+        tabs={[
+          { id: "overview", label: "Overview" },
+          { id: "vendors", label: "Vendors" },
+          { id: "categories", label: "Categories" },
+          { id: "catalogue", label: "Catalogue" },
+        ]}
+      />
       {/* ------------------------------------------------------------ */}
       {/* HERO — editorial nameplate                                   */}
       {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
+      <header
+        id="overview"
+        className="ink-in grid scroll-mt-32 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
+      >
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-4">
             <div>
@@ -178,6 +190,12 @@ export default function ProductsPage() {
                     </dd>
                   </Link>
                 </dl>
+                <Link
+                  href="#catalogue"
+                  className="mt-4 inline-flex items-baseline gap-1 border border-border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
+                >
+                  Jump to catalogue ↓
+                </Link>
               </div>
             </div>
           </div>
@@ -187,6 +205,7 @@ export default function ProductsPage() {
       {/* ------------------------------------------------------------ */}
       {/* § I — VENDOR MARKET SHARE                                    */}
       {/* ------------------------------------------------------------ */}
+      <div id="vendors" className="scroll-mt-32">
       <Section
         number="I"
         title="Who sells"
@@ -205,10 +224,12 @@ export default function ProductsPage() {
           <VendorShareChart data={vendorShare} />
         </Figure>
       </Section>
+      </div>
 
       {/* ------------------------------------------------------------ */}
       {/* § II — CATEGORY DISTRIBUTION                                 */}
       {/* ------------------------------------------------------------ */}
+      <div id="categories" className="scroll-mt-32">
       <Section
         number="II"
         title="By category"
@@ -237,10 +258,12 @@ export default function ProductsPage() {
           <CategoryDistributionChart data={categoryDistribution} />
         </Figure>
       </Section>
+      </div>
 
       {/* ------------------------------------------------------------ */}
       {/* § III — CATALOGUE                                            */}
       {/* ------------------------------------------------------------ */}
+      <div id="catalogue" className="scroll-mt-32">
       <Section
         number="III"
         title="The catalogue"
@@ -254,6 +277,7 @@ export default function ProductsPage() {
           <ProductsFilters products={products} parentNames={parentNames} />
         </Suspense>
       </Section>
+      </div>
 
       {/* ------------------------------------------------------------ */}
       {/* Footer caption                                               */}

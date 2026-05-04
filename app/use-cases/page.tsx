@@ -9,6 +9,7 @@ import { formatNumber } from "@/lib/formatting";
 import type { UseCaseFilterInput } from "@/lib/types";
 import { UseCaseFilters } from "@/components/use-case-filters";
 import { MobileFiltersSheet } from "@/components/mobile-filters-sheet";
+import { PageSubnav } from "@/components/page-subnav";
 import { UseCaseTable } from "@/components/use-case-table";
 import { UseCaseGrid } from "@/components/use-case-grid";
 import {
@@ -190,10 +191,20 @@ export default async function UseCasesPage({
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <PageSubnav
+        tabs={[
+          { id: "overview", label: "Overview" },
+          { id: "filters", label: "Filters" },
+          { id: "results", label: "Results" },
+        ]}
+      />
       {/* ------------------------------------------------------------ */}
       {/* EDITORIAL HEADER — filing meta + big italic counter           */}
       {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14">
+      <header
+        id="overview"
+        className="ink-in grid scroll-mt-32 grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14"
+      >
         <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-3">
             <div className="eyebrow !text-[var(--stamp)]">
@@ -241,7 +252,7 @@ export default async function UseCasesPage({
            on the outer cell, which created a nested scroll container
            competing with the window scrollbar and made page scrolling
            feel "strange". */}
-        <div className="min-w-0">
+        <div id="filters" className="min-w-0 scroll-mt-32">
           <div className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
             <MobileFiltersSheet triggerLabel="Filter use cases">
               <UseCaseFilters
@@ -263,7 +274,7 @@ export default async function UseCasesPage({
           </div>
         </div>
 
-        <section className="flex min-w-0 flex-col gap-6">
+        <section id="results" className="flex min-w-0 scroll-mt-32 flex-col gap-6">
           {/* Toolbar — mono-styled bar. */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-y-2 border-foreground py-2.5">
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
