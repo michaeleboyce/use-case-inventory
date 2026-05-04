@@ -33,6 +33,7 @@ const BROWSE_DIMENSIONS: Array<{ slug: string; label: string }> = [
   { slug: "topic-area", label: "Topic area" },
   { slug: "vendor", label: "Vendor" },
   { slug: "category", label: "Product category" },
+  { slug: "category-topic", label: "Category × Topic" },
 ];
 
 export function Navigation() {

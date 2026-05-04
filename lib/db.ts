@@ -86,9 +86,11 @@ export {
   getEnterpriseLLMAgencies,
   getCrossCutSummary,
   getCrossCutHeatmap,
+  getCategoryTopicCrossTab,
   type CrossCutKey,
   type CrossCutValueRow,
   type CrossCutHeatmapCell,
+  type CategoryTopicCrossTab,
 } from "./db/analytics";
 
 import type {
