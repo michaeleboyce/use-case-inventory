@@ -8,8 +8,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getDiscrepancyDetail } from "@/lib/discrepancies";
+import { canWriteResolutions } from "@/lib/resolutions";
 import { Section, MonoChip } from "@/components/editorial";
 import { DiscrepancySideBySide } from "@/components/discrepancy-side-by-side";
+import { ResolutionForm } from "@/components/resolution-form";
 
 const STATUS_LABEL: Record<string, string> = {
   matched_exact: "Exact match",
@@ -102,6 +104,22 @@ export default async function DiscrepancyDetailPage({
         }
       >
         <DiscrepancySideBySide detail={detail} />
+      </Section>
+
+      <Section
+        number="II"
+        title="Triage"
+        source="derived"
+        lede="Mark this discrepancy resolved once a human has decided what to do. Resolutions are persisted in data/discrepancy_resolutions.json keyed by (agency, use case name) so they survive ETL re-runs."
+      >
+        <ResolutionForm
+          auditId={audit.audit_id}
+          agency={audit.agency_abbreviation ?? ""}
+          name={audit.use_case_name ?? ""}
+          resolvedAt={audit.resolved_at}
+          resolutionNote={detail.resolution_note}
+          canWrite={canWriteResolutions()}
+        />
       </Section>
     </div>
   );

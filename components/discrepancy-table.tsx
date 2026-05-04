@@ -43,6 +43,9 @@ export function DiscrepancyTable({
     "all",
   );
   const [agencyFilter, setAgencyFilter] = useState<string>("all");
+  const [resolvedFilter, setResolvedFilter] = useState<
+    "all" | "unresolved" | "resolved"
+  >("unresolved");
   const [search, setSearch] = useState<string>("");
 
   const filtered = useMemo(() => {
@@ -51,10 +54,12 @@ export function DiscrepancyTable({
       if (statusFilter !== "all" && r.match_status !== statusFilter) return false;
       if (agencyFilter !== "all" && r.agency_abbreviation !== agencyFilter)
         return false;
+      if (resolvedFilter === "unresolved" && r.resolved_at != null) return false;
+      if (resolvedFilter === "resolved" && r.resolved_at == null) return false;
       if (q && !(r.use_case_name ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [rows, statusFilter, agencyFilter, search]);
+  }, [rows, statusFilter, agencyFilter, resolvedFilter, search]);
 
   const statusCounts: Record<DiscrepancyStatus, number> = useMemo(() => {
     const out: Record<DiscrepancyStatus, number> = {
@@ -96,6 +101,18 @@ export function DiscrepancyTable({
             })),
           ]}
         />
+        <FilterSelect
+          label="Resolved?"
+          value={resolvedFilter}
+          onChange={(v) =>
+            setResolvedFilter(v as "all" | "unresolved" | "resolved")
+          }
+          options={[
+            { value: "unresolved", label: "Unresolved only" },
+            { value: "resolved", label: "Resolved only" },
+            { value: "all", label: "Both" },
+          ]}
+        />
         <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-stone-500">
           Search name
           <input
@@ -122,6 +139,7 @@ export function DiscrepancyTable({
               <th className="px-3 py-2">OMB ID</th>
               <th className="px-3 py-2 text-right">Drift</th>
               <th className="px-3 py-2 text-right">Score</th>
+              <th className="px-3 py-2">Resolved</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -165,6 +183,15 @@ export function DiscrepancyTable({
                   {r.match_score != null ? r.match_score.toFixed(2) : "—"}
                 </td>
                 <td className="px-3 py-2">
+                  {r.resolved_at ? (
+                    <span className="inline-block rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                      ✓
+                    </span>
+                  ) : (
+                    <span className="text-stone-300">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-2">
                   <Link
                     href={`/discrepancies/${r.audit_id}`}
                     className="text-sm text-stone-700 underline-offset-4 hover:underline"
@@ -176,7 +203,7 @@ export function DiscrepancyTable({
             ))}
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-stone-500">
+                <td colSpan={9} className="px-3 py-6 text-center text-stone-500">
                   No rows match the current filters.
                 </td>
               </tr>

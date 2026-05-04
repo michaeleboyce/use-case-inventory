@@ -751,6 +751,8 @@ export interface DiscrepancyDetail {
    * use case has no DB row (i.e., omb_only) or no OMB row (db_only). */
   db_row: Record<string, string | null> | null;
   omb_row: Record<string, string | null> | null;
+  /** Triage note from data/discrepancy_resolutions.json, if any. */
+  resolution_note: string | null;
 }
 
 export interface DiscrepancyFilter {

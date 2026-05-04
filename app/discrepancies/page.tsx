@@ -25,7 +25,10 @@ export const metadata = {
 
 export default function DiscrepanciesPage() {
   const summary = getDiscrepancySummary();
-  const rows = getDiscrepancyRows({ unresolvedOnly: true });
+  // Fetch ALL rows; the client-side table has a "Resolved?" filter that
+  // defaults to unresolved-only. This way switching filters doesn't require
+  // a server round-trip.
+  const rows = getDiscrepancyRows();
   const agencies = getDiscrepancyAgencies();
 
   const driftPct =

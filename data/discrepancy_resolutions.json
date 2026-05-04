@@ -1,0 +1,4 @@
+{
+  "_about": "Human-curated triage decisions for /discrepancies. Keyed by (agency::use_case_name) — stable across ETL re-runs even though omb_match_audit.id is regenerated on each load. Edit only via the dashboard's Mark/Unmark buttons in local dev (npm run dev), then commit + push to deploy. Writes are blocked in production (Vercel filesystems are ephemeral).",
+  "resolutions": []
+}

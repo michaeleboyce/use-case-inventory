@@ -10,6 +10,7 @@
  * defines small helper SELECTs, returns plain typed objects.
  */
 import { rawDb } from "./db";
+import { buildResolutionKey, getResolutionMap } from "./resolutions";
 import type {
   DiscrepancyDetail,
   DiscrepancyDriftField,
@@ -98,9 +99,10 @@ export function getDiscrepancyRows(filter: DiscrepancyFilter = {}): DiscrepancyR
   if (filter.hasDrift) {
     where.push(`a.drift_fields_json IS NOT NULL AND a.drift_fields_json != '{}'`);
   }
-  if (filter.unresolvedOnly) {
-    where.push(`a.resolved_at IS NULL`);
-  }
+  // Note: filter.unresolvedOnly is applied AFTER the JSON-overlay below,
+  // because the authoritative resolved_at lives in the JSON file (the DB
+  // column is reset to NULL on every ETL re-run since it's not a curated
+  // input). Filtering here would over-reject.
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
   // SQLite has json_each but not json_object_keys. Counting json_each rows
@@ -131,7 +133,17 @@ export function getDiscrepancyRows(filter: DiscrepancyFilter = {}): DiscrepancyR
     ${whereSql}
     ORDER BY ${STATUS_ORDER_SQL}, a.agency_abbreviation, a.use_case_name
   `;
-  return rawDb().prepare<unknown[], DiscrepancyRow>(sql).all(...params);
+  const rows = rawDb().prepare<unknown[], DiscrepancyRow>(sql).all(...params);
+  const resolutions = getResolutionMap();
+  const overlaid = rows.map((r) => {
+    const res = resolutions.get(
+      buildResolutionKey(r.agency_abbreviation, r.use_case_name),
+    );
+    return res ? { ...r, resolved_at: res.resolved_at } : r;
+  });
+  return filter.unresolvedOnly
+    ? overlaid.filter((r) => r.resolved_at == null)
+    : overlaid;
 }
 
 /** Detail for a single audit row — both sides of the diff. */
@@ -183,19 +195,25 @@ export function getDiscrepancyDetail(auditId: number): DiscrepancyDetail | null 
     }),
   );
 
+  const agency = row.agency_abbreviation as string | null;
+  const useCaseName = row.use_case_name as string | null;
+  const overlay = getResolutionMap().get(
+    buildResolutionKey(agency, useCaseName),
+  );
+
   const audit: DiscrepancyRow = {
     audit_id: row.audit_id as number,
     match_status: row.match_status as DiscrepancyStatus,
     match_score: row.match_score as number | null,
-    agency_abbreviation: row.agency_abbreviation as string | null,
-    use_case_name: row.use_case_name as string | null,
+    agency_abbreviation: agency,
+    use_case_name: useCaseName,
     db_use_case_id: row.db_use_case_id as number | null,
     db_use_case_id_text: row.db_use_case_id_text as string | null,
     db_use_case_slug: row.db_use_case_slug as string | null,
     omb_row_id: row.omb_row_id as number | null,
     omb_use_case_id: row.omb_use_case_id as string | null,
     drift_field_count: drift.length,
-    resolved_at: row.resolved_at as string | null,
+    resolved_at: overlay?.resolved_at ?? (row.resolved_at as string | null),
   };
 
   const hasDb = audit.db_use_case_id != null;
@@ -211,7 +229,13 @@ export function getDiscrepancyDetail(auditId: number): DiscrepancyDetail | null 
       )
     : null;
 
-  return { audit, drift, db_row, omb_row };
+  return {
+    audit,
+    drift,
+    db_row,
+    omb_row,
+    resolution_note: overlay?.note ?? null,
+  };
 }
 
 /** Distinct agencies with at least one non-exact-match row. Powers the dropdown. */
