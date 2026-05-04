@@ -11,10 +11,7 @@
 import { getDb } from "./shared/init";
 import type { Agency, AgencyMaturity, AgencyWithMaturity } from "../types";
 import { getProductsForAgency } from "./products";
-// getEntryTypeBreakdown + getAISophisticationBreakdown still live in the
-// legacy `lib/db.ts` until the analytics domain split lands. Imported via
-// the barrel; this is a transient ESM cycle on hoisted function exports.
-import { getEntryTypeBreakdown, getAISophisticationBreakdown } from "../db";
+import { getEntryTypeBreakdown, getAISophisticationBreakdown } from "./analytics";
 
 export function getAgencies(): Agency[] {
   const stmt = getDb().prepare<[], Agency>(`

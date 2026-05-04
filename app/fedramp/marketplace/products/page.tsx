@@ -6,7 +6,14 @@
 
 import { Suspense } from "react";
 import { Section, MonoChip, Eyebrow } from "@/components/editorial";
-import { getFedrampProducts, getFedrampSnapshot } from "@/lib/db";
+import {
+  getFedrampProducts,
+  getFedrampSnapshot,
+  getFedrampProductBusinessFunctions,
+  getFedrampProductServiceModels,
+  getDistinctBusinessFunctions,
+  getDistinctServiceModels,
+} from "@/lib/db";
 import { formatDate, formatNumber } from "@/lib/formatting";
 import {
   ProductsTable,
@@ -88,10 +95,18 @@ export default async function MarketplaceProductsPage({
   const q = (typeof sp.q === "string" ? sp.q : "").trim().toLowerCase();
   const status = typeof sp.status === "string" ? sp.status : "";
   const impact = typeof sp.impact === "string" ? sp.impact : "";
+  const bf = typeof sp.bf === "string" ? sp.bf : "";
+  const sm = typeof sp.sm === "string" ? sp.sm : "";
   const sortRaw = typeof sp.sort === "string" ? sp.sort : undefined;
   const sort = parseSort(sortRaw);
 
   const all = getFedrampProducts();
+  // Eager-load multi-valued attribute maps (small datasets: 642 keys × small arrays).
+  const bfMap = bf ? getFedrampProductBusinessFunctions() : null;
+  const smMap = sm ? getFedrampProductServiceModels() : null;
+  const bfChoices = getDistinctBusinessFunctions();
+  const smChoices = getDistinctServiceModels();
+
   let rows = all;
   if (q) {
     rows = rows.filter(
@@ -103,6 +118,12 @@ export default async function MarketplaceProductsPage({
   }
   if (status) rows = rows.filter((p) => p.status === status);
   if (impact) rows = rows.filter((p) => p.impact_level === impact);
+  if (bf && bfMap) {
+    rows = rows.filter((p) => bfMap.get(p.fedramp_id)?.includes(bf));
+  }
+  if (sm && smMap) {
+    rows = rows.filter((p) => smMap.get(p.fedramp_id)?.includes(sm));
+  }
   rows = applySort(rows, sort);
 
   const snapshot = getFedrampSnapshot();
@@ -112,6 +133,8 @@ export default async function MarketplaceProductsPage({
     if (q) params.set("q", q);
     if (status) params.set("status", status);
     if (impact) params.set("impact", impact);
+    if (bf) params.set("bf", bf);
+    if (sm) params.set("sm", sm);
     params.set("sort", `${key}:${dir}`);
     return `?${params.toString()}`;
   };
@@ -120,6 +143,8 @@ export default async function MarketplaceProductsPage({
   if (q) activeChips.push({ label: `“${q}”`, tone: "stamp" });
   if (status) activeChips.push({ label: status, tone: "ink" });
   if (impact) activeChips.push({ label: impact, tone: "ink" });
+  if (bf) activeChips.push({ label: bf, tone: "ink" });
+  if (sm) activeChips.push({ label: sm, tone: "ink" });
 
   return (
     <div>
@@ -185,7 +210,7 @@ export default async function MarketplaceProductsPage({
             <form
               action="/fedramp/marketplace/products"
               method="get"
-              className="mt-8 grid grid-cols-1 items-end gap-3 border-t border-border pt-4 md:grid-cols-[1fr_10rem_8rem_auto]"
+              className="mt-8 grid grid-cols-1 items-end gap-3 border-t border-border pt-4 md:grid-cols-[1fr_10rem_8rem_12rem_8rem_auto]"
             >
               <div>
                 <label
@@ -240,6 +265,48 @@ export default async function MarketplaceProductsPage({
                   <option value="Moderate">Moderate</option>
                   <option value="Low">Low</option>
                   <option value="Li-SaaS">Li-SaaS</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="bf"
+                  className="block font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                >
+                  Business function
+                </label>
+                <select
+                  id="bf"
+                  name="bf"
+                  defaultValue={bf}
+                  className="mt-1 w-full border-b border-border bg-transparent px-1 py-1.5 font-mono text-[12px] focus:border-foreground focus:outline-none"
+                >
+                  <option value="">Any</option>
+                  {bfChoices.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="sm"
+                  className="block font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                >
+                  Service model
+                </label>
+                <select
+                  id="sm"
+                  name="sm"
+                  defaultValue={sm}
+                  className="mt-1 w-full border-b border-border bg-transparent px-1 py-1.5 font-mono text-[12px] focus:border-foreground focus:outline-none"
+                >
+                  <option value="">Any</option>
+                  {smChoices.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
                 </select>
               </div>
               <button

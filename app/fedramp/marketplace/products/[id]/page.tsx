@@ -1,11 +1,13 @@
 /**
  * /fedramp/marketplace/products/[id] — single-product detail page.
  *
- * Sections:
- *   § I   Identity         — CSP, CSO, status stamp, impact, models, FedRAMP id
- *   § II  Description      — service_desc paragraph
- *   § III Authorizations   — full ATO ledger
- *   § IV  Colophon         — assessor, contacts, dates
+ * Sections (numbered dynamically; supply-chain and description are both
+ * conditional, so a `nextSection()` counter assigns roman numerals in order):
+ *   § I    Identity         — CSP, CSO, status stamp, impact, models, FedRAMP id
+ *   § II?  Supply chain     — leverages / leveraged by (omitted when empty)
+ *   § III? Description      — service_desc paragraph
+ *   § IV   Authorizations   — full ATO ledger
+ *   § V    Colophon         — assessor, contacts, dates
  */
 
 import { notFound } from "next/navigation";
@@ -16,6 +18,8 @@ import {
   getFedrampProductById,
   getFedrampAuthorizationsForProduct,
   getFedrampAssessors,
+  getLeveragedSystemsForFedrampProduct,
+  getProductsLeveragedBy,
 } from "@/lib/db";
 import { Section, MonoChip, Eyebrow, Figure } from "@/components/editorial";
 import { MetricTile } from "@/components/metric-tile";
@@ -52,6 +56,9 @@ export default async function MarketplaceProductDetailPage({
   if (!product) notFound();
 
   const authorizations = getFedrampAuthorizationsForProduct(product.fedramp_id);
+  const leverages = getLeveragedSystemsForFedrampProduct(product.fedramp_id);
+  const leveragedBy = getProductsLeveragedBy(product.fedramp_id);
+  const hasSupplyChain = leverages.length > 0 || leveragedBy.length > 0;
 
   // Look up the assessor's slug from the assessors directory so we can link
   // back to the 3PAO profile page.
@@ -61,6 +68,17 @@ export default async function MarketplaceProductDetailPage({
     assessorSlug =
       assessors.find((a) => a.id === product.assessor_id)?.slug ?? null;
   }
+
+  // Roman-numeral section counter — Identity is always § I; Supply chain and
+  // Description are conditional; Authorizations and Colophon always render.
+  const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+  let sectionIdx = 0;
+  const nextSection = () => ROMAN[sectionIdx++];
+  const identityNum = nextSection();
+  const supplyChainNum = hasSupplyChain ? nextSection() : null;
+  const descriptionNum = product.service_desc ? nextSection() : null;
+  const authorizationsNum = nextSection();
+  const colophonNum = nextSection();
 
   return (
     <div>
@@ -132,7 +150,7 @@ export default async function MarketplaceProductDetailPage({
       </header>
 
       <Section
-        number="I"
+        number={identityNum}
         title="Identity"
         lede="Sponsor, posture, and the categorical filing tags."
       >
@@ -173,9 +191,61 @@ export default async function MarketplaceProductDetailPage({
         </dl>
       </Section>
 
+      {hasSupplyChain ? (
+        <Section
+          number={supplyChainNum!}
+          title="Supply chain"
+          lede="Other FedRAMP-authorized offerings that this CSO leverages, and those that leverage it. Resolved one hop only; unresolved labels are free-text references in the source filing."
+        >
+          {leverages.length > 0 ? (
+            <div className="mb-8">
+              <Eyebrow color="stamp">Leverages</Eyebrow>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {leverages.map((row, i) =>
+                  row.target_fedramp_id ? (
+                    <MonoChip
+                      key={`fwd-${i}`}
+                      href={`/fedramp/marketplace/products/${row.target_fedramp_id}`}
+                      tone="ink"
+                    >
+                      {row.target_csp ?? row.system_name} · {row.target_cso ?? ""}
+                    </MonoChip>
+                  ) : (
+                    <span
+                      key={`fwd-${i}`}
+                      className="rounded border border-dotted border-border px-2 py-1 font-mono text-[11px] text-muted-foreground"
+                      title="Free-text reference in source filing; no FedRAMP marketplace match"
+                    >
+                      {row.system_name}
+                    </span>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {leveragedBy.length > 0 ? (
+            <div>
+              <Eyebrow color="stamp">Leveraged by</Eyebrow>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {leveragedBy.map((row, i) => (
+                  <MonoChip
+                    key={`rev-${i}`}
+                    href={`/fedramp/marketplace/products/${row.source_fedramp_id}`}
+                    tone="ink"
+                  >
+                    {row.source_csp} · {row.source_cso}
+                  </MonoChip>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </Section>
+      ) : null}
+
       {product.service_desc ? (
         <Section
-          number="II"
+          number={descriptionNum!}
           title="Description"
           lede="The provider&rsquo;s own description of the offering."
         >
@@ -195,7 +265,7 @@ export default async function MarketplaceProductDetailPage({
       ) : null}
 
       <Section
-        number={product.service_desc ? "III" : "II"}
+        number={authorizationsNum}
         title="Authorization ledger"
         lede={`Every agency ATO and reuse logged for ${product.cso}.`}
       >
@@ -208,7 +278,7 @@ export default async function MarketplaceProductDetailPage({
       </Section>
 
       <Section
-        number={product.service_desc ? "IV" : "III"}
+        number={colophonNum}
         title="Colophon"
         lede="Filing metadata for this record."
       >
