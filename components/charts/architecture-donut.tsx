@@ -48,6 +48,8 @@ const LLM_VENDOR_COLORS: Record<string, string> = {
   Palantir: "#6366f1", // indigo-500
   ServiceNow: "#22c55e", // green-500
   Databricks: "#eab308", // yellow-500
+  xAI: "#475569", // slate-600
+  Meta: "#1d4ed8", // blue-700
   "In-house": "#8b5cf6", // violet-500
   "Other named": "#64748b", // slate-500
   // "Vendor unspecified" — agency reports general-LLM access without

@@ -397,10 +397,35 @@ export function getArchitectureDistribution(): BreakdownRow[] {
 export function getLLMVendorShare(): BreakdownRow[] {
   const stmt = getDb().prepare<[], BreakdownRow>(`
     WITH tagged AS (
-      SELECT LOWER(TRIM(COALESCE(NULLIF(cots_vendor,''), tool_vendor, ''))) AS v_lower,
-             LOWER(TRIM(COALESCE(NULLIF(cots_product_name,''), tool_product_name, ''))) AS p_lower
-        FROM use_case_tags
-       WHERE ai_sophistication = 'general_llm'
+      -- Layered fallback chain: tag.cots_vendor -> tag.tool_vendor ->
+      -- use_cases.vendor_name (the OMB-filed source column). auto_tag.py
+      -- doesn't always propagate vendor info into the tag fields; falling
+      -- back to use_cases.vendor_name recovers ~278 rows that previously
+      -- bucketed as "Vendor unspecified" despite the agency naming a
+      -- vendor in the OMB filing. Placeholder values ('N/A', 'Not
+      -- available', 'None', 'TBD', 'Unknown') treated as blank for the
+      -- vendor side; system_name fallback still applies (e.g. an "N/A"
+      -- vendor with system_name="Azure OpenAI" still buckets as Microsoft).
+      SELECT LOWER(TRIM(COALESCE(
+               NULLIF(t.cots_vendor,''),
+               NULLIF(t.tool_vendor,''),
+               CASE
+                 WHEN LOWER(TRIM(COALESCE(uc.vendor_name,'')))
+                   IN ('n/a','not available','none','tbd','tbd.','unknown','')
+                 THEN ''
+                 ELSE uc.vendor_name
+               END,
+               ''
+             ))) AS v_lower,
+             LOWER(TRIM(COALESCE(
+               NULLIF(t.cots_product_name,''),
+               NULLIF(t.tool_product_name,''),
+               uc.system_name,
+               ''
+             ))) AS p_lower
+        FROM use_case_tags t
+        LEFT JOIN use_cases uc ON uc.id = t.use_case_id
+       WHERE t.ai_sophistication = 'general_llm'
     )
     SELECT CASE
              WHEN v_lower LIKE '%microsoft%' OR v_lower = 'azure'
@@ -415,6 +440,11 @@ export function getLLMVendorShare(): BreakdownRow[] {
                THEN 'Google'
              WHEN v_lower LIKE '%amazon%' OR v_lower LIKE '%aws%' OR p_lower LIKE '%bedrock%'
                THEN 'Amazon'
+             -- xAI / Grok showed up under "Other named" before being added.
+             WHEN v_lower = 'xai' OR p_lower LIKE 'grok%' THEN 'xAI'
+             -- Meta / Llama models — appears in CDC, NIH stacks.
+             WHEN v_lower LIKE '%meta%' OR p_lower LIKE 'llama%' OR p_lower LIKE 'meta llama%'
+               THEN 'Meta'
              WHEN v_lower LIKE '%perplexity%' THEN 'Perplexity'
              WHEN v_lower LIKE '%palantir%' THEN 'Palantir'
              WHEN v_lower LIKE '%servicenow%' THEN 'ServiceNow'
@@ -534,6 +564,12 @@ export function getAnalyticsInsights(): {
   zero_coding_agencies: number;
   distinct_products_total: number;
   nasa_yoy_growth: number | null;
+  /** General-LLM-access entries with no recoverable vendor — neither tag
+   *  fields nor `use_cases.vendor_name` / `system_name` name a vendor.
+   *  Editorially: "agency reports general LLM access without naming the
+   *  tool." See `getLLMVendorShare` for the bucket that surfaces this. */
+  general_llm_total: number;
+  general_llm_unspecified: number;
 } {
   const db = getDb();
 
@@ -627,6 +663,42 @@ export function getAnalyticsInsights(): {
     `)
     .get();
 
+  // Mirrors the bucketing in getLLMVendorShare so the insight card and
+  // the donut tell the same story. "Vendor unspecified" = no tag-field
+  // vendor AND no recoverable vendor_name/system_name on the use case.
+  const llmRow = db
+    .prepare<
+      [],
+      { total: number; unspecified: number }
+    >(`
+      WITH tagged AS (
+        SELECT LOWER(TRIM(COALESCE(
+                 NULLIF(t.cots_vendor,''),
+                 NULLIF(t.tool_vendor,''),
+                 CASE
+                   WHEN LOWER(TRIM(COALESCE(uc.vendor_name,'')))
+                     IN ('n/a','not available','none','tbd','tbd.','unknown','')
+                   THEN ''
+                   ELSE uc.vendor_name
+                 END,
+                 ''
+               ))) AS v_lower,
+               LOWER(TRIM(COALESCE(
+                 NULLIF(t.cots_product_name,''),
+                 NULLIF(t.tool_product_name,''),
+                 uc.system_name,
+                 ''
+               ))) AS p_lower
+          FROM use_case_tags t
+          LEFT JOIN use_cases uc ON uc.id = t.use_case_id
+         WHERE t.ai_sophistication = 'general_llm'
+      )
+      SELECT COUNT(*) AS total,
+             SUM(CASE WHEN v_lower = '' AND p_lower = '' THEN 1 ELSE 0 END) AS unspecified
+        FROM tagged
+    `)
+    .get() ?? { total: 0, unspecified: 0 };
+
   return {
     cfo_act_total,
     cfo_act_with_enterprise_llm,
@@ -637,6 +709,8 @@ export function getAnalyticsInsights(): {
     zero_coding_agencies,
     distinct_products_total,
     nasa_yoy_growth: nasaRow?.year_over_year_growth ?? null,
+    general_llm_total: llmRow.total,
+    general_llm_unspecified: llmRow.unspecified,
   };
 }
 
@@ -911,4 +985,153 @@ export function getCrossCutHeatmap(
     .all(...agencyIds);
 
   return { agencies, values, cells, valueTotals };
+}
+
+/* --------------------------------------------------------------------- */
+/* Category × Topic cross-tab                                            */
+/* --------------------------------------------------------------------- */
+/* 2D rollup powering /browse/category-topic — IFP-curated product       */
+/* categories on rows × OMB-filed topic areas on columns. Reuses the     */
+/* same join path as the product_type cross-cut (use_cases →             */
+/* entry_product_edges → products) so cell counts are directly           */
+/* comparable to the product_type heatmap.                               */
+/* --------------------------------------------------------------------- */
+
+export interface CategoryTopicCrossTab {
+  /** Top-N product categories (rows), ordered by total use-case count desc. */
+  categories: Array<{ value: string; total: number }>;
+  /** Top-N topic areas (columns), ordered by total use-case count desc. */
+  topics: Array<{ value: string; total: number }>;
+  /** Non-zero (category, topic, count) cells. */
+  cells: Array<{ category: string; topic: string; count: number }>;
+  /** TRUE per-category totals across ALL topics (incl. off-cap). */
+  categoryTotals: Record<string, number>;
+  /** TRUE per-topic totals across ALL categories (incl. off-cap). */
+  topicTotals: Record<string, number>;
+  /** Total distinct categories with at least one use case (incl. off-cap). */
+  totalCategoryCount: number;
+  /** Total distinct topics with at least one use case (incl. off-cap). */
+  totalTopicCount: number;
+  /** Distinct use-cases backing the visible cap × cap window. */
+  visibleUseCaseCount: number;
+  /** Distinct use-cases backing the full corpus (any category × any topic). */
+  totalUseCaseCount: number;
+}
+
+/** Cross-tabulate IFP product categories × OMB topic areas. Row/column
+ *  caps default to 15 each; off-cap activity is summarized by the page. */
+export function getCategoryTopicCrossTab(
+  rowLimit = 15,
+  colLimit = 15,
+): CategoryTopicCrossTab {
+  const db = getDb();
+
+  // Shared join + filters: use the same join path as the product_type
+  // cross-cut, AND require a non-empty topic_area.
+  const fromJoin = `
+    FROM use_cases uc
+    JOIN entry_product_edges epe
+      ON epe.entry_kind = 'use_case' AND epe.entry_id = uc.id
+    JOIN products p ON p.id = epe.product_id`;
+  const where = `
+    p.product_type IS NOT NULL
+    AND TRIM(p.product_type) <> ''
+    AND LOWER(TRIM(p.product_type)) <> 'unclassified'
+    AND uc.topic_area IS NOT NULL
+    AND uc.topic_area <> ''`;
+
+  // Per-category totals (across all topics).
+  const categoryRows = db
+    .prepare<[], { value: string; total: number }>(
+      `SELECT p.product_type AS value, COUNT(DISTINCT uc.id) AS total
+         ${fromJoin}
+        WHERE ${where}
+        GROUP BY p.product_type
+        ORDER BY total DESC, value COLLATE NOCASE ASC`,
+    )
+    .all();
+
+  // Per-topic totals (across all categories).
+  const topicRows = db
+    .prepare<[], { value: string; total: number }>(
+      `SELECT uc.topic_area AS value, COUNT(DISTINCT uc.id) AS total
+         ${fromJoin}
+        WHERE ${where}
+        GROUP BY uc.topic_area
+        ORDER BY total DESC, value COLLATE NOCASE ASC`,
+    )
+    .all();
+
+  const categoryTotals: Record<string, number> = {};
+  for (const r of categoryRows) categoryTotals[r.value] = r.total;
+  const topicTotals: Record<string, number> = {};
+  for (const r of topicRows) topicTotals[r.value] = r.total;
+
+  const categories = categoryRows.slice(0, rowLimit);
+  const topics = topicRows.slice(0, colLimit);
+
+  // Cell counts restricted to the visible window — keeps the payload
+  // small even on dimensions with many off-cap values.
+  let cells: Array<{ category: string; topic: string; count: number }> = [];
+  if (categories.length > 0 && topics.length > 0) {
+    const catNames = categories.map((c) => c.value);
+    const topicNames = topics.map((t) => t.value);
+    const catPh = catNames.map(() => "?").join(",");
+    const topicPh = topicNames.map(() => "?").join(",");
+    cells = db
+      .prepare<
+        string[],
+        { category: string; topic: string; count: number }
+      >(
+        `SELECT p.product_type AS category,
+                uc.topic_area AS topic,
+                COUNT(DISTINCT uc.id) AS count
+           ${fromJoin}
+          WHERE ${where}
+            AND p.product_type IN (${catPh})
+            AND uc.topic_area IN (${topicPh})
+          GROUP BY p.product_type, uc.topic_area`,
+      )
+      .all(...catNames, ...topicNames);
+  }
+
+  // Distinct use-case totals — visible window vs. full corpus.
+  let visibleUseCaseCount = 0;
+  if (categories.length > 0 && topics.length > 0) {
+    const catNames = categories.map((c) => c.value);
+    const topicNames = topics.map((t) => t.value);
+    const catPh = catNames.map(() => "?").join(",");
+    const topicPh = topicNames.map(() => "?").join(",");
+    const visibleRow = db
+      .prepare<string[], { n: number }>(
+        `SELECT COUNT(DISTINCT uc.id) AS n
+           ${fromJoin}
+          WHERE ${where}
+            AND p.product_type IN (${catPh})
+            AND uc.topic_area IN (${topicPh})`,
+      )
+      .get(...catNames, ...topicNames);
+    visibleUseCaseCount = visibleRow?.n ?? 0;
+  }
+
+  const totalRow = db
+    .prepare<[], { n: number }>(
+      `SELECT COUNT(DISTINCT uc.id) AS n
+         ${fromJoin}
+        WHERE ${where}`,
+    )
+    .get();
+  const totalUseCaseCount = totalRow?.n ?? 0;
+
+  return {
+    categories,
+    topics,
+    cells,
+    categoryTotals,
+    topicTotals,
+    totalCategoryCount: categoryRows.length,
+    totalTopicCount: topicRows.length,
+    visibleUseCaseCount,
+    totalUseCaseCount,
+  };
 }

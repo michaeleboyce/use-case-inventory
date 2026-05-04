@@ -306,6 +306,24 @@ export default function AnalyticsPage() {
             subtext="The largest outlier in the dataset — see Fig. 02 and Fig. 05."
             href="/agencies/NASA"
           />
+          <InsightCard
+            kicker="G · Visibility gap"
+            value={
+              insights.general_llm_total > 0
+                ? `${Math.round(
+                    (insights.general_llm_unspecified / insights.general_llm_total) * 100,
+                  )}%`
+                : "—"
+            }
+            accent="stamp"
+            headline={
+              <>
+                of general-LLM-access entries don't name a vendor or product.
+              </>
+            }
+            subtext={`${insights.general_llm_unspecified} of ${insights.general_llm_total} entries report agency-wide LLM access without specifying the underlying tool — even after recovering vendor info from the OMB-filed vendor_name and system_name columns. See Fig. 07's "Vendor unspecified" slice.`}
+            href={buildUseCasesUrl({ isGeneralLLMAccess: true })}
+          />
         </div>
 
         <p
