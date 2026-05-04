@@ -378,7 +378,13 @@ export default function AnalyticsPage() {
                   >
                     {formatNumber(llmVendorTotal)}
                   </Link>{" "}
-                  general-LLM-access entries.
+                  general-LLM-access entries. Bucketed by the OMB-filed
+                  vendor / product strings on each entry. &quot;Vendor
+                  unspecified&quot; is the share where the agency reported
+                  general-LLM access without naming the tool — distinct from
+                  &quot;Other named&quot; (a real but small-share vendor).
+                  Azure OpenAI is bucketed under Microsoft (Microsoft resells
+                  it) rather than OpenAI.
                 </>
               }
             >

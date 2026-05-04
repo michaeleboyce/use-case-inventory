@@ -17,9 +17,18 @@
  *     objects, but they should be treated as read-only view-models).
  */
 
-import Database from "better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+import { getDb, rawDb } from "./db/shared/init";
+import {
+  STAGE_BUCKET_SQL,
+  USE_CASE_SELECT,
+  EXTERNAL_EVIDENCE_SELECT,
+  EFFECTIVE_FEDRAMP_LINKS_CTE,
+} from "./db/shared/sql-fragments";
+
+// Re-export so existing `import { rawDb, STAGE_BUCKET_SQL } from '@/lib/db'`
+// callers keep working without changes.
+export { rawDb, STAGE_BUCKET_SQL };
+
 import type {
   Agency,
   AgencyMaturity,
@@ -60,74 +69,8 @@ import type {
   YoYRow,
 } from "./types";
 
-/**
- * Normalize the 30+ free-text variants of `use_cases.stage_of_development`
- * into the 4 canonical OMB M-25-21 buckets. Usage:
- *   SELECT ${STAGE_BUCKET_SQL} AS stage_bucket FROM use_cases uc ...
- * Returns one of: 'pre_deployment' | 'pilot' | 'deployed' | 'retired' | 'unknown'.
- * Declared near the top of the file so it's safely accessible from
- * `getGlobalStats` and other functions above the main query-builders (const
- * declarations are not hoisted, so putting it below caused a temporal-dead-
- * zone ReferenceError when the home page rendered).
- */
-export const STAGE_BUCKET_SQL = `
-  CASE
-    WHEN uc.stage_of_development IS NULL OR TRIM(uc.stage_of_development) = ''
-      THEN 'unknown'
-    WHEN LOWER(uc.stage_of_development) LIKE '%retired%'
-      THEN 'retired'
-    WHEN LOWER(uc.stage_of_development) LIKE '%pilot%'
-      THEN 'pilot'
-    WHEN LOWER(uc.stage_of_development) LIKE '%deployed%'
-      THEN 'deployed'
-    WHEN LOWER(uc.stage_of_development) LIKE '%pre-deployment%'
-      OR LOWER(uc.stage_of_development) LIKE '%pre deployment%'
-      OR LOWER(uc.stage_of_development) LIKE '%development or acquisition%'
-      THEN 'pre_deployment'
-    ELSE 'unknown'
-  END
-`;
-
-// -----------------------------------------------------------------------------
-// Connection singleton
-// -----------------------------------------------------------------------------
-
-// Prefer an in-project copy of the DB so the file travels with the Next.js
-// bundle on Vercel (where `process.cwd()` is the function root, not the repo
-// root). Fall back to the parent-directory layout used during local ETL
-// iteration where the dashboard lives next to the data/ folder.
-const DB_PATH = (() => {
-  const inProject = path.join(process.cwd(), "data", "federal_ai_inventory_2025.db");
-  const parent = path.join(process.cwd(), "..", "data", "federal_ai_inventory_2025.db");
-  if (fs.existsSync(inProject)) return inProject;
-  if (fs.existsSync(parent)) return parent;
-  // Final fallback: let better-sqlite3 raise the familiar "not found" error
-  // against the in-project path so messages point at the right place.
-  return inProject;
-})();
-
-// Cache the handle across hot-reloads in dev. Node's module cache already
-// gives us per-process caching in production.
-declare global {
-  // eslint-disable-next-line no-var
-  var __aiInventoryDb: Database.Database | undefined;
-}
-
-function getDb(): Database.Database {
-  if (!globalThis.__aiInventoryDb) {
-    const db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
-    // Read-only connection: no journal mode change needed. A small cache
-    // pragma keeps frequently-used pages warm without bloating RSS.
-    db.pragma("cache_size = -32000"); // ~32 MB page cache
-    globalThis.__aiInventoryDb = db;
-  }
-  return globalThis.__aiInventoryDb;
-}
-
-/** Expose a raw handle for ad-hoc scripts. Do not use from React trees. */
-export function rawDb(): Database.Database {
-  return getDb();
-}
+// STAGE_BUCKET_SQL, DB_PATH, getDb(), and rawDb() now live in
+// `lib/db/shared/{init,sql-fragments}.ts` (imported above).
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -301,17 +244,7 @@ export function getGlobalStats(): GlobalStats {
 // Use cases
 // -----------------------------------------------------------------------------
 
-const USE_CASE_SELECT = `
-  SELECT uc.*,
-         a.name AS agency_name,
-         a.abbreviation AS agency_abbreviation,
-         p.canonical_name AS product_name,
-         t.short_name AS template_short_name
-    FROM use_cases uc
-    JOIN agencies a ON a.id = uc.agency_id
-    LEFT JOIN products p ON p.id = uc.product_id
-    LEFT JOIN use_case_templates t ON t.id = uc.template_id
-`;
+// USE_CASE_SELECT now lives in `lib/db/shared/sql-fragments.ts`.
 
 type JoinedUseCaseRow = UseCase & {
   agency_name: string;
@@ -1656,20 +1589,62 @@ export function getArchitectureDistribution(): BreakdownRow[] {
  * agency staff actually have access to" slice. Counts across both individual
  * and consolidated tag rows since most agency-wide LLM access is reported
  * on the consolidated side.
+ *
+ * Bucketing: was previously a thin wrapper over the auto_tag boolean flags
+ * (is_microsoft_copilot / is_openai / is_anthropic / is_google / is_aws_ai),
+ * but those flags only fire for a subset of products — Azure OpenAI deployments,
+ * Microsoft Teams Copilot rollouts, Perplexity, Palantir AIP, ServiceNow Now
+ * Assist, and others all fell to "Other" despite naming a clear vendor. The
+ * "Other" bucket inflated to 73% of general-LLM rows, which made the donut
+ * uninformative.
+ *
+ * Now bucketed via the cots_vendor / tool_vendor strings on use_case_tags
+ * (OMB-filed, normalized to lowercase for matching). Rows with no vendor
+ * string at all bucket to "Vendor unspecified" so the reader can see how
+ * much of the LLM-access reporting is agency-wide-without-naming-the-tool.
  */
 export function getLLMVendorShare(): BreakdownRow[] {
   const stmt = getDb().prepare<[], BreakdownRow>(`
+    WITH tagged AS (
+      SELECT LOWER(TRIM(COALESCE(NULLIF(cots_vendor,''), tool_vendor, ''))) AS v_lower,
+             LOWER(TRIM(COALESCE(NULLIF(cots_product_name,''), tool_product_name, ''))) AS p_lower
+        FROM use_case_tags
+       WHERE ai_sophistication = 'general_llm'
+    )
     SELECT CASE
-             WHEN is_microsoft_copilot = 1 THEN 'Microsoft'
-             WHEN is_openai = 1 THEN 'OpenAI'
-             WHEN is_anthropic = 1 THEN 'Anthropic'
-             WHEN is_google = 1 THEN 'Google'
-             WHEN is_aws_ai = 1 THEN 'Amazon'
-             ELSE 'Other'
+             -- Microsoft family: Copilot, Teams, Azure OpenAI (resold OpenAI),
+             -- and explicit Microsoft branding.
+             WHEN v_lower LIKE '%microsoft%' OR v_lower = 'azure'
+               OR p_lower LIKE '%copilot%' OR p_lower LIKE '%azure openai%'
+               OR p_lower LIKE '%microsoft teams%'
+               THEN 'Microsoft'
+             -- OpenAI direct (ChatGPT consumer, OpenAI API). Excludes
+             -- Azure OpenAI which is bucketed under Microsoft above.
+             WHEN v_lower LIKE '%openai%' OR p_lower LIKE 'chatgpt%' OR p_lower = 'openai api'
+               THEN 'OpenAI'
+             -- Anthropic + Claude rebrands.
+             WHEN v_lower LIKE '%anthropic%' OR p_lower LIKE 'claude%'
+               THEN 'Anthropic'
+             -- Google: vendor or Gemini family.
+             WHEN v_lower = 'google' OR v_lower LIKE 'google %' OR p_lower LIKE '%gemini%'
+               THEN 'Google'
+             -- AWS / Bedrock.
+             WHEN v_lower LIKE '%amazon%' OR v_lower LIKE '%aws%' OR p_lower LIKE '%bedrock%'
+               THEN 'Amazon'
+             -- Other named LLM vendors that surface in the inventory.
+             WHEN v_lower LIKE '%perplexity%' THEN 'Perplexity'
+             WHEN v_lower LIKE '%palantir%' THEN 'Palantir'
+             WHEN v_lower LIKE '%servicenow%' THEN 'ServiceNow'
+             WHEN v_lower LIKE '%databricks%' THEN 'Databricks'
+             WHEN v_lower IN ('in-house','inhouse','agency','custom') THEN 'In-house'
+             -- Unspecified: agency reported general-LLM access without naming
+             -- the tool. Important to surface separately rather than burying
+             -- in "Other".
+             WHEN v_lower = '' AND p_lower = '' THEN 'Vendor unspecified'
+             ELSE 'Other named'
            END AS label,
            COUNT(*) AS count
-      FROM use_case_tags
-     WHERE ai_sophistication = 'general_llm'
+      FROM tagged
      GROUP BY label
      ORDER BY count DESC
   `);
@@ -2569,12 +2544,7 @@ export function getCommandPaletteIndex(
 // External evidence
 // -----------------------------------------------------------------------------
 
-const EXTERNAL_EVIDENCE_SELECT = `
-  SELECT id, use_case_id, consolidated_use_case_id, topic, status,
-         source_url, source_quote, confidence, search_method,
-         captured_at, captured_by, notes
-    FROM use_case_external_evidence
-`;
+// EXTERNAL_EVIDENCE_SELECT now lives in `lib/db/shared/sql-fragments.ts`.
 
 function externalEvidenceTableExists(): boolean {
   const row = getDb()
@@ -2663,31 +2633,7 @@ export function getExternalEvidenceForConsolidated(
  *   WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
  *   SELECT ... FROM effective_fedramp_links ...
  */
-const EFFECTIVE_FEDRAMP_LINKS_CTE = `
-  product_chain(inventory_product_id, ancestor_id, depth) AS (
-    SELECT id, id, 0 FROM products
-    UNION ALL
-    SELECT pc.inventory_product_id, p.parent_product_id, pc.depth + 1
-      FROM product_chain pc
-      JOIN products p ON p.id = pc.ancestor_id
-     WHERE p.parent_product_id IS NOT NULL
-       AND pc.depth < 5
-  ),
-  effective_fedramp_links AS (
-    SELECT pc.inventory_product_id,
-           l.fedramp_id,
-           CASE WHEN pc.depth = 0 THEN NULL ELSE pc.ancestor_id END
-             AS inherited_from_parent_id,
-           pc.depth AS inherited_depth,
-           l.confidence,
-           l.source,
-           l.score,
-           l.notes
-      FROM product_chain pc
-      JOIN fedramp_product_links l
-        ON l.inventory_product_id = pc.ancestor_id
-  )
-`;
+// EFFECTIVE_FEDRAMP_LINKS_CTE now lives in `lib/db/shared/sql-fragments.ts`.
 
 // -----------------------------------------------------------------------------
 // FedRAMP marketplace
