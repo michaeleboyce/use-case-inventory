@@ -23,6 +23,7 @@ import {
   getMaturityForOrg,
 } from "@/lib/hierarchy-db";
 import { HierarchyBreadcrumbs } from "@/components/hierarchy";
+import { BackLink } from "@/components/back-link";
 import type {
   FederalOrganization,
   AgencyWithMaturity,
@@ -163,6 +164,12 @@ function TopLevelOrgPage({
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <BackLink
+        fallbackHref="/agencies"
+        fallbackLabel="All agencies"
+        listPrefixes={["/agencies"]}
+        className="mb-3 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+      />
       <HierarchyBreadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
       <AgencyHeader agency={agency} />
 
@@ -650,6 +657,12 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <BackLink
+        fallbackHref="/agencies"
+        fallbackLabel="All agencies"
+        listPrefixes={["/agencies"]}
+        className="mb-3 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+      />
       <HierarchyBreadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
 
       <header className="ink-in border-b border-border pb-10 md:pb-12">

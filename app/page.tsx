@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   getAgencyMaturity,
   getAgencyTypeByTier,
+  getCategoryDistribution,
   getGlobalStats,
   getMaturityTierSummary,
   getRecentlyModifiedAgencies,
@@ -21,6 +22,10 @@ export default function HomePage() {
   const topProducts = getTopProducts(10);
   const agencyTypeData = getAgencyTypeByTier();
   const recent = getRecentlyModifiedAgencies(5);
+  const topCategories = getCategoryDistribution().slice(0, 6);
+
+  const humanizeCategory = (c: string): string =>
+    c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
 
   const distinctProducts = maturity.reduce(
     (acc, row) => acc + (row.maturity?.distinct_products_deployed ?? 0),
@@ -286,6 +291,44 @@ export default function HomePage() {
             source="omb"
           />
         </div>
+
+        {/* Top categories — chip-row parallel to the cross-cut grid above.
+            Top 6 IFP product categories by use-case reach, each linking to
+            the products page filtered to that category. Trailing link goes
+            to the full /browse/category dimension page. */}
+        {topCategories.length > 0 ? (
+          <div className="mt-8 border-t border-dotted border-border pt-5">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <div className="eyebrow !text-[var(--stamp)]">
+                Top categories
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                IFP-derived · top 6 by use-case reach
+              </span>
+            </div>
+            <ul className="flex flex-wrap items-center gap-1.5">
+              {topCategories.map((c) => (
+                <li key={c.category}>
+                  <MonoChip
+                    href={`/products?category=${encodeURIComponent(c.category)}`}
+                    tone="stamp"
+                    title={`${humanizeCategory(c.category)} · ${formatNumber(c.use_case_count)} use cases`}
+                  >
+                    {humanizeCategory(c.category)} ({formatNumber(c.use_case_count)})
+                  </MonoChip>
+                </li>
+              ))}
+              <li className="ml-1">
+                <Link
+                  href="/browse/category"
+                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                >
+                  → All categories
+                </Link>
+              </li>
+            </ul>
+          </div>
+        ) : null}
       </Section>
 
       {/* ------------------------------------------------------------ */}
