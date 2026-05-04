@@ -981,6 +981,43 @@ export function getDeploymentScopeBreakdown(
   return stmt.all(agencyId, agencyId);
 }
 
+/** Per-agency rollup of distinct entries by IFP product category.
+ *
+ * Mirrors the global `getCategoryDistribution()` but filtered to one agency
+ * and returns the BreakdownRow shape ({label, count}) used by the three
+ * sibling per-agency breakdowns above. Counts each (entry, product_type)
+ * pair once via UNION ALL across both use_cases and consolidated_use_cases
+ * so an agency that uses 5 productivity products on one consolidated row
+ * still counts that row as one productivity touch rather than 5.
+ *
+ * Excludes the 'unclassified' placeholder — same convention as
+ * _crossCutSql for product_type and getCategoryDistribution. */
+export function getCategoryDistributionForAgency(
+  agencyId: number,
+): BreakdownRow[] {
+  const stmt = getDb().prepare<[number, number], BreakdownRow>(`
+    SELECT p.product_type AS label, COUNT(*) AS count
+      FROM (
+        SELECT ucp.use_case_id AS entry_id, ucp.product_id
+          FROM use_case_products ucp
+          JOIN use_cases uc ON uc.id = ucp.use_case_id
+         WHERE uc.agency_id = ?
+        UNION ALL
+        SELECT cucp.consolidated_use_case_id AS entry_id, cucp.product_id
+          FROM consolidated_use_case_products cucp
+          JOIN consolidated_use_cases c ON c.id = cucp.consolidated_use_case_id
+         WHERE c.agency_id = ?
+      ) edges
+      JOIN products p ON p.id = edges.product_id
+     WHERE p.product_type IS NOT NULL
+       AND TRIM(p.product_type) <> ''
+       AND LOWER(TRIM(p.product_type)) <> 'unclassified'
+     GROUP BY p.product_type
+     ORDER BY count DESC, p.product_type COLLATE NOCASE ASC
+  `);
+  return stmt.all(agencyId, agencyId);
+}
+
 export function getProductsForAgency(
   agencyId: number,
 ): Array<{

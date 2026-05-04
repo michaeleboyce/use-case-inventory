@@ -11,6 +11,7 @@ import {
   getConsolidatedForAgency,
   getProductsForAgency,
   getBureauBreakdown,
+  getCategoryDistributionForAgency,
   getEntryTypeBreakdown,
   getAISophisticationBreakdown,
   getDeploymentScopeBreakdown,
@@ -66,6 +67,35 @@ import {
 import { agencyUseCasesUrl } from "@/lib/urls";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+// IFP product-category palette + display labels for §I Portfolio · Fig. 4.
+// Page-local rather than shared with editorial.tsx because the list of
+// categories that can appear here is open-ended (any value of
+// products.product_type) and we want a fallback color for unknown ones.
+// Mirrors components/charts/category-distribution-chart.tsx — duplication
+// is intentional; extract to shared if a third caller appears.
+const CATEGORY_COLORS: Record<string, string> = {
+  general_llm: "#10b981",
+  productivity: "#2563eb",
+  security_tool: "#ef4444",
+  computer_vision: "#8b5cf6",
+  scientific_ml: "#0ea5e9",
+  data_analytics: "#f59e0b",
+  ml_platform: "#06b6d4",
+  coding_assistant: "#84cc16",
+  document_ai: "#ec4899",
+  agent_platform: "#14b8a6",
+  physical_security: "#dc2626",
+  consumer_feature: "#94a3b8",
+  developer_tool: "#a855f7",
+  investigative_data: "#f97316",
+  threat_intel: "#be123c",
+  forensics: "#7c2d12",
+};
+
+function humanizeCategory(c: string): string {
+  return c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -118,6 +148,7 @@ function TopLevelOrgPage({
   const entryTypeBreakdown = getEntryTypeBreakdown(agency.id);
   const sophisticationBreakdown = getAISophisticationBreakdown(agency.id);
   const scopeBreakdown = getDeploymentScopeBreakdown(agency.id);
+  const categoryBreakdown = getCategoryDistributionForAgency(agency.id);
   const fedrampScope = getAgencyAtoScope(agency.id);
   const fedrampDistinctCsps = new Set(fedrampScope.map((s) => s.csp_slug)).size;
   const fedrampInInventoryCount = fedrampScope.filter(
@@ -236,6 +267,44 @@ function TopLevelOrgPage({
             />
           </Figure>
         </div>
+
+        {/* Fig. 4 · By IFP product category — full-width below the 3-figure
+            grid. Most agencies span 4–10 categories; horizontal bars scale
+            cleanly past 5 where a donut goes unreadable. Empty-state guard:
+            agencies with zero product attributions skip this figure entirely
+            (the page still renders the other 3 portfolio figures). */}
+        {categoryBreakdown.length > 0 ? (
+          <div className="mt-10">
+            <Figure
+              eyebrow="Fig. 4 · By IFP product category"
+              caption={
+                <>
+                  IFP-curated product category. Distinct from OMB&rsquo;s{" "}
+                  <span className="text-foreground">ai_classification</span>{" "}
+                  field, which lives on individual use cases.
+                </>
+              }
+            >
+              <HorizontalBarChart
+                data={categoryBreakdown}
+                colorMap={CATEGORY_COLORS}
+                labelMap={Object.fromEntries(
+                  categoryBreakdown.map((r) => [r.label, humanizeCategory(r.label)]),
+                )}
+                height={Math.max(180, categoryBreakdown.length * 26)}
+                labelWidth={140}
+              />
+              <BreakdownChips
+                agencyId={agency.id}
+                rows={categoryBreakdown}
+                labels={Object.fromEntries(
+                  categoryBreakdown.map((r) => [r.label, humanizeCategory(r.label)]),
+                )}
+                filterKey="productCategories"
+              />
+            </Figure>
+          </div>
+        ) : null}
       </Section>
 
       {/* § II · Capabilities */}
@@ -248,12 +317,12 @@ function TopLevelOrgPage({
         <CapabilityFlags maturity={maturity} />
       </Section>
 
-      {/* § III · Products deployed */}
+      {/* § III · Products linked */}
       <Section
         number="III"
-        title="Products deployed"
+        title="Products linked"
         source="derived"
-        lede="Canonical AI products linked across this agency's use cases."
+        lede="Canonical AI products evidenced in this agency's filings. Linkage coverage is improving but not complete; counts reflect the products we have resolved, not necessarily all products the agency uses."
       >
         <ProductGrid products={products} agencyId={agency.id} />
       </Section>
@@ -468,7 +537,11 @@ function BreakdownChips({
   agencyId: number;
   rows: { label: string; count: number }[];
   labels: Record<string, string>;
-  filterKey: "entryTypes" | "aiSophistications" | "deploymentScopes";
+  filterKey:
+    | "entryTypes"
+    | "aiSophistications"
+    | "deploymentScopes"
+    | "productCategories";
 }) {
   if (rows.length === 0) return null;
   return (
