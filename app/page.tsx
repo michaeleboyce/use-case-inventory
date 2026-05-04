@@ -248,6 +248,42 @@ export default function HomePage() {
       </header>
 
       {/* ------------------------------------------------------------ */}
+      {/* CROSS-CUTS — entry points to /browse/[dimension]              */}
+      {/* ------------------------------------------------------------ */}
+      <Section
+        number="0"
+        title="Cross-cuts"
+        lede="Slice the entire inventory by one dimension at a time."
+      >
+        <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
+          <CrossCutCard
+            kicker="A"
+            href="/browse/sophistication"
+            label="Sophistication"
+            note="Browse by AI sophistication tier."
+          />
+          <CrossCutCard
+            kicker="B"
+            href="/browse/high-impact"
+            label="High-impact"
+            note="Browse by high-impact designation."
+          />
+          <CrossCutCard
+            kicker="C"
+            href="/browse/topic-area"
+            label="Topic area"
+            note="Browse by mission topic area."
+          />
+          <CrossCutCard
+            kicker="D"
+            href="/browse/vendor"
+            label="Vendor"
+            note="Browse by product vendor."
+          />
+        </div>
+      </Section>
+
+      {/* ------------------------------------------------------------ */}
       {/* § I — AT A GLANCE                                             */}
       {/* ------------------------------------------------------------ */}
       <Section
@@ -489,6 +525,38 @@ export default function HomePage() {
         </ul>
       </Section>
     </div>
+  );
+}
+
+function CrossCutCard({
+  kicker,
+  href,
+  label,
+  note,
+}: {
+  kicker: string;
+  href: string;
+  label: string;
+  note: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex min-w-0 flex-col gap-2 border-t-2 border-foreground pt-2 transition-colors"
+    >
+      <div className="flex items-baseline gap-2">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--stamp)]">
+          {kicker}
+        </span>
+        <span className="font-display italic text-[1.5rem] leading-tight text-foreground transition-colors group-hover:text-[var(--stamp)]">
+          {label}
+        </span>
+      </div>
+      <p className="text-sm leading-snug text-muted-foreground">{note}</p>
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors group-hover:text-[var(--stamp)]">
+        Browse →
+      </span>
+    </Link>
   );
 }
 

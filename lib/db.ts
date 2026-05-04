@@ -492,6 +492,12 @@ export function getUseCasesFiltered(
     );
     params.push(...filters.maturityTiers);
   }
+  if (filters.topicAreas && filters.topicAreas.length > 0) {
+    where.push(
+      `uc.topic_area IN (${filters.topicAreas.map(() => "?").join(",")})`,
+    );
+    params.push(...filters.topicAreas);
+  }
 
   const joinTags =
     filters.entryType != null ||
@@ -1675,6 +1681,7 @@ export function getUseCaseFacets(): {
   tagArchitectureTypes: string[];
   tagUseTypes: string[];
   tagHighImpactDesignations: string[];
+  topicAreas: string[];
 } {
   const db = getDb();
   const distinct = (table: string, col: string) =>
@@ -1684,6 +1691,22 @@ export function getUseCaseFacets(): {
       )
       .all()
       .map((r) => r.v);
+
+  // Topic-area distinct list, ranked by use-case count rather than name.
+  // The OMB filings have a long-tail (30+ values, many one-offs and case
+  // variants); count-ranked makes the sidebar facet usable without the
+  // long tail crowding the top.
+  const topicAreas = db
+    .prepare<[], { v: string }>(
+      `SELECT topic_area AS v
+         FROM use_cases
+        WHERE topic_area IS NOT NULL AND topic_area <> ''
+        GROUP BY topic_area
+       HAVING COUNT(*) >= 3
+        ORDER BY COUNT(*) DESC, topic_area COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
 
   return {
     stages: distinct("use_cases", "stage_of_development"),
@@ -1696,6 +1719,7 @@ export function getUseCaseFacets(): {
     tagArchitectureTypes: distinct("use_case_tags", "architecture_type"),
     tagUseTypes: distinct("use_case_tags", "use_type"),
     tagHighImpactDesignations: distinct("use_case_tags", "high_impact_designation"),
+    topicAreas,
   };
 }
 
@@ -3356,4 +3380,312 @@ export function getLinkQueueRows(filter: {
       .all(filter.value);
   }
   return rows.map(_hydrateQueueRow);
+}
+
+// -----------------------------------------------------------------------------
+// Cross-cut summaries (drives /browse/[dimension] pages and the home-page
+// "Cross-cuts" row). One dimension = one tag/column we want to slice the
+// entire inventory by. See lib/urls.ts CrossCutDimension for the slug list.
+// -----------------------------------------------------------------------------
+
+/** Discriminator for the supported cross-cut dimensions. Mirrors
+ *  CrossCutDimension in lib/urls.ts but extended with `vendor` for the
+ *  product-side cross-cut. */
+export type CrossCutKey =
+  | "entry_type"
+  | "sophistication"
+  | "scope"
+  | "use_type"
+  | "high_impact"
+  | "topic_area"
+  | "vendor";
+
+export interface CrossCutValueRow {
+  value: string;
+  count: number;
+  top_agencies: Array<{ id: number; abbreviation: string; count: number }>;
+  top_products: Array<{ id: number; canonical_name: string; count: number }>;
+}
+
+export interface CrossCutHeatmapCell {
+  value: string;
+  agency_id: number;
+  agency_abbreviation: string;
+  count: number;
+}
+
+/** Resolve a dimension to (table.column) for the COUNT/GROUP BY. Vendor and
+ *  topic_area need different join paths than the use_case_tags dims. */
+function _crossCutSql(dim: CrossCutKey): {
+  fromJoin: string;
+  groupCol: string;
+  whereGroupNotEmpty: string;
+} {
+  if (dim === "topic_area") {
+    return {
+      fromJoin: "FROM use_cases uc JOIN agencies a ON a.id = uc.agency_id",
+      groupCol: "uc.topic_area",
+      whereGroupNotEmpty: "uc.topic_area IS NOT NULL AND uc.topic_area <> ''",
+    };
+  }
+  if (dim === "vendor") {
+    return {
+      fromJoin: `
+        FROM use_cases uc
+        JOIN agencies a ON a.id = uc.agency_id
+        JOIN entry_product_edges epe
+          ON epe.entry_kind = 'use_case' AND epe.entry_id = uc.id
+        JOIN products p ON p.id = epe.product_id`,
+      groupCol: "p.vendor",
+      whereGroupNotEmpty: "p.vendor IS NOT NULL AND p.vendor <> ''",
+    };
+  }
+  const tagCol = {
+    entry_type: "tag.entry_type",
+    sophistication: "tag.ai_sophistication",
+    scope: "tag.deployment_scope",
+    use_type: "tag.use_type",
+    high_impact: "tag.high_impact_designation",
+  }[dim];
+  return {
+    fromJoin: `
+      FROM use_cases uc
+      JOIN agencies a ON a.id = uc.agency_id
+      JOIN use_case_tags tag ON tag.use_case_id = uc.id`,
+    groupCol: tagCol,
+    whereGroupNotEmpty: `${tagCol} IS NOT NULL AND ${tagCol} <> ''`,
+  };
+}
+
+/** Per-value rollup for one cross-cut dimension. For each distinct value:
+ *  the use-case count, top 3 agencies by count, and top 3 products by
+ *  count among those use cases. */
+export function getCrossCutSummary(dim: CrossCutKey): CrossCutValueRow[] {
+  const db = getDb();
+  const { fromJoin, groupCol, whereGroupNotEmpty } = _crossCutSql(dim);
+
+  const valueRows = db
+    .prepare<[], { value: string; count: number }>(
+      `SELECT ${groupCol} AS value, COUNT(DISTINCT uc.id) AS count
+         ${fromJoin}
+        WHERE ${whereGroupNotEmpty}
+        GROUP BY ${groupCol}
+        ORDER BY count DESC, value COLLATE NOCASE ASC`,
+    )
+    .all();
+
+  const agencyStmt = db.prepare<
+    [string],
+    { id: number; abbreviation: string; count: number }
+  >(
+    `SELECT a.id, a.abbreviation, COUNT(DISTINCT uc.id) AS count
+       ${fromJoin}
+      WHERE ${groupCol} = ?
+      GROUP BY a.id, a.abbreviation
+      ORDER BY count DESC
+      LIMIT 3`,
+  );
+
+  // Top products per value — joins via entry_product_edges. For dim=vendor
+  // we already have p in scope; for the others we need a separate join.
+  const productSql =
+    dim === "vendor"
+      ? `SELECT p.id, p.canonical_name, COUNT(DISTINCT uc.id) AS count
+           ${fromJoin}
+          WHERE ${groupCol} = ?
+          GROUP BY p.id, p.canonical_name
+          ORDER BY count DESC
+          LIMIT 3`
+      : `SELECT p.id, p.canonical_name, COUNT(DISTINCT uc.id) AS count
+           ${fromJoin}
+           JOIN entry_product_edges epe2
+             ON epe2.entry_kind = 'use_case' AND epe2.entry_id = uc.id
+           JOIN products p ON p.id = epe2.product_id
+          WHERE ${groupCol} = ?
+          GROUP BY p.id, p.canonical_name
+          ORDER BY count DESC
+          LIMIT 3`;
+  const productStmt = db.prepare<
+    [string],
+    { id: number; canonical_name: string; count: number }
+  >(productSql);
+
+  return valueRows.map((row) => ({
+    value: row.value,
+    count: row.count,
+    top_agencies: agencyStmt.all(row.value),
+    top_products: productStmt.all(row.value),
+  }));
+}
+
+/** value × agency cell counts for the heatmap view. Caller picks the agency
+ *  cap (default 15) and rows are returned for those agencies only, ranked
+ *  by total use-case count descending. */
+export function getCrossCutHeatmap(
+  dim: CrossCutKey,
+  agencyLimit = 15,
+): {
+  agencies: Array<{ id: number; abbreviation: string; total: number }>;
+  values: string[];
+  cells: CrossCutHeatmapCell[];
+} {
+  const db = getDb();
+  const { fromJoin, groupCol, whereGroupNotEmpty } = _crossCutSql(dim);
+
+  const agencies = db
+    .prepare<[number], { id: number; abbreviation: string; total: number }>(
+      `SELECT a.id, a.abbreviation, COUNT(DISTINCT uc.id) AS total
+         ${fromJoin}
+        WHERE ${whereGroupNotEmpty}
+        GROUP BY a.id, a.abbreviation
+        ORDER BY total DESC
+        LIMIT ?`,
+    )
+    .all(agencyLimit);
+
+  if (agencies.length === 0) {
+    return { agencies: [], values: [], cells: [] };
+  }
+
+  const values = db
+    .prepare<[], { value: string }>(
+      `SELECT ${groupCol} AS value
+         ${fromJoin}
+        WHERE ${whereGroupNotEmpty}
+        GROUP BY ${groupCol}
+        ORDER BY COUNT(DISTINCT uc.id) DESC, value COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.value);
+
+  const agencyIds = agencies.map((a) => a.id);
+  const placeholders = agencyIds.map(() => "?").join(",");
+  const cells = db
+    .prepare<
+      number[],
+      { value: string; agency_id: number; agency_abbreviation: string; count: number }
+    >(
+      `SELECT ${groupCol} AS value,
+              a.id AS agency_id,
+              a.abbreviation AS agency_abbreviation,
+              COUNT(DISTINCT uc.id) AS count
+         ${fromJoin}
+        WHERE ${whereGroupNotEmpty}
+          AND a.id IN (${placeholders})
+        GROUP BY ${groupCol}, a.id, a.abbreviation`,
+    )
+    .all(...agencyIds);
+
+  return { agencies, values, cells };
+}
+
+// -----------------------------------------------------------------------------
+// Peer similarity — "Use cases like this" panel on /use-cases/[slug].
+//
+// Definition of "like": shares >= 3 of these tag-value dimensions with the
+// input use case (sophistication, scope, use_type, high_impact, entry_type,
+// topic_area). Excludes the input itself and same-agency entries (otherwise
+// the result collapses to "more from this agency", which we already show).
+//
+// Ranking: shared-dimension count desc, then operational_date desc (most
+// recent first), then use_case_name asc.
+// -----------------------------------------------------------------------------
+
+export interface PeerUseCaseRow {
+  id: number;
+  slug: string | null;
+  use_case_name: string;
+  agency_id: number;
+  agency_abbreviation: string;
+  agency_name: string;
+  ai_sophistication: string | null;
+  deployment_scope: string | null;
+  stage_of_development: string | null;
+  topic_area: string | null;
+  shared_dimensions: number;
+}
+
+export function getPeerUseCases(
+  useCaseId: number,
+  limit = 6,
+): PeerUseCaseRow[] {
+  const db = getDb();
+  const seed = db
+    .prepare<
+      [number],
+      {
+        agency_id: number;
+        ai_sophistication: string | null;
+        deployment_scope: string | null;
+        use_type: string | null;
+        high_impact_designation: string | null;
+        entry_type: string | null;
+        topic_area: string | null;
+      }
+    >(
+      `SELECT uc.agency_id,
+              tag.ai_sophistication,
+              tag.deployment_scope,
+              tag.use_type,
+              tag.high_impact_designation,
+              tag.entry_type,
+              uc.topic_area
+         FROM use_cases uc
+         LEFT JOIN use_case_tags tag ON tag.use_case_id = uc.id
+        WHERE uc.id = ?`,
+    )
+    .get(useCaseId);
+
+  if (!seed) return [];
+
+  const conds: string[] = [];
+  const params: (string | number)[] = [];
+  const push = (col: string, val: string | null) => {
+    if (val == null || val === "") return;
+    conds.push(`(CASE WHEN ${col} = ? THEN 1 ELSE 0 END)`);
+    params.push(val);
+  };
+  push("tag2.ai_sophistication", seed.ai_sophistication);
+  push("tag2.deployment_scope", seed.deployment_scope);
+  push("tag2.use_type", seed.use_type);
+  push("tag2.high_impact_designation", seed.high_impact_designation);
+  push("tag2.entry_type", seed.entry_type);
+  push("uc2.topic_area", seed.topic_area);
+
+  // Need at least 2 dimensions populated on the seed to even attempt — a
+  // use case with only entry_type set will match too many random peers.
+  if (conds.length < 2) return [];
+
+  const sumExpr = conds.join(" + ");
+
+  const rows = db
+    .prepare<
+      (string | number)[],
+      PeerUseCaseRow
+    >(
+      `SELECT uc2.id,
+              uc2.slug,
+              uc2.use_case_name,
+              a.id AS agency_id,
+              a.abbreviation AS agency_abbreviation,
+              a.name AS agency_name,
+              tag2.ai_sophistication,
+              tag2.deployment_scope,
+              uc2.stage_of_development,
+              uc2.topic_area,
+              (${sumExpr}) AS shared_dimensions
+         FROM use_cases uc2
+         JOIN agencies a ON a.id = uc2.agency_id
+         LEFT JOIN use_case_tags tag2 ON tag2.use_case_id = uc2.id
+        WHERE uc2.id <> ?
+          AND uc2.agency_id <> ?
+          AND (${sumExpr}) >= 3
+        ORDER BY shared_dimensions DESC,
+                 COALESCE(uc2.operational_date, '') DESC,
+                 uc2.use_case_name COLLATE NOCASE ASC
+        LIMIT ?`,
+    )
+    .all(...params, useCaseId, seed.agency_id, ...params, limit);
+
+  return rows;
 }

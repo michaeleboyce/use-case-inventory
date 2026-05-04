@@ -26,6 +26,7 @@ const ARRAY_PARAMS: Array<
   ["bureaus", "bureau", "string"],
   ["maturityTiers", "tier", "string"],
   ["stageBuckets", "stage_bucket", "string"],
+  ["topicAreas", "topic_area", "string"],
 ];
 
 const BOOL_PARAMS: Array<
@@ -112,4 +113,50 @@ export function templateUseCasesUrl(
   extra: Partial<UseCaseFilterInput> = {},
 ): string {
   return buildUseCasesUrl({ ...extra, templateIds: [templateId] });
+}
+
+/* --------------------------------------------------------------------- */
+/* Tag-driven cross-cut helpers                                           */
+/* --------------------------------------------------------------------- */
+/* Used by `<TagChip>` (editorial.tsx) and the /browse/[dimension] pages */
+/* so every "click a tag value to see peers" affordance produces the     */
+/* same canonical filter URL.                                             */
+/* --------------------------------------------------------------------- */
+
+/** The 6 cross-cut tag dimensions that have URL params. The string
+ *  literal is the URL param name; the value also doubles as the
+ *  /browse/[dimension] slug. */
+export type CrossCutDimension =
+  | "entry_type"
+  | "sophistication"
+  | "scope"
+  | "use_type"
+  | "high_impact"
+  | "topic_area";
+
+const DIMENSION_TO_FILTER: Record<
+  CrossCutDimension,
+  keyof UseCaseFilterInput
+> = {
+  entry_type: "entryTypes",
+  sophistication: "aiSophistications",
+  scope: "deploymentScopes",
+  use_type: "useTypes",
+  high_impact: "highImpactDesignations",
+  topic_area: "topicAreas",
+};
+
+/** Build a filtered `/use-cases?...` URL for a single (key, value) pair on
+ *  a tag dimension. Optionally narrowed to one agency. */
+export function tagFilterUrl(
+  key: CrossCutDimension,
+  value: string,
+  agencyId?: number,
+): string {
+  const filterField = DIMENSION_TO_FILTER[key];
+  const filters: Partial<UseCaseFilterInput> = {
+    [filterField]: [value],
+  } as Partial<UseCaseFilterInput>;
+  if (agencyId != null) filters.agencyIds = [agencyId];
+  return buildUseCasesUrl(filters);
 }

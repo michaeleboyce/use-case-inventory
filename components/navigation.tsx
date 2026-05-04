@@ -19,6 +19,13 @@ const LINKS: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/about", label: "Colophon", kicker: "§" },
 ];
 
+const BROWSE_DIMENSIONS: Array<{ slug: string; label: string }> = [
+  { slug: "sophistication", label: "AI sophistication" },
+  { slug: "high-impact", label: "High-impact" },
+  { slug: "topic-area", label: "Topic area" },
+  { slug: "vendor", label: "Vendor" },
+];
+
 export function Navigation() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/92 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -62,8 +69,52 @@ export function Navigation() {
               {link.label}
             </NavLink>
           ))}
+          <BrowseMenu />
         </nav>
       </div>
     </header>
+  );
+}
+
+/**
+ * "Browse" cross-cut menu. CSS-only dropdown — no JS state — opens on
+ * hover/focus-within so it works without client-side hydration. Mirrors
+ * the styling of a NavLink but routes the trigger to /browse/sophistication
+ * (the first dimension) so it's still useful with no JS.
+ */
+function BrowseMenu() {
+  return (
+    <div className="group/browse relative -mt-px flex items-stretch">
+      <NavLink
+        href="/browse/sophistication"
+        className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
+      >
+        <span
+          aria-hidden
+          className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
+        >
+          ⊞
+        </span>
+        Browse
+        <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
+          ▾
+        </span>
+      </NavLink>
+      <div
+        role="menu"
+        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[14rem] border border-border bg-background py-1 shadow-md group-hover/browse:block group-focus-within/browse:block"
+      >
+        {BROWSE_DIMENSIONS.map((d) => (
+          <Link
+            key={d.slug}
+            href={`/browse/${d.slug}`}
+            role="menuitem"
+            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {d.label}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

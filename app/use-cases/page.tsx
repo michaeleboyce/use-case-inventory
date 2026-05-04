@@ -98,6 +98,14 @@ function buildFilters(sp: Search): UseCaseFilterInput & { page: number } {
   const stageBuckets = parseCsv(sp.stage_bucket);
   if (stageBuckets.length > 0) filters.stageBuckets = stageBuckets;
 
+  const topicAreas = parseCsv(sp.topic_area);
+  if (topicAreas.length > 0) filters.topicAreas = topicAreas;
+
+  // Vendor is a single-value substring filter (filters.vendor on the
+  // DB side does LIKE %v%). Surfaced via /browse/vendor heatmap cells.
+  const vendor = first(sp.vendor);
+  if (vendor) filters.vendor = vendor;
+
   if (first(sp.coding_tool) === "1") filters.isCodingTool = true;
   if (first(sp.coding_tool) === "0") filters.isCodingTool = false;
   if (first(sp.general_llm_access) === "1") filters.isGeneralLLMAccess = true;
@@ -238,6 +246,7 @@ export default async function UseCasesPage({
                   tagArchitectureTypes: facets.tagArchitectureTypes,
                   tagUseTypes: facets.tagUseTypes,
                   tagHighImpactDesignations: facets.tagHighImpactDesignations,
+                  topicAreas: facets.topicAreas,
                 }}
               />
             </MobileFiltersSheet>

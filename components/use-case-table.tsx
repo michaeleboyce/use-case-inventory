@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { UseCaseWithTags } from "@/lib/types";
 import { truncate } from "@/lib/formatting";
-import { MonoChip } from "@/components/editorial";
+import { MonoChip, TagChip } from "@/components/editorial";
 import { ArrowDown, ArrowUp, ArrowUpDown, Code2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,9 +34,12 @@ type SortDir = "asc" | "desc";
 
 export interface UseCaseTableProps {
   rows: UseCaseWithTags[];
+  /** Show an additional `Topic` column (use-case `topic_area`) to the right
+   *  of the high-impact / flags area. Default false. */
+  showTopicArea?: boolean;
 }
 
-export function UseCaseTable({ rows }: UseCaseTableProps) {
+export function UseCaseTable({ rows, showTopicArea = false }: UseCaseTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -91,6 +94,14 @@ export function UseCaseTable({ rows }: UseCaseTableProps) {
                 <span className="font-mono text-[8px] font-normal tracking-[0.1em] text-muted-foreground/60">IFP</span>
               </span>
             </th>
+            {showTopicArea ? (
+              <th className="px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="inline-flex items-baseline gap-1">
+                  Topic
+                  <span className="font-mono text-[8px] font-normal tracking-[0.1em] text-muted-foreground/60">OMB</span>
+                </span>
+              </th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -143,24 +154,35 @@ export function UseCaseTable({ rows }: UseCaseTableProps) {
               </td>
               <td className="px-3 py-3">
                 {row.tags?.entry_type ? (
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                    {row.tags.entry_type.replace(/_/g, " ")}
-                  </span>
+                  <TagChip
+                    dimension="entry_type"
+                    value={row.tags.entry_type}
+                  />
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
               </td>
               <td className="px-3 py-3">
                 {row.tags?.deployment_scope ? (
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                    {row.tags.deployment_scope.replace(/_/g, " ")}
-                  </span>
+                  <TagChip
+                    dimension="scope"
+                    value={row.tags.deployment_scope}
+                  />
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
               </td>
               <td className="px-3 py-3">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  {row.tags?.high_impact_designation === "high_impact" && (
+                    <TagChip
+                      dimension="high_impact"
+                      value="high_impact"
+                      tone="stamp"
+                      label="High"
+                      title="High-impact use cases"
+                    />
+                  )}
                   {row.tags?.is_coding_tool === 1 && (
                     <Code2
                       className="size-3.5 text-[var(--stamp)]"
@@ -175,6 +197,18 @@ export function UseCaseTable({ rows }: UseCaseTableProps) {
                   )}
                 </div>
               </td>
+              {showTopicArea ? (
+                <td className="px-3 py-3">
+                  {row.topic_area ? (
+                    <TagChip
+                      dimension="topic_area"
+                      value={row.topic_area}
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+              ) : null}
             </tr>
           ))}
         </tbody>

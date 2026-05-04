@@ -13,7 +13,9 @@ import {
   getExternalEvidenceForUseCase,
   getExternalEvidenceForConsolidated,
   getUseCaseFedrampCoverage,
+  getPeerUseCases,
 } from "@/lib/db";
+import type { PeerUseCaseRow } from "@/lib/db";
 import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
 import { getOrganizationById } from "@/lib/hierarchy-db";
 import type {
@@ -23,13 +25,21 @@ import type {
 import { RawJsonViewer } from "@/components/raw-json-viewer";
 import { TagDefinitionList } from "@/components/tag-definition-list";
 import { RelatedUseCases } from "@/components/related-use-cases";
-import { Section, MonoChip, SourceLegend } from "@/components/editorial";
+import {
+  Section,
+  MonoChip,
+  SourceLegend,
+  TagChip,
+  SOPHISTICATION_LABELS,
+  SCOPE_LABELS,
+} from "@/components/editorial";
 import type { SectionSource } from "@/components/editorial";
 import {
   ExternalEvidenceBadge,
   ExternalEvidenceList,
 } from "@/components/external-evidence";
 import { formatBoolFlag } from "@/lib/formatting";
+import { tagFilterUrl } from "@/lib/urls";
 import {
   ArrowLeft,
   Code2,
@@ -100,6 +110,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
     data.template_id != null ? getTemplateById(data.template_id) : null;
   const externalEvidence = getExternalEvidenceForUseCase(data.id);
   const fedrampCoverage = getUseCaseFedrampCoverage(data.id);
+  const peerUseCases = getPeerUseCases(data.id, 6);
   const bureauOrg =
     data.bureau_organization_id != null
       ? getOrganizationById(data.bureau_organization_id)
@@ -134,24 +145,33 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
             )}
             <div className="flex flex-wrap gap-1.5">
               {tags?.entry_type && (
-                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                  {tags.entry_type.replace(/_/g, " ")}
-                </span>
+                <TagChip dimension="entry_type" value={tags.entry_type} />
+              )}
+              {tags?.ai_sophistication && (
+                <TagChip
+                  dimension="sophistication"
+                  value={tags.ai_sophistication}
+                />
               )}
               {tags?.deployment_scope && (
-                <>
-                  <span className="font-mono text-[10px] text-muted-foreground">
-                    ·
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                    {tags.deployment_scope.replace(/_/g, " ")}
-                  </span>
-                </>
+                <TagChip dimension="scope" value={tags.deployment_scope} />
+              )}
+              {tags?.use_type && (
+                <TagChip dimension="use_type" value={tags.use_type} />
+              )}
+              {data.topic_area && (
+                <TagChip dimension="topic_area" value={data.topic_area} />
               )}
             </div>
             {tags?.high_impact_designation === "high_impact" && (
               <div className="relative inline-flex w-fit">
-                <div className="stamp">High impact</div>
+                <Link
+                  href={tagFilterUrl("high_impact", "high_impact")}
+                  className="stamp transition-colors hover:text-[var(--stamp)]"
+                  title="See all high-impact use cases"
+                >
+                  High impact
+                </Link>
               </div>
             )}
             <div className="flex flex-wrap gap-2 pt-2">
@@ -536,6 +556,17 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
         </div>
       </Section>
 
+      {peerUseCases.length > 0 && (
+        <Section
+          number={`${templateOrProductNextNumber(!!product, !!template)}.5`}
+          title="Use cases like this"
+          source="derived"
+          lede="Other agencies' entries that share at least three analytical dimensions with this one — sophistication, scope, use type, topic area, entry type, or high-impact status."
+        >
+          <PeerUseCaseList items={peerUseCases} />
+        </Section>
+      )}
+
       <Section
         number={rawNumber(!!product, !!template)}
         title="Raw record"
@@ -577,6 +608,59 @@ function fedrampNumber(hasProduct: boolean, hasTemplate: boolean) {
   if (hasProduct && hasTemplate) return "XIII";
   if (hasProduct || hasTemplate) return "XII";
   return "XI";
+}
+
+/** Renders a list of peer use cases — entries that share ≥3 analytical
+ *  dimensions with the current use case (and are not from the same agency). */
+function PeerUseCaseList({ items }: { items: PeerUseCaseRow[] }) {
+  return (
+    <ul className="flex flex-col divide-y divide-border border-t-2 border-foreground">
+      {items.map((peer) => {
+        const peerHref = peer.slug
+          ? `/use-cases/${peer.slug}`
+          : `/use-cases/id/${peer.id}`;
+        const sophLabel = peer.ai_sophistication
+          ? (SOPHISTICATION_LABELS[peer.ai_sophistication] ??
+            peer.ai_sophistication.replace(/_/g, " "))
+          : null;
+        const scopeLabel = peer.deployment_scope
+          ? (SCOPE_LABELS[peer.deployment_scope] ??
+            peer.deployment_scope.replace(/_/g, " "))
+          : null;
+        const stageLabel = peer.stage_of_development ?? null;
+        const dims = [sophLabel, scopeLabel, stageLabel].filter(Boolean);
+        return (
+          <li
+            key={peer.id}
+            className="flex flex-col gap-2 py-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
+          >
+            <div className="flex min-w-0 items-baseline gap-3">
+              <MonoChip
+                href={`/agencies/${peer.agency_abbreviation}`}
+                tone="stamp"
+                size="xs"
+                title={peer.agency_name}
+              >
+                {peer.agency_abbreviation}
+              </MonoChip>
+              <Link
+                href={peerHref}
+                className="min-w-0 truncate text-[14px] leading-snug text-foreground hover:text-[var(--stamp)]"
+                title={peer.use_case_name}
+              >
+                {peer.use_case_name}
+              </Link>
+            </div>
+            {dims.length > 0 && (
+              <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground sm:text-right">
+                {dims.join(" · ")}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function FedrampCoverageSection({
@@ -694,8 +778,8 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
               </div>
             )}
             {tags?.entry_type && (
-              <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                {tags.entry_type.replace(/_/g, " ")}
+              <div>
+                <TagChip dimension="entry_type" value={tags.entry_type} />
               </div>
             )}
             <div className="pt-2">

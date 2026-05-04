@@ -15,7 +15,11 @@ import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial
 import { Badge } from "@/components/ui/badge";
 import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
-import { agencyUseCasesUrl, productUseCasesUrl } from "@/lib/urls";
+import {
+  agencyUseCasesUrl,
+  buildUseCasesUrl,
+  productUseCasesUrl,
+} from "@/lib/urls";
 
 type ProductPageProps = { params: Promise<{ id: string }> };
 
@@ -107,7 +111,15 @@ export default async function ProductDetailPage(props: ProductPageProps) {
                 </MonoChip>
               ) : null}
               {product.is_generative_ai === 1 ? (
-                <MonoChip tone="ink" size="xs">
+                <MonoChip
+                  tone="ink"
+                  size="xs"
+                  href={buildUseCasesUrl({
+                    isGenAI: true,
+                    productIds: [product.id],
+                  })}
+                  title="See generative-AI use cases of this product"
+                >
                   GenAI
                 </MonoChip>
               ) : null}

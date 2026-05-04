@@ -413,6 +413,11 @@ export interface UseCaseFilterInput {
   templateIds?: number[];
   bureaus?: string[];
   maturityTiers?: string[]; // agency_ai_maturity.maturity_tier
+  /** OMB-filed topic_area on use_cases (free-text enum: "Science",
+   *  "Health & Medical", "Law Enforcement", …). Multiple values = OR.
+   *  Exact-match against use_cases.topic_area. Consolidated rows have
+   *  no topic_area, so this filter implicitly excludes them. */
+  topicAreas?: string[];
   // Normalized OMB M-25-21 stage buckets: 'pre_deployment' | 'pilot' |
   // 'deployed' | 'retired' | 'unknown'. Bucketing is done via SQL CASE
   // against LOWER(uc.stage_of_development) because the raw column has 30+

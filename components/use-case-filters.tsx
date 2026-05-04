@@ -43,6 +43,7 @@ export interface UseCaseFiltersProps {
     tagArchitectureTypes: string[];
     tagUseTypes: string[];
     tagHighImpactDesignations: string[];
+    topicAreas: string[];
   };
 }
 
@@ -199,6 +200,7 @@ export function UseCaseFilters({
   const selectedArchitectures = parseCsv(currentParams.get("architecture"));
   const selectedUseTypes = parseCsv(currentParams.get("use_type"));
   const selectedHighImpact = parseCsv(currentParams.get("high_impact"));
+  const selectedTopicAreas = parseCsv(currentParams.get("topic_area"));
 
   const activeCount =
     Array.from(currentParams.keys()).filter((k) => k !== "view" && k !== "page")
@@ -490,6 +492,29 @@ export function UseCaseFilters({
             label={labelFor(v)}
           />
         ))}
+      </FilterGroup>
+
+      {/* Topic area (OMB-filed). Long-tail: facets are pre-filtered to
+          values appearing on >=3 use cases (see getUseCaseFacets in
+          lib/db.ts). Default-collapsed because most readers won't care. */}
+      <FilterGroup
+        title={
+          selectedTopicAreas.length > 0
+            ? `Topic area · ${selectedTopicAreas.length} selected`
+            : "Topic area"
+        }
+        defaultOpen={selectedTopicAreas.length > 0}
+      >
+        <div className="max-h-56 overflow-y-auto pr-1">
+          {facets.topicAreas.map((v) => (
+            <CheckRow
+              key={v}
+              checked={selectedTopicAreas.includes(v)}
+              onToggle={() => toggleMulti("topic_area", v)}
+              label={v}
+            />
+          ))}
+        </div>
       </FilterGroup>
 
       {/* High impact designation */}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { tagFilterUrl, type CrossCutDimension } from "@/lib/urls";
 
 /* --------------------------------------------------------------------- */
 /* Section                                                                */
@@ -302,3 +303,62 @@ export const TIER_ACCENTS: Record<string, string> = {
   early: "var(--highlight)",
   minimal: "oklch(0.7 0.01 60)",
 };
+
+/* --------------------------------------------------------------------- */
+/* TagChip                                                                */
+/* --------------------------------------------------------------------- */
+/* A MonoChip whose href routes to /use-cases filtered to the (dimension, */
+/* value) pair it represents. Use anywhere a tag value would otherwise be */
+/* a static label so readers can jump from "I see this tag" to "show me   */
+/* every use case with this tag". Optional agencyId narrows the link to a */
+/* single agency (use on /agencies/[slug] sidebars).                      */
+/*                                                                         */
+/* Renders the value's LABELS map entry where one exists; falls back to   */
+/* titleCase. Pass a custom `label` to override.                          */
+/* --------------------------------------------------------------------- */
+
+const TAG_CHIP_LABELS: Record<string, string> = {
+  ...ENTRY_TYPE_LABELS,
+  ...SOPHISTICATION_LABELS,
+  ...SCOPE_LABELS,
+  // Use-type, high-impact, etc. fall through to titleCase below.
+};
+
+function _titleCase(value: string): string {
+  return value
+    .split(/[_\s]+/)
+    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+export function TagChip({
+  dimension,
+  value,
+  agencyId,
+  label,
+  tone = "ink",
+  size = "xs",
+  title,
+}: {
+  dimension: CrossCutDimension;
+  value: string;
+  agencyId?: number;
+  /** Override the displayed text. Defaults to LABELS[value] or titleCase. */
+  label?: string;
+  tone?: "ink" | "stamp" | "verified" | "muted";
+  size?: "xs" | "sm" | "md";
+  title?: string;
+}) {
+  const display = label ?? TAG_CHIP_LABELS[value] ?? _titleCase(value);
+  const href = tagFilterUrl(dimension, value, agencyId);
+  const tip =
+    title ??
+    (agencyId != null
+      ? `See peers at this agency: ${display}`
+      : `See all use cases · ${display}`);
+  return (
+    <MonoChip href={href} tone={tone} size={size} title={tip}>
+      {display}
+    </MonoChip>
+  );
+}
