@@ -254,6 +254,7 @@ export default function HomePage() {
         number="0"
         title="Cross-cuts"
         lede="Slice the entire inventory by one dimension at a time."
+        source="mixed"
       >
         <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
           <CrossCutCard
@@ -261,24 +262,28 @@ export default function HomePage() {
             href="/browse/sophistication"
             label="Sophistication"
             note="Browse by AI sophistication tier."
+            source="derived"
           />
           <CrossCutCard
             kicker="B"
             href="/browse/high-impact"
             label="High-impact"
             note="Browse by high-impact designation."
+            source="omb"
           />
           <CrossCutCard
             kicker="C"
             href="/browse/topic-area"
             label="Topic area"
             note="Browse by mission topic area."
+            source="omb"
           />
           <CrossCutCard
             kicker="D"
             href="/browse/vendor"
             label="Vendor"
             note="Browse by product vendor."
+            source="omb"
           />
         </div>
       </Section>
@@ -290,6 +295,7 @@ export default function HomePage() {
         number="I"
         title="At a glance"
         lede={`What ${reportingAgencies} reporting agencies collectively say about their AI.`}
+        source="mixed"
       >
         <div className="space-y-10">
           <div>
@@ -533,11 +539,15 @@ function CrossCutCard({
   href,
   label,
   note,
+  source,
 }: {
   kicker: string;
   href: string;
   label: string;
   note: string;
+  /** Tag the dimension as OMB-filed or IFP-derived so readers don't
+   *  have to click through to /browse to see provenance. */
+  source: "omb" | "derived";
 }) {
   return (
     <Link
@@ -550,6 +560,20 @@ function CrossCutCard({
         </span>
         <span className="font-display italic text-[1.5rem] leading-tight text-foreground transition-colors group-hover:text-[var(--stamp)]">
           {label}
+        </span>
+        <span
+          className={`ml-auto font-mono text-[9px] tracking-[0.08em] ${
+            source === "derived"
+              ? "text-[var(--stamp)]"
+              : "text-muted-foreground"
+          }`}
+          title={
+            source === "derived"
+              ? "IFP-derived classification (auto_tag.py)"
+              : "OMB-filed by the agency"
+          }
+        >
+          {source === "derived" ? "IFP" : "OMB"}
         </span>
       </div>
       <p className="text-sm leading-snug text-muted-foreground">{note}</p>

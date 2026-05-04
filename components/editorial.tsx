@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { tagFilterUrl, type CrossCutDimension } from "@/lib/urls";
+import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
 
 /* --------------------------------------------------------------------- */
 /* Section                                                                */
@@ -339,6 +340,7 @@ export function TagChip({
   tone = "ink",
   size = "xs",
   title,
+  showProvenance = true,
 }: {
   dimension: CrossCutDimension;
   value: string;
@@ -348,17 +350,38 @@ export function TagChip({
   tone?: "ink" | "stamp" | "verified" | "muted";
   size?: "xs" | "sm" | "md";
   title?: string;
+  /** When true (default), append a small OMB/IFP marker to the chip so
+   *  readers can see at a glance whether the value comes from the OMB
+   *  filing or from IFP's analytical layer. Set false for very tight
+   *  layouts (e.g. inside dense tables where the marker would crowd). */
+  showProvenance?: boolean;
 }) {
   const display = label ?? TAG_CHIP_LABELS[value] ?? _titleCase(value);
   const href = tagFilterUrl(dimension, value, agencyId);
+  const provenance = DIMENSION_PROVENANCE[dimension];
+  const provenanceLabel = provenance.source === "omb" ? "OMB" : "IFP";
   const tip =
     title ??
-    (agencyId != null
-      ? `See peers at this agency: ${display}`
-      : `See all use cases · ${display}`);
+    `${provenanceLabel} · ${provenance.short} ${
+      agencyId != null
+        ? `Click to see peers at this agency.`
+        : `Click to see all use cases.`
+    }`;
   return (
     <MonoChip href={href} tone={tone} size={size} title={tip}>
       {display}
+      {showProvenance ? (
+        <span
+          aria-hidden
+          className={`ml-1 inline-block translate-y-[-1px] font-mono text-[8px] tracking-[0.08em] ${
+            provenance.source === "derived"
+              ? "text-[var(--stamp)]"
+              : "text-muted-foreground"
+          }`}
+        >
+          {provenanceLabel}
+        </span>
+      ) : null}
     </MonoChip>
   );
 }
