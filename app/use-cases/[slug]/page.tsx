@@ -25,6 +25,7 @@ import type {
 import { RawJsonViewer } from "@/components/raw-json-viewer";
 import { TagDefinitionList } from "@/components/tag-definition-list";
 import { RelatedUseCases } from "@/components/related-use-cases";
+import { BackLink as ReferrerBackLink } from "@/components/back-link";
 import {
   Section,
   MonoChip,
@@ -968,14 +969,14 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
 // ---------------------------------------------------------------------------
 
 function BackLink() {
+  // Delegate to the referrer-aware shared component so a click on a use-case
+  // card from a filtered /use-cases page returns to the same filter state.
   return (
-    <Link
-      href="/use-cases"
+    <ReferrerBackLink
+      fallbackHref="/use-cases"
+      fallbackLabel="All use cases"
       className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:text-[var(--stamp)]"
-    >
-      <ArrowLeft className="size-3" aria-hidden />
-      All use cases
-    </Link>
+    />
   );
 }
 

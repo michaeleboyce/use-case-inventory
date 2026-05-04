@@ -11,6 +11,7 @@ import {
   getUseCasesForProduct,
 } from "@/lib/db";
 import { ProductCard } from "@/components/product-card";
+import { BackLink } from "@/components/back-link";
 import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial";
 import { Badge } from "@/components/ui/badge";
 import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
@@ -71,13 +72,8 @@ export default async function ProductDetailPage(props: ProductPageProps) {
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
       {/* Breadcrumb */}
-      <nav className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-        <Link
-          href="/products"
-          className="hover:text-[var(--stamp)]"
-        >
-          ← All products
-        </Link>
+      <nav className="mb-6">
+        <BackLink fallbackHref="/products" fallbackLabel="All products" />
       </nav>
 
       {/* ------------------------------------------------------------ */}
