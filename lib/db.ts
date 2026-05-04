@@ -4099,24 +4099,27 @@ export function getCrossCutSummary(dim: CrossCutKey): CrossCutValueRow[] {
   );
 
   // Top products per value — joins via entry_product_edges. For dim=vendor
-  // we already have p in scope; for the others we need a separate join.
-  const productSql =
-    dim === "vendor"
-      ? `SELECT p.id, p.canonical_name, COUNT(DISTINCT uc.id) AS count
-           ${fromJoin}
-          WHERE ${groupCol} = ?
-          GROUP BY p.id, p.canonical_name
-          ORDER BY count DESC
-          LIMIT 3`
-      : `SELECT p.id, p.canonical_name, COUNT(DISTINCT uc.id) AS count
-           ${fromJoin}
-           JOIN entry_product_edges epe2
-             ON epe2.entry_kind = 'use_case' AND epe2.entry_id = uc.id
-           JOIN products p ON p.id = epe2.product_id
-          WHERE ${groupCol} = ?
-          GROUP BY p.id, p.canonical_name
-          ORDER BY count DESC
-          LIMIT 3`;
+  // and dim=product_type the outer fromJoin already aliases `products p`,
+  // so we reuse it directly. For other dims (which join through tags), we
+  // need a separate join — aliased `gp` to avoid collision with any other
+  // `p` alias the outer fromJoin might introduce in the future.
+  const dimAlreadyHasProductsP = dim === "vendor" || dim === "product_type";
+  const productSql = dimAlreadyHasProductsP
+    ? `SELECT p.id, p.canonical_name, COUNT(DISTINCT uc.id) AS count
+         ${fromJoin}
+        WHERE ${groupCol} = ?
+        GROUP BY p.id, p.canonical_name
+        ORDER BY count DESC
+        LIMIT 3`
+    : `SELECT gp.id, gp.canonical_name, COUNT(DISTINCT uc.id) AS count
+         ${fromJoin}
+         JOIN entry_product_edges epe2
+           ON epe2.entry_kind = 'use_case' AND epe2.entry_id = uc.id
+         JOIN products gp ON gp.id = epe2.product_id
+        WHERE ${groupCol} = ?
+        GROUP BY gp.id, gp.canonical_name
+        ORDER BY count DESC
+        LIMIT 3`;
   const productStmt = db.prepare<
     [string],
     { id: number; canonical_name: string; count: number }

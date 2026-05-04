@@ -45,7 +45,11 @@ export function CapabilityFlags({
   const flags = flagFrom(maturity);
 
   return (
-    <ul className="divide-y divide-border border-t border-b border-border">
+    <>
+      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+        IFP-derived from agency_ai_maturity rollups
+      </p>
+      <ul className="divide-y divide-border border-t border-b border-border">
       {flags.map((f) => {
         const yes = f.value === 1;
         const unknown = f.value == null;
@@ -75,6 +79,7 @@ export function CapabilityFlags({
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </>
   );
 }
