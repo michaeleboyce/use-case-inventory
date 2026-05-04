@@ -133,6 +133,35 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
                 </span>
               </div>
             )}
+            {/* OMB consolidated 2025 provenance: surfaces whether OMB's
+              * normalized snapshot includes this use case, and its OMB-
+              * assigned ID when present. See /discrepancies for the full
+              * audit. */}
+            {data.omb_consolidated_id ? (
+              <MonoChip
+                size="xs"
+                tone="muted"
+                title="ID assigned by OMB in the 2025 consolidated file"
+              >
+                OMB: {data.omb_consolidated_id}
+              </MonoChip>
+            ) : data.omb_consolidated_source ? (
+              <MonoChip
+                size="xs"
+                tone="muted"
+                title="Matched to an OMB row but OMB filed an empty Use Case ID"
+              >
+                OMB: (no ID)
+              </MonoChip>
+            ) : (
+              <MonoChip
+                size="xs"
+                tone="stamp"
+                title="This use case is not present in OMB's 2025 consolidated inventory"
+              >
+                Not in OMB 2025
+              </MonoChip>
+            )}
             {data.agency_abbreviation && (
               <div>
                 <MonoChip
