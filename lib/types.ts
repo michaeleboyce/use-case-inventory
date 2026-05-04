@@ -373,6 +373,16 @@ export interface VendorShareRow {
   agency_count: number;
 }
 
+/** One row of the IFP-category distribution: how many canonical products
+ *  fall into each category, and the use-case / agency reach of those
+ *  products. Excludes the 'unclassified' placeholder. */
+export interface CategoryDistributionRow {
+  category: string;
+  product_count: number;
+  use_case_count: number;
+  agency_count: number;
+}
+
 export interface HeatmapCell {
   product_id: number;
   product_name: string;
@@ -381,7 +391,22 @@ export interface HeatmapCell {
   count: number;
 }
 
+/** Discriminated-union row returned by `getUseCasesFiltered`. The explorer
+ *  defaults to `kind = "use_case"` only; drill-throughs from product / agency /
+ *  template pages set `entryKind: "all"` to see both kinds. Consolidated rows
+ *  carry only the fields present in `consolidated_use_cases` (much thinner than
+ *  individual rows). Components branching on `kind` should source the title from
+ *  `use_case_name` for individual rows and `ai_use_case` for consolidated. */
+export type UseCaseRow =
+  | ({ kind: "use_case" } & UseCaseWithTags)
+  | ({ kind: "consolidated" } & ConsolidatedWithTags);
+
 export interface UseCaseFilterInput {
+  /** Which inventory tables to include. Absent or "use_case" → individual only
+   *  (default — the explorer's full filter set is built around `use_cases`
+   *  columns). "consolidated" → consolidated only. "all" → union. Drill-throughs
+   *  from product / agency / template pages should pass "all". */
+  entryKind?: "use_case" | "consolidated" | "all";
   agencyId?: number;
   agencyAbbr?: string;
   stage?: string;

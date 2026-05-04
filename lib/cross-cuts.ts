@@ -63,6 +63,13 @@ export const DIMENSION_PROVENANCE: Record<ProvenanceKey, DimensionProvenance> = 
     short: "OMB-filed via product attribution.",
     long: 'Vendor is OMB-filed via each entry\'s linked product. IFP normalizes vendor strings across spelling variants (e.g., "OpenAI", "OpenAI Inc.", "openai" all map to one canonical vendor).',
   },
+  product_type: {
+    source: "derived",
+    short:
+      "IFP-curated product category (general_llm, security_tool, etc.). Distinct from OMB ai_classification.",
+    long:
+      'Product category is an IFP-curated taxonomy applied to canonical products (general_llm, security_tool, productivity, physical_security, …). It is NOT the OMB M-25-21 ai_classification field — that lives on individual use cases and uses a different controlled vocabulary (Computer Vision, Generative AI, NLP, etc.). Categories are seeded in build_lookups.py and can be overridden via the curator proposal at audit/product_categorization/proposal.json.',
+  },
 };
 
 /** Convenience: just the source ("omb" | "derived") for a dimension. */

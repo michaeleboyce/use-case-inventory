@@ -37,6 +37,7 @@ import type {
   FedrampAssessor,
   FedrampAuthorization,
   FedrampCoverageState,
+  CategoryDistributionRow,
   FedrampProduct,
   FedrampSnapshot,
   GlobalStats,
@@ -1022,7 +1023,9 @@ export function getYoYGrowthData(): YoYRow[] {
   return stmt.all();
 }
 
-/** Vendor market share = products/use cases/agencies per vendor. */
+/** Vendor market share = products/use cases/agencies per vendor. Drops
+ *  vendors with zero attributed entries (catalog-only products with no
+ *  inventory edges) so they don't pollute the chart with all-0 bars. */
 export function getVendorMarketShare(): VendorShareRow[] {
   const stmt = getDb().prepare<[], VendorShareRow>(`
     SELECT p.vendor AS vendor,
@@ -1033,7 +1036,35 @@ export function getVendorMarketShare(): VendorShareRow[] {
       LEFT JOIN entry_product_edges sub ON sub.product_id = p.id
      WHERE p.vendor IS NOT NULL AND p.vendor <> ''
      GROUP BY p.vendor
+    HAVING COUNT(sub.product_id) > 0
      ORDER BY use_case_count DESC, agency_count DESC
+  `);
+  return stmt.all();
+}
+
+/** Per-IFP-category rollup: product count + use-case reach + agency count.
+ *
+ * Distinct from `getVendorMarketShare` (which buckets by `products.vendor`):
+ * this buckets by `products.product_type`, the IFP-curated category. Excludes
+ * the `'unclassified'` placeholder (set by cleanup_products_taxonomy.py for
+ * any product with no assigned category) so the chart surfaces only
+ * meaningful buckets.
+ *
+ * Used by /products §II "By category" chart. */
+export function getCategoryDistribution(): CategoryDistributionRow[] {
+  const stmt = getDb().prepare<[], CategoryDistributionRow>(`
+    SELECT p.product_type AS category,
+           COUNT(DISTINCT p.id) AS product_count,
+           COUNT(DISTINCT ucp.use_case_id) AS use_case_count,
+           COUNT(DISTINCT uc.agency_id) AS agency_count
+      FROM products p
+      LEFT JOIN use_case_products ucp ON ucp.product_id = p.id
+      LEFT JOIN use_cases uc ON uc.id = ucp.use_case_id
+     WHERE p.product_type IS NOT NULL
+       AND TRIM(p.product_type) <> ''
+       AND LOWER(TRIM(p.product_type)) <> 'unclassified'
+     GROUP BY p.product_type
+     ORDER BY use_case_count DESC, agency_count DESC, product_count DESC
   `);
   return stmt.all();
 }
@@ -1291,6 +1322,11 @@ export function getLLMVendorShare(): BreakdownRow[] {
 /**
  * For the entry-type-mix stacked bar. One row per agency (that has data),
  * columns are raw counts of each tag.entry_type. The client normalizes to %.
+ *
+ * Counts span BOTH `use_cases` and `consolidated_use_cases` because the
+ * `generic_use_pattern` entry_type lives almost entirely on the
+ * consolidated side (~900 rows) — joining only `use_cases` made that
+ * column read as zero for every agency, even though the data is real.
  */
 export function getEntryTypeMixByAgency(): Array<{
   agency_id: number;
@@ -1313,9 +1349,15 @@ export function getEntryTypeMixByAgency(): Array<{
            a.abbreviation,
            COALESCE(tag.entry_type, 'unknown') AS entry_type,
            COUNT(*) AS count
-      FROM use_cases uc
-      JOIN agencies a ON a.id = uc.agency_id
-      LEFT JOIN use_case_tags tag ON tag.use_case_id = uc.id
+      FROM (
+        SELECT id AS entry_id, agency_id, 'use_case' AS kind FROM use_cases
+        UNION ALL
+        SELECT id AS entry_id, agency_id, 'consolidated' AS kind FROM consolidated_use_cases
+      ) e
+      JOIN agencies a ON a.id = e.agency_id
+      LEFT JOIN use_case_tags tag
+        ON (e.kind = 'use_case' AND tag.use_case_id = e.entry_id)
+        OR (e.kind = 'consolidated' AND tag.consolidated_use_case_id = e.entry_id)
      WHERE a.status IN ('FOUND_2025','FOUND_2024_ONLY')
      GROUP BY a.id, entry_type
   `);
@@ -2651,6 +2693,93 @@ export function getInventoryProductsForFedrampProduct(
 }
 
 /**
+ * Forward supply-chain edge: the other CSOs this product `leverages` (depends
+ * on). The source data's `system_name` is free text and only resolves to a
+ * fedramp_id for ~half the rows; unresolved rows render as plain labels.
+ * Resolution is case-insensitive against `fedramp_products.cso`.
+ */
+export function getLeveragedSystemsForFedrampProduct(
+  fedrampId: string,
+): Array<{
+  system_name: string;
+  target_fedramp_id: string | null;
+  target_csp: string | null;
+  target_cso: string | null;
+  target_status: string | null;
+  target_impact_level: string | null;
+}> {
+  return getDb()
+    .prepare<
+      [string],
+      {
+        system_name: string;
+        target_fedramp_id: string | null;
+        target_csp: string | null;
+        target_cso: string | null;
+        target_status: string | null;
+        target_impact_level: string | null;
+      }
+    >(`
+      SELECT ls.system_name,
+             p.fedramp_id   AS target_fedramp_id,
+             p.csp          AS target_csp,
+             p.cso          AS target_cso,
+             p.status       AS target_status,
+             p.impact_level AS target_impact_level
+        FROM fedramp_leveraged_systems ls
+        LEFT JOIN fedramp_products p
+          ON LOWER(p.cso) = LOWER(ls.system_name)
+       WHERE ls.fedramp_id = ?
+       ORDER BY ls.system_name COLLATE NOCASE ASC
+    `)
+    .all(fedrampId);
+}
+
+/**
+ * Reverse supply-chain edge: which other CSOs `leverage` THIS product. Joins
+ * back via the same fuzzy `system_name`↔`cso` match used in the forward
+ * direction. Empty when the product is a leaf (nothing depends on it).
+ */
+export function getProductsLeveragedBy(
+  fedrampId: string,
+): Array<{
+  source_fedramp_id: string;
+  source_csp: string;
+  source_cso: string;
+  source_csp_slug: string;
+  source_status: string;
+  source_impact_level: string | null;
+}> {
+  return getDb()
+    .prepare<
+      [string],
+      {
+        source_fedramp_id: string;
+        source_csp: string;
+        source_cso: string;
+        source_csp_slug: string;
+        source_status: string;
+        source_impact_level: string | null;
+      }
+    >(`
+      SELECT src.fedramp_id   AS source_fedramp_id,
+             src.csp          AS source_csp,
+             src.cso          AS source_cso,
+             src.csp_slug     AS source_csp_slug,
+             src.status       AS source_status,
+             src.impact_level AS source_impact_level
+        FROM fedramp_products tgt
+        JOIN fedramp_leveraged_systems ls
+          ON LOWER(ls.system_name) = LOWER(tgt.cso)
+        JOIN fedramp_products src
+          ON src.fedramp_id = ls.fedramp_id
+       WHERE tgt.fedramp_id = ?
+       ORDER BY src.csp COLLATE NOCASE ASC, src.cso COLLATE NOCASE ASC
+    `)
+    .all(fedrampId);
+}
+
+/**
  * The full ATO scope for a single inventory agency. Joins inventory agency →
  * fedramp_agency_links → fedramp_authorizations → fedramp_products, and
  * cross-references which of those products the agency *also* mentions in its
@@ -3435,7 +3564,8 @@ export type CrossCutKey =
   | "use_type"
   | "high_impact"
   | "topic_area"
-  | "vendor";
+  | "vendor"
+  | "product_type";
 
 export interface CrossCutValueRow {
   value: string;
@@ -3475,6 +3605,23 @@ function _crossCutSql(dim: CrossCutKey): {
         JOIN products p ON p.id = epe.product_id`,
       groupCol: "p.vendor",
       whereGroupNotEmpty: "p.vendor IS NOT NULL AND p.vendor <> ''",
+    };
+  }
+  if (dim === "product_type") {
+    // IFP-curated products.product_type. Same JOIN path as `vendor` (through
+    // entry_product_edges → products) but groups by product_type and
+    // excludes the 'unclassified' placeholder so the cross-cut surfaces
+    // only meaningful categories.
+    return {
+      fromJoin: `
+        FROM use_cases uc
+        JOIN agencies a ON a.id = uc.agency_id
+        JOIN entry_product_edges epe
+          ON epe.entry_kind = 'use_case' AND epe.entry_id = uc.id
+        JOIN products p ON p.id = epe.product_id`,
+      groupCol: "p.product_type",
+      whereGroupNotEmpty:
+        "p.product_type IS NOT NULL AND TRIM(p.product_type) <> '' AND LOWER(TRIM(p.product_type)) <> 'unclassified'",
     };
   }
   const tagCol = {

@@ -124,16 +124,20 @@ export function templateUseCasesUrl(
 /* same canonical filter URL.                                             */
 /* --------------------------------------------------------------------- */
 
-/** The 6 cross-cut tag dimensions that have URL params. The string
+/** The 7 cross-cut tag dimensions that have URL params. The string
  *  literal is the URL param name; the value also doubles as the
- *  /browse/[dimension] slug. */
+ *  /browse/[dimension] slug for tag-style dimensions. (`product_type`
+ *  surfaces as `/browse/category` — see SLUG_TO_KEY in
+ *  app/browse/[dimension]/page.tsx — but the URL param remains
+ *  `product_category` for /use-cases filtering.) */
 export type CrossCutDimension =
   | "entry_type"
   | "sophistication"
   | "scope"
   | "use_type"
   | "high_impact"
-  | "topic_area";
+  | "topic_area"
+  | "product_type";
 
 const DIMENSION_TO_FILTER: Record<
   CrossCutDimension,
@@ -145,6 +149,7 @@ const DIMENSION_TO_FILTER: Record<
   use_type: "useTypes",
   high_impact: "highImpactDesignations",
   topic_area: "topicAreas",
+  product_type: "productCategories",
 };
 
 /** Build a filtered `/use-cases?...` URL for a single (key, value) pair on

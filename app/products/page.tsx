@@ -2,12 +2,14 @@ import { Suspense } from "react";
 import Link from "next/link";
 import {
   getAllProducts,
+  getCategoryDistribution,
   getProductCatalogStats,
   getProductNamesById,
   getVendorMarketShare,
 } from "@/lib/db";
 import { ProductsFilters } from "@/components/products-filters";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
+import { CategoryDistributionChart } from "@/components/charts/category-distribution-chart";
 import { Section, Figure } from "@/components/editorial";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
@@ -23,6 +25,7 @@ export default function ProductsPage() {
   const catalogStats = getProductCatalogStats();
   const parentNames = getProductNamesById();
   const vendorShare = getVendorMarketShare();
+  const categoryDistribution = getCategoryDistribution();
 
   const totalAgencyMentions = products.reduce(
     (acc, p) => acc + (p.agency_count ?? 0),
@@ -204,10 +207,42 @@ export default function ProductsPage() {
       </Section>
 
       {/* ------------------------------------------------------------ */}
-      {/* § II — CATALOGUE                                             */}
+      {/* § II — CATEGORY DISTRIBUTION                                 */}
       {/* ------------------------------------------------------------ */}
       <Section
         number="II"
+        title="By category"
+        lede="The same products grouped by IFP-curated category — distinct from OMB's ai_classification field, which lives on individual use cases."
+      >
+        <Figure
+          eyebrow="Fig. 2 · Category distribution"
+          caption={
+            <>
+              Source: <span className="text-foreground">products</span>.
+              <span className="text-foreground">product_type</span> joined
+              with <span className="text-foreground">use_case_products</span>;
+              top 14 categories per metric. Bars link to{" "}
+              <span className="text-foreground">/products?category=X</span>.
+              See{" "}
+              <Link
+                href="/browse/category"
+                className="text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+              >
+                /browse/category
+              </Link>{" "}
+              for the agency × category heatmap.
+            </>
+          }
+        >
+          <CategoryDistributionChart data={categoryDistribution} />
+        </Figure>
+      </Section>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § III — CATALOGUE                                            */}
+      {/* ------------------------------------------------------------ */}
+      <Section
+        number="III"
         title="The catalogue"
         lede="Every canonical product, searchable by name, vendor, type, and capability."
       >

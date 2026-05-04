@@ -1,9 +1,9 @@
 /**
  * /browse/[dimension] — sliced views of the inventory by one cross-cut tag.
  *
- * Valid dimension slugs: sophistication, high-impact, topic-area, vendor.
- * URL slug is hyphenated; CrossCutKey uses snake_case, so we map at the
- * page boundary. Unknown slugs → notFound() (404).
+ * Valid dimension slugs: sophistication, high-impact, topic-area, vendor,
+ * category. URL slug is hyphenated; CrossCutKey uses snake_case, so we map
+ * at the page boundary. Unknown slugs → notFound() (404).
  *
  * Two views, controlled by `?view=list|heatmap` (default list):
  *   - list:    per-value cards with count + top agencies + top products
@@ -29,6 +29,7 @@ const SLUG_TO_KEY: Record<string, CrossCutKey> = {
   "high-impact": "high_impact",
   "topic-area": "topic_area",
   vendor: "vendor",
+  category: "product_type",
 };
 
 const DIMENSION_TITLES: Record<CrossCutKey, string> = {
@@ -39,6 +40,7 @@ const DIMENSION_TITLES: Record<CrossCutKey, string> = {
   high_impact: "High-impact designation",
   topic_area: "Topic area",
   vendor: "Vendor",
+  product_type: "Product category",
 };
 
 const DIMENSION_LEDES: Record<CrossCutKey, string> = {
@@ -51,6 +53,8 @@ const DIMENSION_LEDES: Record<CrossCutKey, string> = {
     "Every reported AI use case, sliced by high-impact designation.",
   topic_area: "Every reported AI use case, sliced by topic area.",
   vendor: "Every reported AI use case, sliced by product vendor.",
+  product_type:
+    "Every reported AI use case, sliced by IFP-curated product category.",
 };
 
 type Search = Record<string, string | string[] | undefined>;
