@@ -9,18 +9,18 @@ import { NavLink } from "./nav-link";
 import { CommandPaletteHint } from "./command-palette";
 
 // Primary nav: the high-frequency surfaces. Kept inline on the section rail.
+// FedRAMP promoted from "More" — it's a real sub-area with its own
+// marketplace / coverage / curate routes and readers go there often.
 const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/agencies", label: "Agencies", kicker: "I" },
   { href: "/use-cases", label: "Use Cases", kicker: "II" },
   { href: "/products", label: "Products", kicker: "III" },
   { href: "/analytics", label: "Analytics", kicker: "IV" },
+  { href: "/fedramp", label: "FedRAMP", kicker: "V" },
 ];
 
-// Lower-frequency surfaces, collapsed into a "More" dropdown so the section
-// rail doesn't horizontally overflow at narrow widths. Order: FedRAMP first
-// (a real sub-area users navigate to), then Compare, Templates, Colophon.
+// Lower-frequency surfaces, collapsed into a "More" dropdown.
 const MORE: Array<{ href: string; label: string }> = [
-  { href: "/fedramp", label: "FedRAMP" },
   { href: "/compare", label: "Compare" },
   { href: "/templates", label: "Templates" },
   { href: "/discrepancies", label: "Discrepancies" },
@@ -62,8 +62,15 @@ export function Navigation() {
           </div>
         </div>
 
-        {/* Section rail */}
-        <nav className="mt-1 flex items-stretch gap-0 overflow-x-auto border-t border-border/70 text-sm">
+        {/* Section rail.
+            NOTE: `overflow-x-auto` is intentionally absent. Adding it back
+            creates a clipping ancestor that hides the absolute-positioned
+            BrowseMenu / MoreMenu dropdowns when they pop out below the nav
+            (overflow-x:auto implicitly sets overflow-y:auto in CSS). With
+            5 primary items + Browse + More + a wide masthead the rail
+            still fits without horizontal scroll on typical viewports;
+            on very narrow mobile widths the items wrap, which is fine. */}
+        <nav className="mt-1 flex flex-wrap items-stretch gap-0 border-t border-border/70 text-sm">
           {PRIMARY.map((link) => (
             <NavLink
               key={link.href}
