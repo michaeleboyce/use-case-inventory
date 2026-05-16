@@ -17,8 +17,8 @@
  *     objects, but they should be treated as read-only view-models).
  */
 
-import { rawDb } from "./db/shared/init";
-import { STAGE_BUCKET_SQL } from "./db/shared/sql-fragments";
+import { rawDb } from "./shared/init";
+import { STAGE_BUCKET_SQL } from "./shared/sql-fragments";
 
 // Re-export so existing `import { rawDb, STAGE_BUCKET_SQL } from '@/lib/db'`
 // callers keep working without changes.
@@ -30,13 +30,13 @@ export {
   getTemplateById,
   getEntriesForTemplate,
   type TemplateEntryRow,
-} from "./db/templates";
+} from "./templates";
 export {
   getGlobalStats,
   getProductCatalogStats,
   getCommandPaletteIndex,
   type CommandPaletteIndex,
-} from "./db/stats";
+} from "./stats";
 export {
   getAgencies,
   getAllAgenciesIncludingEmpty,
@@ -48,7 +48,7 @@ export {
   getAgencyInventoryLinks,
   getAgencyCompareData,
   type AgencyCompareData,
-} from "./db/agencies";
+} from "./agencies";
 export {
   getAllProducts,
   getProductById,
@@ -58,7 +58,7 @@ export {
   getChildProducts,
   getProductsByVendor,
   getProductNamesById,
-} from "./db/products";
+} from "./products";
 export {
   getBureauBreakdown,
   getEntryTypeBreakdown,
@@ -87,7 +87,7 @@ export {
   type CrossCutValueRow,
   type CrossCutHeatmapCell,
   type CategoryTopicCrossTab,
-} from "./db/analytics";
+} from "./analytics";
 export {
   getUseCasesForAgency,
   getUseCasesForOrgSubtree,
@@ -110,7 +110,7 @@ export {
   getExternalEvidenceForConsolidated,
   getPeerUseCases,
   type PeerUseCaseRow,
-} from "./db/use-cases";
+} from "./use-cases";
 export {
   getFedrampProducts,
   getFedrampProductById,
@@ -144,7 +144,7 @@ export {
   getCoverageUnusedProducts,
   getLinkQueueGroups,
   getLinkQueueRows,
-} from "./db/fedramp";
+} from "./fedramp";
 
 // All query functions now live under ./db/<domain>.ts and are re-exported
 // above. STAGE_BUCKET_SQL, DB_PATH, getDb(), and rawDb() live in
