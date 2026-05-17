@@ -52,13 +52,14 @@ export default async function AgenciesPage({
   ).length;
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+    <>
       <PageSubnav
         tabs={[
           { id: "overview", label: "Overview" },
           { id: "directory", label: "Directory" },
         ]}
       />
+      <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
       {/* ---------------------------------------------------------------- */}
       {/* Editorial masthead                                                */}
       {/* ---------------------------------------------------------------- */}
@@ -177,6 +178,7 @@ export default async function AgenciesPage({
           </Suspense>
         )}
       </section>
-    </div>
+      </div>
+    </>
   );
 }

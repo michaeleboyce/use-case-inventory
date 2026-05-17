@@ -190,7 +190,7 @@ export default async function UseCasesPage({
   const totalInDb = stats.total_use_cases + stats.total_consolidated;
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+    <>
       <PageSubnav
         tabs={[
           { id: "overview", label: "Overview" },
@@ -198,6 +198,7 @@ export default async function UseCasesPage({
           { id: "results", label: "Results" },
         ]}
       />
+      <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
       {/* ------------------------------------------------------------ */}
       {/* EDITORIAL HEADER — filing meta + big italic counter           */}
       {/* ------------------------------------------------------------ */}
@@ -314,6 +315,7 @@ export default async function UseCasesPage({
           </div>
         </section>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

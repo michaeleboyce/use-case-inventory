@@ -7,14 +7,18 @@
  * `href="#section-id"` matches an `id` on a target <Section> or <header>.
  *
  * Design choices:
+ *  - Render this as a SIBLING above the page's padded `max-w-[1400px]`
+ *    container, not inside it. Two reasons:
+ *      (a) at scrollY=0 the band sits flush with the global masthead
+ *          instead of getting pushed down by the parent's top padding;
+ *      (b) the band naturally spans the full viewport (no margin-magic
+ *          breakout needed), so the bottom rule lines up with the main
+ *          nav's full-width rule. Inner tabs still center inside a
+ *          `max-w-[1400px] mx-auto px-4 md:px-8` container so "Overview"
+ *          sits directly under "Agencies."
  *  - Sticky at `top-[var(--page-subnav-top)]` (set in globals.css per
  *    breakpoint) so it tucks under the global masthead — which is taller
- *    on mobile because the section rail wraps.
- *  - Full-width rule band via `mx-[calc(50%-50vw)] w-screen` so the
- *    border extends edge-to-edge like the main nav, while the inner
- *    `max-w-[1400px] mx-auto` container keeps the tabs aligned under
- *    the primary rail. (Earlier attempt used `left-1/2 -translate-x-1/2`,
- *    which broke under position:sticky and pushed the band off-screen.)
+ *    on narrow viewports because the section rail wraps.
  *  - Mono uppercase pills matching the existing filter-row aesthetic on
  *    /products. Active-state highlight via a single shared
  *    IntersectionObserver keyed off the tab `id`s. The tab whose target
@@ -96,7 +100,7 @@ export function PageSubnav({ tabs }: { tabs: PageSubnavTab[] }) {
   return (
     <nav
       aria-label="On this page"
-      className="sticky top-[var(--page-subnav-top,6.5rem)] z-30 mx-[calc(50%-50vw)] mb-6 w-screen border-b border-border bg-background/92 backdrop-blur supports-[backdrop-filter]:bg-background/75"
+      className="sticky top-[var(--page-subnav-top,6.5rem)] z-30 border-b border-border bg-background/92 backdrop-blur supports-[backdrop-filter]:bg-background/75"
     >
       <div className="mx-auto max-w-[1400px] px-4 md:px-8">
         <ul className="flex items-stretch gap-0 overflow-x-auto">

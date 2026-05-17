@@ -35,7 +35,7 @@ export default function ProductsPage() {
   const frontierCount = products.filter((p) => p.is_frontier_llm === 1).length;
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+    <>
       <PageSubnav
         tabs={[
           { id: "overview", label: "Overview" },
@@ -44,6 +44,7 @@ export default function ProductsPage() {
           { id: "catalogue", label: "Catalogue" },
         ]}
       />
+      <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* ------------------------------------------------------------ */}
       {/* HERO — editorial nameplate                                   */}
       {/* ------------------------------------------------------------ */}
@@ -294,6 +295,7 @@ export default function ProductsPage() {
           </span>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
