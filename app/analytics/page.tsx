@@ -1,18 +1,4 @@
 import Link from "next/link";
-import {
-  getYoYGrowthData,
-  getVendorMarketShare,
-  getProductAgencyMatrix,
-  getMaturityScatterData,
-  getArchitectureDistribution,
-  getLLMVendorShare,
-  getLLMVendorVisibilityByAgency,
-  getCodingToolAgencies,
-  getEnterpriseLLMAgencies,
-  getEntryTypeMixByAgency,
-  getAnalyticsInsights,
-  getGlobalStats,
-} from "@/lib/db";
 import { formatNumber, formatYoY } from "@/lib/formatting";
 import { InsightCard } from "@/components/insight-card";
 import { YoYGrowthChart } from "@/components/charts/yoy-growth-chart";
@@ -28,11 +14,7 @@ import { VisibilityGapList } from "@/components/charts/visibility-gap-list";
 import { EntryTypeMixChart } from "@/components/charts/entry-type-mix-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import { buildUseCasesUrl, buildAgenciesUrl } from "@/lib/urls";
-import {
-  ANALYTICS_FIGURES,
-  buildAnalyticsLeaderboards,
-  sumCounts,
-} from "../_view-models/analytics";
+import { ANALYTICS_FIGURES, buildAnalyticsViewModel } from "./_view-model";
 
 export const metadata = {
   title: "Analytics · Federal AI Use Case Inventory",
@@ -40,25 +22,22 @@ export const metadata = {
     "Ten figures that describe American AI deployment: year-over-year growth, vendor market share, product adoption heatmaps, and other cross-cutting views of the 2025 federal AI inventory.",
 };
 
-export default function AnalyticsPage() {
-  const globalStats = getGlobalStats();
-  const insights = getAnalyticsInsights();
-  const yoy = getYoYGrowthData();
-  const vendorShare = getVendorMarketShare();
-  const heatmap = getProductAgencyMatrix(15, 20);
-  const scatter = getMaturityScatterData();
-  const architecture = getArchitectureDistribution();
-  const llmVendors = getLLMVendorShare();
-  const llmVisibilityGap = getLLMVendorVisibilityByAgency();
-  const coding = getCodingToolAgencies();
-  const enterpriseLLM = getEnterpriseLLMAgencies();
-  const entryMix = getEntryTypeMixByAgency();
-
-  const { codingRows, enterpriseLLMRows } = buildAnalyticsLeaderboards({
-    coding,
-    enterpriseLLM,
-  });
-  const llmVendorTotal = sumCounts(llmVendors);
+export default async function AnalyticsPage() {
+  const {
+    globalStats,
+    insights,
+    yoy,
+    vendorShare,
+    heatmap,
+    scatter,
+    architecture,
+    llmVendors,
+    llmVisibilityGap,
+    entryMix,
+    codingRows,
+    enterpriseLLMRows,
+    llmVendorTotal,
+  } = await buildAnalyticsViewModel();
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
