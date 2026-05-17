@@ -21,19 +21,15 @@ import {
   MonoChip,
 } from "@/components/editorial";
 import { agencyUseCasesUrl } from "@/lib/urls";
+import {
+  compareGridClass,
+  parseCompareAbbrs,
+  resolveSelectedAgencies,
+} from "../_view-models/compare";
 
 export const metadata = {
   title: "Compare agencies · Federal AI Use Case Inventory",
 };
-
-function parseAbbrs(raw: string | string[] | undefined): string[] {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  return String(raw)
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
 
 function Bool({ v }: { v: number | null | undefined }) {
   if (v === 1)
@@ -301,38 +297,20 @@ export default async function ComparePage({
   searchParams: Promise<{ a?: string | string[] }>;
 }) {
   const sp = await searchParams;
-  const raw = parseAbbrs(sp.a);
+  const raw = parseCompareAbbrs(sp.a);
   const options = getAgencies().map((a) => ({
     id: a.id,
     name: a.name,
     abbreviation: a.abbreviation,
   }));
 
-  // Resolve to canonical abbreviations (case-insensitive), keep order, cap at 4.
-  const optionSet = new Map(
-    options.map((o) => [o.abbreviation.toUpperCase(), o.abbreviation]),
-  );
-  const selected: string[] = [];
-  for (const s of raw) {
-    const canon = optionSet.get(s.toUpperCase());
-    if (canon && !selected.includes(canon)) selected.push(canon);
-    if (selected.length >= 4) break;
-  }
+  const selected = resolveSelectedAgencies(raw, options);
 
   const compareData: AgencyCompareData[] = selected
     .map((abbr) => getAgencyCompareData(abbr))
     .filter((d): d is AgencyCompareData => d !== null);
 
-  const gridTemplate =
-    compareData.length === 0
-      ? "grid-cols-1"
-      : compareData.length === 1
-        ? "grid-cols-[200px_1fr]"
-        : compareData.length === 2
-          ? "grid-cols-[200px_1fr_1fr]"
-          : compareData.length === 3
-            ? "grid-cols-[200px_1fr_1fr_1fr]"
-            : "grid-cols-[200px_1fr_1fr_1fr_1fr]";
+  const gridTemplate = compareGridClass(compareData.length);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">

@@ -27,37 +27,18 @@ import { CodingLeaderboard } from "@/components/charts/coding-leaderboard";
 import { VisibilityGapList } from "@/components/charts/visibility-gap-list";
 import { EntryTypeMixChart } from "@/components/charts/entry-type-mix-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
+import { buildUseCasesUrl, buildAgenciesUrl } from "@/lib/urls";
 import {
-  buildUseCasesUrl,
-  buildAgenciesUrl,
-  agencyUseCasesUrl,
-} from "@/lib/urls";
+  ANALYTICS_FIGURES,
+  buildAnalyticsLeaderboards,
+  sumCounts,
+} from "../_view-models/analytics";
 
 export const metadata = {
   title: "Analytics · Federal AI Use Case Inventory",
   description:
     "Ten figures that describe American AI deployment: year-over-year growth, vendor market share, product adoption heatmaps, and other cross-cutting views of the 2025 federal AI inventory.",
 };
-
-// Figure index — shown in the sticky left-rail TOC and repeated as the
-// eyebrow of each <Figure>. Keep these in sync with the page body.
-const FIGURES: Array<{
-  num: string;
-  id: string;
-  title: string;
-  section: string;
-}> = [
-  { num: "01", id: "insights", title: "Headline insights", section: "Adoption" },
-  { num: "02", id: "yoy", title: "Year-over-year growth", section: "Growth" },
-  { num: "03", id: "vendors", title: "Vendor market share", section: "Market share" },
-  { num: "04", id: "heatmap", title: "Product adoption heatmap", section: "Market share" },
-  { num: "05", id: "scatter", title: "Maturity × growth × scale", section: "Growth" },
-  { num: "06", id: "architecture", title: "Architecture distribution", section: "Adoption" },
-  { num: "07", id: "llm-vendors", title: "LLM vendor share", section: "Market share" },
-  { num: "08", id: "coding", title: "Coding tool adoption", section: "Reach" },
-  { num: "09", id: "enterprise-llm", title: "Enterprise LLM access", section: "Reach" },
-  { num: "10", id: "entry-mix", title: "Entry-type mix", section: "Adoption" },
-];
 
 export default function AnalyticsPage() {
   const globalStats = getGlobalStats();
@@ -73,26 +54,11 @@ export default function AnalyticsPage() {
   const enterpriseLLM = getEnterpriseLLMAgencies();
   const entryMix = getEntryTypeMixByAgency();
 
-  const codingRows = coding.map((c) => ({
-    id: c.agency_id,
-    abbreviation: c.abbreviation,
-    name: c.name,
-    value: c.coding_tool_count,
-    href: agencyUseCasesUrl(c.agency_id, { isCodingTool: true }),
-  }));
-
-  const enterpriseLLMRows = enterpriseLLM
-    .filter((r) => r.has_enterprise_llm === 1)
-    .map((r) => ({
-      id: r.agency_id,
-      abbreviation: r.abbreviation,
-      name: r.name,
-      value: r.general_llm_count,
-      subLabel: "enterprise LLM",
-      href: agencyUseCasesUrl(r.agency_id, { isGeneralLLMAccess: true }),
-    }));
-
-  const llmVendorTotal = llmVendors.reduce((acc, r) => acc + r.count, 0);
+  const { codingRows, enterpriseLLMRows } = buildAnalyticsLeaderboards({
+    coding,
+    enterpriseLLM,
+  });
+  const llmVendorTotal = sumCounts(llmVendors);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
@@ -198,7 +164,7 @@ export default function AnalyticsPage() {
           <div className="eyebrow mb-3">Index of figures</div>
         </div>
         <ol className="col-span-12 grid grid-cols-1 gap-y-1 border-t-2 border-foreground pt-3 md:col-span-9 md:grid-cols-2">
-          {FIGURES.map((f) => (
+          {ANALYTICS_FIGURES.map((f) => (
             <li
               key={f.id}
               className="flex items-baseline gap-3 border-b border-dotted border-border py-1.5 font-mono text-[11px] uppercase tracking-[0.1em]"
@@ -305,7 +271,7 @@ export default function AnalyticsPage() {
                 : "—"
             }
             accent="stamp"
-            headline={<>NASA's year-over-year growth in reported use cases.</>}
+            headline={<>NASA&apos;s year-over-year growth in reported use cases.</>}
             subtext="The largest outlier in the dataset — see Fig. 02 and Fig. 05."
             href="/agencies/NASA"
           />
@@ -321,7 +287,7 @@ export default function AnalyticsPage() {
             accent="stamp"
             headline={
               <>
-                of general-LLM-access entries don't name a vendor or product.
+                of general-LLM-access entries don&apos;t name a vendor or product.
               </>
             }
             subtext={`${insights.general_llm_unspecified} of ${insights.general_llm_total} entries report agency-wide LLM access without specifying the underlying tool — even after recovering vendor info from the OMB-filed vendor_name and system_name columns. See Fig. 07's "Vendor unspecified" slice.`}
@@ -458,7 +424,7 @@ export default function AnalyticsPage() {
             caption={
               <>
                 Change in reported use cases, 2024 → 2025. Each bar is an
-                agency; bars tinted vermilion exceed +500%. NASA's bar is off
+                agency; bars tinted vermilion exceed +500%. NASA&apos;s bar is off
                 the scale. Source:{" "}
                 <code>agency_ai_maturity.year_over_year_growth</code>.
               </>
@@ -553,7 +519,7 @@ export default function AnalyticsPage() {
           {" · "}
           Queries in{" "}
           <code className="bg-muted px-1 py-0.5 text-foreground">
-            lib/db.ts
+            @/lib/db
           </code>
           {" · "}
           page at{" "}

@@ -15,11 +15,11 @@ import {
   BarChart,
   Cell,
   LabelList,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 import { Button } from "@/components/ui/button";
 import type { YoYRow } from "@/lib/types";
 
@@ -90,80 +90,78 @@ export function YoYGrowthChart({ data }: { data: YoYRow[] }) {
         </Button>
       </div>
 
-      <div style={{ height }} className="w-full">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <BarChart
-            data={display}
-            layout="vertical"
-            margin={{ top: 4, right: 72, bottom: 4, left: 8 }}
-          >
-            <XAxis
-              type="number"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              tickFormatter={(v) => `${v > 0 ? "+" : ""}${Math.round(v)}%`}
-            />
-            <YAxis
-              type="category"
-              dataKey="abbreviation"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              width={70}
-              interval={0}
-            />
-            <Tooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-              contentStyle={{
-                background: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-                color: "var(--popover-foreground)",
-              }}
-              labelFormatter={(abbr) => {
-                const key = String(abbr ?? "");
-                const row = display.find((r) => r.abbreviation === key);
-                return row ? `${row.name} (${row.abbreviation})` : key;
-              }}
-              formatter={(value, _name, entry) => {
-                const v = Number(value ?? 0);
-                const datum = (entry as { payload?: ChartRow }).payload;
-                return [
-                  `${v > 0 ? "+" : ""}${v.toFixed(1)}%  (${datum?.total ?? 0} use cases)`,
-                  "YoY growth",
-                ];
-              }}
-            />
-            <Bar dataKey="growth" radius={[0, 4, 4, 0]}>
-              {display.map((row) => (
-                <Cell
-                  key={row.abbreviation}
-                  fill={
-                    row.growth >= 500
-                      ? OUTLIER
-                      : row.growth >= 0
-                        ? POSITIVE
-                        : NEGATIVE
-                  }
-                />
-              ))}
-              <LabelList
-                dataKey="growth"
-                position="right"
-                formatter={(value) => {
-                  const v = Number(value ?? 0);
-                  return `${v > 0 ? "+" : ""}${Math.round(v)}%`;
-                }}
-                style={{
-                  fontSize: 10,
-                  fill: "var(--muted-foreground)",
-                  fontVariantNumeric: "tabular-nums",
-                }}
+      <ChartFrame height={height}>
+        <BarChart
+          data={display}
+          layout="vertical"
+          margin={{ top: 4, right: 72, bottom: 4, left: 8 }}
+        >
+          <XAxis
+            type="number"
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            tickFormatter={(v) => `${v > 0 ? "+" : ""}${Math.round(v)}%`}
+          />
+          <YAxis
+            type="category"
+            dataKey="abbreviation"
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            width={70}
+            interval={0}
+          />
+          <Tooltip
+            cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+            contentStyle={{
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "var(--popover-foreground)",
+            }}
+            labelFormatter={(abbr) => {
+              const key = String(abbr ?? "");
+              const row = display.find((r) => r.abbreviation === key);
+              return row ? `${row.name} (${row.abbreviation})` : key;
+            }}
+            formatter={(value, _name, entry) => {
+              const v = Number(value ?? 0);
+              const datum = (entry as { payload?: ChartRow }).payload;
+              return [
+                `${v > 0 ? "+" : ""}${v.toFixed(1)}%  (${datum?.total ?? 0} use cases)`,
+                "YoY growth",
+              ];
+            }}
+          />
+          <Bar dataKey="growth" radius={[0, 4, 4, 0]}>
+            {display.map((row) => (
+              <Cell
+                key={row.abbreviation}
+                fill={
+                  row.growth >= 500
+                    ? OUTLIER
+                    : row.growth >= 0
+                      ? POSITIVE
+                      : NEGATIVE
+                }
               />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+            ))}
+            <LabelList
+              dataKey="growth"
+              position="right"
+              formatter={(value) => {
+                const v = Number(value ?? 0);
+                return `${v > 0 ? "+" : ""}${Math.round(v)}%`;
+              }}
+              style={{
+                fontSize: 10,
+                fill: "var(--muted-foreground)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            />
+          </Bar>
+        </BarChart>
+      </ChartFrame>
 
       <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
         <LegendSwatch color={OUTLIER} label="Extreme growth (≥ 500%)" />

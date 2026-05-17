@@ -10,11 +10,11 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 import { agencyTypeLabel } from "@/lib/formatting";
 
 export type AgencyTypeDatum = {
@@ -38,28 +38,26 @@ export function AgencyTypeChart({ data }: { data: AgencyTypeDatum[] }) {
   const shaped = data.map((d) => ({ ...d, label: agencyTypeLabel(d.agency_type) }));
 
   return (
-    <div className="h-[280px] w-full">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-        <BarChart data={shaped} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />
-          <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
-          <Tooltip
-            contentStyle={{
-              background: "var(--popover)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              fontSize: 12,
-            }}
-          />
-          <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="leading" stackId="a" fill={TIER_COLORS.leading} />
-          <Bar dataKey="progressing" stackId="a" fill={TIER_COLORS.progressing} />
-          <Bar dataKey="early" stackId="a" fill={TIER_COLORS.early} />
-          <Bar dataKey="minimal" stackId="a" fill={TIER_COLORS.minimal} />
-          <Bar dataKey="none" stackId="a" fill={TIER_COLORS.none} name="unranked" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartFrame height={280}>
+      <BarChart data={shaped} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+        <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />
+        <YAxis stroke="var(--muted-foreground)" fontSize={12} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{
+            background: "var(--popover)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+        />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Bar dataKey="leading" stackId="a" fill={TIER_COLORS.leading} />
+        <Bar dataKey="progressing" stackId="a" fill={TIER_COLORS.progressing} />
+        <Bar dataKey="early" stackId="a" fill={TIER_COLORS.early} />
+        <Bar dataKey="minimal" stackId="a" fill={TIER_COLORS.minimal} />
+        <Bar dataKey="none" stackId="a" fill={TIER_COLORS.none} name="unranked" />
+      </BarChart>
+    </ChartFrame>
   );
 }

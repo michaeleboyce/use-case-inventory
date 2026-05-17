@@ -101,7 +101,6 @@ export function RawJsonViewer({ json }: { json: string | null | undefined }) {
         <pre className="overflow-x-auto px-0 py-4 text-[11.5px] leading-relaxed">
           <code
             className="font-mono"
-            // eslint-disable-next-line react/no-danger -- see file-level safety note
             dangerouslySetInnerHTML={{ __html: highlight(pretty) }}
           />
         </pre>

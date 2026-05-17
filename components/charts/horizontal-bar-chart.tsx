@@ -11,11 +11,11 @@ import {
   Bar,
   BarChart,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 
 export type BarDatum = {
   label: string;
@@ -73,38 +73,36 @@ export function HorizontalBarChart({
   }
 
   return (
-    <div className="w-full" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
-        >
-          <XAxis type="number" hide />
-          <YAxis
-            dataKey="label"
-            type="category"
-            width={labelWidth}
-            tick={{ fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip
-            cursor={{ fill: "rgba(148,163,184,0.1)" }}
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 8,
-              borderColor: "var(--border)",
-              background: "var(--background)",
-            }}
-          />
-          <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-            {chartData.map((d) => (
-              <Cell key={d.rawLabel} fill={d.fill} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartFrame height={height}>
+      <BarChart
+        data={chartData}
+        layout="vertical"
+        margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+      >
+        <XAxis type="number" hide />
+        <YAxis
+          dataKey="label"
+          type="category"
+          width={labelWidth}
+          tick={{ fontSize: 11 }}
+          tickLine={false}
+          axisLine={false}
+        />
+        <Tooltip
+          cursor={{ fill: "rgba(148,163,184,0.1)" }}
+          contentStyle={{
+            fontSize: 12,
+            borderRadius: 8,
+            borderColor: "var(--border)",
+            background: "var(--background)",
+          }}
+        />
+        <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+          {chartData.map((d) => (
+            <Cell key={d.rawLabel} fill={d.fill} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ChartFrame>
   );
 }

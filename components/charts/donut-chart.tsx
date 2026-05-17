@@ -7,9 +7,9 @@ import {
   Legend,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 import { humanize } from "@/lib/formatting";
 
 export type DonutDatum = {
@@ -75,48 +75,50 @@ export function DonutChart({
   }
 
   return (
-    <div className="relative w-full" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            innerRadius="55%"
-            outerRadius="85%"
-            strokeWidth={1}
-            paddingAngle={1}
-          >
-            {chartData.map((d) => (
-              <Cell key={d.rawLabel} fill={d.fill} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 0,
-              borderColor: "var(--border)",
-              background: "var(--background)",
-            }}
-          />
-          <Legend
-            wrapperStyle={{ fontSize: 11 }}
-            iconSize={8}
-            verticalAlign="bottom"
-            height={36}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-9">
-        <span className="font-display text-[2rem] leading-none tabular-nums">
-          {display}
-        </span>
-        {centerSubLabel ? (
-          <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {centerSubLabel}
+    <ChartFrame
+      height={height}
+      overlay={
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-9">
+          <span className="font-display text-[2rem] leading-none tabular-nums">
+            {display}
           </span>
-        ) : null}
-      </div>
-    </div>
+          {centerSubLabel ? (
+            <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {centerSubLabel}
+            </span>
+          ) : null}
+        </div>
+      }
+    >
+      <PieChart>
+        <Pie
+          data={chartData}
+          dataKey="value"
+          nameKey="name"
+          innerRadius="55%"
+          outerRadius="85%"
+          strokeWidth={1}
+          paddingAngle={1}
+        >
+          {chartData.map((d) => (
+            <Cell key={d.rawLabel} fill={d.fill} />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{
+            fontSize: 12,
+            borderRadius: 0,
+            borderColor: "var(--border)",
+            background: "var(--background)",
+          }}
+        />
+        <Legend
+          wrapperStyle={{ fontSize: 11 }}
+          iconSize={8}
+          verticalAlign="bottom"
+          height={36}
+        />
+      </PieChart>
+    </ChartFrame>
   );
 }

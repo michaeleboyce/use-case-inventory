@@ -12,11 +12,11 @@ import {
   Bar,
   BarChart,
   Cell,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 
 export type VendorShareDatum = {
   vendor: string;
@@ -113,56 +113,54 @@ function VendorPanel({
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         <p className="text-xs text-muted-foreground">{subtitle}</p>
       </div>
-      <div style={{ height }} className="w-full">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <BarChart
-            data={display}
-            layout="vertical"
-            margin={{ top: 4, right: 40, bottom: 4, left: 8 }}
-          >
-            <XAxis
-              type="number"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              allowDecimals={false}
-            />
-            <YAxis
-              type="category"
-              dataKey="vendor"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              width={110}
-              interval={0}
-            />
-            <Tooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-              contentStyle={{
-                background: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-                color: "var(--popover-foreground)",
-              }}
-              formatter={(value, _name, entry) => {
-                const d = (entry as { payload: VendorShareDatum }).payload;
-                const v = value as number;
-                return [
-                  valueKey === "agency_count"
-                    ? `${v} agencies · ${d.use_case_count} entries`
-                    : `${v} entries · ${d.agency_count} agencies`,
-                  d.vendor,
-                ];
-              }}
-              labelFormatter={() => ""}
-            />
-            <Bar dataKey={valueKey} radius={[0, 4, 4, 0]}>
-              {display.map((d) => (
-                <Cell key={d.vendor} fill={vendorColor(d.vendor)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <ChartFrame height={height}>
+        <BarChart
+          data={display}
+          layout="vertical"
+          margin={{ top: 4, right: 40, bottom: 4, left: 8 }}
+        >
+          <XAxis
+            type="number"
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            allowDecimals={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="vendor"
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            width={110}
+            interval={0}
+          />
+          <Tooltip
+            cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+            contentStyle={{
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "var(--popover-foreground)",
+            }}
+            formatter={(value, _name, entry) => {
+              const d = (entry as { payload: VendorShareDatum }).payload;
+              const v = value as number;
+              return [
+                valueKey === "agency_count"
+                  ? `${v} agencies · ${d.use_case_count} entries`
+                  : `${v} entries · ${d.agency_count} agencies`,
+                d.vendor,
+              ];
+            }}
+            labelFormatter={() => ""}
+          />
+          <Bar dataKey={valueKey} radius={[0, 4, 4, 0]}>
+            {display.map((d) => (
+              <Cell key={d.vendor} fill={vendorColor(d.vendor)} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ChartFrame>
     </div>
   );
 }

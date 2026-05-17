@@ -47,6 +47,7 @@ The authoritative generated count block lives at `../audit/db_snapshot.md`.
 ```bash
 npm install         # once
 npm run dev         # http://localhost:3000
+npm run typecheck   # TypeScript only; no build artifacts
 npm run build       # type-check + production build
 npm run start       # serve production build
 ```
@@ -56,8 +57,8 @@ npm run start       # serve production build
 - All pages are Server Components by default. They import query helpers from
   `@/lib/db` and pass plain objects into Client Components that need
   interactivity.
-- `next.config.ts` marks `better-sqlite3` as a `serverExternalPackages` entry
-  so its native addon isn't bundled into the RSC graph.
+- `next.config.ts` keeps `better-sqlite3` explicit in `serverExternalPackages`
+  so the native-addon invariant stays visible across Next upgrades.
 - Formatting helpers live in `@/lib/formatting` (pure functions, usable in
   both environments).
 - Shared UI primitives live in `@/components/ui/*` (shadcn/ui, neutral base
@@ -87,17 +88,15 @@ import type {
   // ...
 } from "@/lib/types";
 
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 ```
 
 ## Installed shadcn components
 
-`badge · button · card · command · dialog · dropdown-menu · input ·
-input-group · label · popover · scroll-area · select · separator · sheet ·
-table · tabs · textarea · tooltip`
+`badge · button · command · dialog · input · input-group · select · sheet ·
+table · tabs · textarea`
 
-## Query helpers exposed by `lib/db.ts`
+## Query helpers exposed by `@/lib/db`
 
 ### Agencies
 - `getAgencies()` — agencies that actually have inventory data
@@ -146,11 +145,9 @@ All query functions use prepared statements and return typed rows.
 
 ---
 
-## Build history
+## Archive
 
-The dashboard was built across seven agent passes (scaffold → polish). The
-detailed handoff notes for each pass live in
-[`docs/AGENT_HISTORY.md`](docs/AGENT_HISTORY.md). They're useful for tracing
-how a particular page or component came to exist; they are **not**
-authoritative documentation of the current code — for that, read this README
-and the source.
+Historical build notes and unused runtime assets are preserved under
+[`archive/2026-05-dashboard-cleanup/README.md`](archive/2026-05-dashboard-cleanup/README.md).
+The archive is for traceability only; current architecture is documented here
+and in the source.

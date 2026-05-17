@@ -8,11 +8,11 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 
 export type CapabilityCategoryDatum = {
   category: string;
@@ -33,44 +33,42 @@ export function CapabilityCategoryChart({ data }: Props) {
   }
 
   return (
-    <div className="h-72 w-full">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-        <BarChart data={data} margin={{ top: 12, right: 12, bottom: 48, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis
-            dataKey="category"
-            angle={-25}
-            textAnchor="end"
-            height={70}
-            interval={0}
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-            stroke="var(--border)"
-          />
-          <YAxis
-            allowDecimals={false}
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-            stroke="var(--border)"
-          />
-          <Tooltip
-            cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-            contentStyle={{
-              background: "var(--popover)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              fontSize: 12,
-              color: "var(--popover-foreground)",
-            }}
-            labelStyle={{ fontWeight: 600 }}
-            formatter={(value) => [value as number, "Use cases"]}
-          />
-          <Bar
-            dataKey="use_case_count"
-            name="Use cases"
-            fill="var(--primary)"
-            radius={[4, 4, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartFrame height={288}>
+      <BarChart data={data} margin={{ top: 12, right: 12, bottom: 48, left: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+        <XAxis
+          dataKey="category"
+          angle={-25}
+          textAnchor="end"
+          height={70}
+          interval={0}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+          stroke="var(--border)"
+        />
+        <YAxis
+          allowDecimals={false}
+          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+          stroke="var(--border)"
+        />
+        <Tooltip
+          cursor={{ fill: "var(--muted)", opacity: 0.4 }}
+          contentStyle={{
+            background: "var(--popover)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "var(--popover-foreground)",
+          }}
+          labelStyle={{ fontWeight: 600 }}
+          formatter={(value) => [value as number, "Use cases"]}
+        />
+        <Bar
+          dataKey="use_case_count"
+          name="Use cases"
+          fill="var(--primary)"
+          radius={[4, 4, 0, 0]}
+        />
+      </BarChart>
+    </ChartFrame>
   );
 }

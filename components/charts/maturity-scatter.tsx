@@ -7,7 +7,6 @@
 
 import {
   CartesianGrid,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -15,6 +14,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 
 export type MaturityScatterDatum = {
   agency_id: number;
@@ -70,105 +70,103 @@ export function MaturityScatter({ data }: { data: MaturityScatterDatum[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="h-80 w-full">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <ScatterChart margin={{ top: 12, right: 16, bottom: 44, left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis
-              type="number"
-              dataKey="growth"
-              name="YoY growth"
-              domain={[-100, xCap]}
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              tickFormatter={(v) => `${v > 0 ? "+" : ""}${Math.round(v)}%`}
-              label={{
-                value: "Year-over-year growth (capped at +500%)",
-                position: "insideBottom",
-                offset: -10,
-                style: {
-                  fontSize: 11,
-                  fill: "var(--muted-foreground)",
-                },
-              }}
-            />
-            <YAxis
-              type="number"
-              dataKey="total"
-              name="Use cases"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              label={{
-                value: "Total use cases",
-                angle: -90,
-                position: "insideLeft",
-                style: {
-                  fontSize: 11,
-                  fill: "var(--muted-foreground)",
-                },
-              }}
-            />
-            <ZAxis range={[80, 80]} />
-            <Tooltip
-              cursor={{
-                stroke: "var(--muted-foreground)",
-                strokeDasharray: "3 3",
-              }}
-              contentStyle={{
-                background: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-                color: "var(--popover-foreground)",
-              }}
-              formatter={(value, name) => {
-                const v = Number(value ?? 0);
-                const n = String(name ?? "");
-                if (n === "YoY growth")
-                  return [`${v > 0 ? "+" : ""}${v.toFixed(1)}%`, n];
-                return [String(v), n];
-              }}
-              labelFormatter={() => ""}
-              content={({ active, payload }) => {
-                if (!active || !payload || payload.length === 0) return null;
-                const p = payload[0].payload as ChartPoint;
-                return (
-                  <div className="rounded-md border border-border bg-popover p-2 text-xs text-popover-foreground shadow">
-                    <div className="font-semibold">{p.name}</div>
-                    <div className="text-muted-foreground">
-                      {p.abbreviation} · {TIER_LABEL[p.tier] ?? p.tier}
-                    </div>
-                    <div className="mt-1 tabular-nums">
-                      YoY:{" "}
-                      <span className="font-medium">
-                        {p.growth > 0 ? "+" : ""}
-                        {p.growth.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="tabular-nums">
-                      Total:{" "}
-                      <span className="font-medium">{p.total}</span> use cases
-                    </div>
+      <ChartFrame height={320}>
+        <ScatterChart margin={{ top: 12, right: 16, bottom: 44, left: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis
+            type="number"
+            dataKey="growth"
+            name="YoY growth"
+            domain={[-100, xCap]}
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            tickFormatter={(v) => `${v > 0 ? "+" : ""}${Math.round(v)}%`}
+            label={{
+              value: "Year-over-year growth (capped at +500%)",
+              position: "insideBottom",
+              offset: -10,
+              style: {
+                fontSize: 11,
+                fill: "var(--muted-foreground)",
+              },
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="total"
+            name="Use cases"
+            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            label={{
+              value: "Total use cases",
+              angle: -90,
+              position: "insideLeft",
+              style: {
+                fontSize: 11,
+                fill: "var(--muted-foreground)",
+              },
+            }}
+          />
+          <ZAxis range={[80, 80]} />
+          <Tooltip
+            cursor={{
+              stroke: "var(--muted-foreground)",
+              strokeDasharray: "3 3",
+            }}
+            contentStyle={{
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "var(--popover-foreground)",
+            }}
+            formatter={(value, name) => {
+              const v = Number(value ?? 0);
+              const n = String(name ?? "");
+              if (n === "YoY growth")
+                return [`${v > 0 ? "+" : ""}${v.toFixed(1)}%`, n];
+              return [String(v), n];
+            }}
+            labelFormatter={() => ""}
+            content={({ active, payload }) => {
+              if (!active || !payload || payload.length === 0) return null;
+              const p = payload[0].payload as ChartPoint;
+              return (
+                <div className="rounded-md border border-border bg-popover p-2 text-xs text-popover-foreground shadow">
+                  <div className="font-semibold">{p.name}</div>
+                  <div className="text-muted-foreground">
+                    {p.abbreviation} · {TIER_LABEL[p.tier] ?? p.tier}
                   </div>
-                );
-              }}
+                  <div className="mt-1 tabular-nums">
+                    YoY:{" "}
+                    <span className="font-medium">
+                      {p.growth > 0 ? "+" : ""}
+                      {p.growth.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="tabular-nums">
+                    Total: <span className="font-medium">{p.total}</span> use
+                    cases
+                  </div>
+                </div>
+              );
+            }}
+          />
+          {Array.from(buckets.entries()).map(([tier, points]) => (
+            <Scatter
+              key={tier}
+              name={TIER_LABEL[tier] ?? tier}
+              data={points.map((p) => ({
+                ...p,
+                // Clamp to xCap so outliers still render at the edge.
+                growth: Math.min(p.growth, xCap),
+              }))}
+              fill={TIER_COLORS[tier] ?? "#64748b"}
+              fillOpacity={0.8}
             />
-            {Array.from(buckets.entries()).map(([tier, points]) => (
-              <Scatter
-                key={tier}
-                name={TIER_LABEL[tier] ?? tier}
-                data={points.map((p) => ({
-                  ...p,
-                  // Clamp to xCap so outliers still render at the edge.
-                  growth: Math.min(p.growth, xCap),
-                }))}
-                fill={TIER_COLORS[tier] ?? "#64748b"}
-                fillOpacity={0.8}
-              />
-            ))}
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
+          ))}
+        </ScatterChart>
+      </ChartFrame>
 
       <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
         {Array.from(buckets.keys()).map((tier) => (

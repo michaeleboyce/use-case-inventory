@@ -5,7 +5,6 @@
  * presentation of the rows handed in by `getFedrampAuthorizationsForProduct`.
  */
 
-import Link from "next/link";
 import { MonoChip } from "@/components/editorial";
 import { formatDate, formatNumber } from "@/lib/formatting";
 import type { FedrampAuthorization } from "@/lib/types";

@@ -13,7 +13,14 @@ import { MaturityTierCard } from "@/components/maturity-tier-card";
 import { TopProductsChart } from "@/components/charts/top-products-chart";
 import { AgencyTypeChart } from "@/components/charts/agency-type-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
+import { ReadinessHeadlineStat } from "@/components/readiness-headline-stat";
+import { getHeadlineStats } from "@/lib/readiness";
 import { buildUseCasesUrl } from "@/lib/urls";
+import {
+  buildHomeViewModel,
+  formatWholePercent,
+  humanizeCategory,
+} from "./_view-models/home";
 
 export default function HomePage() {
   const stats = getGlobalStats();
@@ -22,60 +29,28 @@ export default function HomePage() {
   const topProducts = getTopProducts(10);
   const agencyTypeData = getAgencyTypeByTier();
   const recent = getRecentlyModifiedAgencies(5);
-  const topCategories = getCategoryDistribution().slice(0, 6);
-
-  const humanizeCategory = (c: string): string =>
-    c.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
-
-  const distinctProducts = maturity.reduce(
-    (acc, row) => acc + (row.maturity?.distinct_products_deployed ?? 0),
-    0,
-  );
-  const codingEntries = maturity.reduce(
-    (acc, row) => acc + (row.maturity?.coding_tool_count ?? 0),
-    0,
-  );
-
-  const missingEnterpriseLLM = maturity
-    .filter((a) => (a.maturity?.has_enterprise_llm ?? 0) === 0)
-    .map((a) => ({ id: a.id, abbr: a.abbreviation, name: a.name }))
-    .sort((a, b) => a.abbr.localeCompare(b.abbr));
-  const missingCoding = maturity
-    .filter((a) => (a.maturity?.has_coding_assistants ?? 0) === 0)
-    .map((a) => ({ id: a.id, abbr: a.abbreviation, name: a.name }))
-    .sort((a, b) => a.abbr.localeCompare(b.abbr));
-
-  // Aggregate rollups across agency maturity rows.
-  const reportingAgencies = maturity.length;
-  const totalEntries = stats.total_use_cases + stats.total_consolidated;
-  const agenciesWithEnterpriseLLM = maturity.filter(
-    (a) => (a.maturity?.has_enterprise_llm ?? 0) === 1,
-  ).length;
-  const agenciesWithCoding = maturity.filter(
-    (a) => (a.maturity?.has_coding_assistants ?? 0) === 1,
-  ).length;
-  const agenciesWithAgentic = maturity.filter(
-    (a) => (a.maturity?.has_agentic_ai ?? 0) === 1,
-  ).length;
-  const agenciesWithCustom = maturity.filter(
-    (a) => (a.maturity?.has_custom_ai ?? 0) === 1,
-  ).length;
-  const agenticEntries = maturity.reduce(
-    (acc, row) => acc + (row.maturity?.agentic_ai_count ?? 0),
-    0,
-  );
-  const genAIEntries = stats.total_genai_entries;
-
-  const pct = (n: number, d: number): string =>
-    d === 0 ? "—" : `${Math.round((n / d) * 100)}%`;
-
-  const topProductsData = topProducts.map((p) => ({
-    id: p.id,
-    name: p.canonical_name,
-    vendor: p.vendor,
-    agency_count: p.agency_count,
-    use_case_count: p.use_case_count,
-  }));
+  const readinessHeadline = getHeadlineStats();
+  const {
+    agenciesWithAgentic,
+    agenciesWithCoding,
+    agenciesWithCustom,
+    agenciesWithEnterpriseLLM,
+    agenticEntries,
+    codingEntries,
+    distinctProducts,
+    genAIEntries,
+    missingCoding,
+    missingEnterpriseLLM,
+    reportingAgencies,
+    topCategories,
+    topProductsData,
+    totalEntries,
+  } = buildHomeViewModel({
+    stats,
+    maturity,
+    topProducts,
+    categories: getCategoryDistribution(),
+  });
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
@@ -349,27 +324,27 @@ export default function HomePage() {
               <StatGlance
                 label="Coding assistants"
                 count={stats.total_coding_entries}
-                pct={pct(stats.total_coding_entries, totalEntries)}
+                pct={formatWholePercent(stats.total_coding_entries, totalEntries)}
                 href={buildUseCasesUrl({ isCodingTool: true })}
                 accent="verified"
               />
               <StatGlance
                 label="Generative AI"
                 count={genAIEntries}
-                pct={pct(genAIEntries, totalEntries)}
+                pct={formatWholePercent(genAIEntries, totalEntries)}
                 href={buildUseCasesUrl({ isGenAI: true })}
                 accent="stamp"
               />
               <StatGlance
                 label="Agentic AI"
                 count={agenticEntries}
-                pct={pct(agenticEntries, totalEntries)}
+                pct={formatWholePercent(agenticEntries, totalEntries)}
                 href={buildUseCasesUrl({ aiSophistications: ["agentic"] })}
               />
               <StatGlance
                 label="High-impact"
                 count={stats.total_high_impact_entries}
-                pct={pct(stats.total_high_impact_entries, totalEntries)}
+                pct={formatWholePercent(stats.total_high_impact_entries, totalEntries)}
                 href={buildUseCasesUrl({ highImpactDesignations: ["high_impact"] })}
               />
             </div>
@@ -383,26 +358,26 @@ export default function HomePage() {
               <StatGlance
                 label="Pre-deployment"
                 count={stats.stage_bucket_counts.pre_deployment}
-                pct={pct(stats.stage_bucket_counts.pre_deployment, stats.total_use_cases)}
+                pct={formatWholePercent(stats.stage_bucket_counts.pre_deployment, stats.total_use_cases)}
                 href={buildUseCasesUrl({ stageBuckets: ["pre_deployment"] })}
               />
               <StatGlance
                 label="Pilot"
                 count={stats.stage_bucket_counts.pilot}
-                pct={pct(stats.stage_bucket_counts.pilot, stats.total_use_cases)}
+                pct={formatWholePercent(stats.stage_bucket_counts.pilot, stats.total_use_cases)}
                 href={buildUseCasesUrl({ stageBuckets: ["pilot"] })}
               />
               <StatGlance
                 label="Deployed"
                 count={stats.stage_bucket_counts.deployed}
-                pct={pct(stats.stage_bucket_counts.deployed, stats.total_use_cases)}
+                pct={formatWholePercent(stats.stage_bucket_counts.deployed, stats.total_use_cases)}
                 href={buildUseCasesUrl({ stageBuckets: ["deployed"] })}
                 accent="verified"
               />
               <StatGlance
                 label="Retired"
                 count={stats.stage_bucket_counts.retired}
-                pct={pct(stats.stage_bucket_counts.retired, stats.total_use_cases)}
+                pct={formatWholePercent(stats.stage_bucket_counts.retired, stats.total_use_cases)}
                 href={buildUseCasesUrl({ stageBuckets: ["retired"] })}
               />
             </div>
@@ -416,32 +391,61 @@ export default function HomePage() {
               <StatGlance
                 label="With enterprise LLM"
                 count={agenciesWithEnterpriseLLM}
-                pct={pct(agenciesWithEnterpriseLLM, reportingAgencies)}
+                pct={formatWholePercent(agenciesWithEnterpriseLLM, reportingAgencies)}
                 href={buildUseCasesUrl({ isGeneralLLMAccess: true })}
                 accent="stamp"
               />
               <StatGlance
                 label="With coding assistants"
                 count={agenciesWithCoding}
-                pct={pct(agenciesWithCoding, reportingAgencies)}
+                pct={formatWholePercent(agenciesWithCoding, reportingAgencies)}
                 href={buildUseCasesUrl({ isCodingTool: true })}
                 accent="verified"
               />
               <StatGlance
                 label="With agentic AI"
                 count={agenciesWithAgentic}
-                pct={pct(agenciesWithAgentic, reportingAgencies)}
+                pct={formatWholePercent(agenciesWithAgentic, reportingAgencies)}
                 href={buildUseCasesUrl({ aiSophistications: ["agentic"] })}
               />
               <StatGlance
                 label="With custom AI"
                 count={agenciesWithCustom}
-                pct={pct(agenciesWithCustom, reportingAgencies)}
+                pct={formatWholePercent(agenciesWithCustom, reportingAgencies)}
                 href={buildUseCasesUrl({ entryTypes: ["custom_system"] })}
               />
             </div>
           </div>
         </div>
+      </Section>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § Ia — THE HEADLINE (Readiness Index)                          */}
+      {/* ------------------------------------------------------------ */}
+      <Section
+        number="Ia"
+        title="The headline"
+        lede="A published rubric for state-capacity readiness, scored against five dimensions."
+        source="derived"
+      >
+        <ReadinessHeadlineStat
+          value={Math.round(readinessHeadline.internal_build_pct)}
+          unit="%"
+          label="of federal AI is built in-house — the rest is purchased commercial tooling"
+          caption={`Computed across all reported use cases · ${readinessHeadline.total_agencies_scored} agencies scored against the v1.1 capacity-first rubric`}
+          variant="big"
+          href="/readiness/methodology#internal-build"
+        />
+        <p className="mt-6 max-w-prose font-display text-[1rem] italic leading-snug text-stone-600">
+          The ledger below groups agencies by an internal-heuristic tier; the
+          readiness index above scores them against a published rubric.{" "}
+          <Link
+            href="/readiness"
+            className="underline decoration-dotted underline-offset-4 text-foreground hover:text-[var(--stamp)]"
+          >
+            See the league table →
+          </Link>
+        </p>
       </Section>
 
       {/* ------------------------------------------------------------ */}

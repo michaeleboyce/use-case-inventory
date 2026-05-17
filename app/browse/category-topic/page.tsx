@@ -69,8 +69,8 @@ export default async function BrowseCategoryTopicPage() {
           <p className="mt-4 max-w-prose text-[1rem] leading-[1.55] text-foreground/85">
             IFP-curated product categories on rows × OMB-filed topic areas on
             columns. Cell counts are distinct use cases at the intersection —
-            useful for asking "which kinds of AI tools are agencies pointing at
-            which kinds of problems?"
+            useful for asking &ldquo;which kinds of AI tools are agencies pointing at
+            which kinds of problems?&rdquo;
           </p>
 
           {/* Provenance — this view pairs an IFP-derived axis with an

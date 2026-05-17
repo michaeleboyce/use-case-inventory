@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node -e \"const fs=require('fs');const src='../data/federal_ai_inventory_2025.db';if(fs.existsSync(src))fs.copyFileSync(src,'data/federal_ai_inventory_2025.db')\"",
+    "prebuild": "node -e \"const fs=require('fs');const src='../data/federal_ai_inventory_2025.db';if(fs.existsSync(src))fs.copyFileSync(src,'data/federal_ai_inventory_2025.db')\" && npm run lint",
     "build": "next build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit --incremental false",
     "start": "next start"
   },
@@ -34,6 +36,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.6"

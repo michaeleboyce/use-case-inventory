@@ -12,11 +12,11 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartFrame } from "@/components/charts/chart-frame";
 import { Button } from "@/components/ui/button";
 
 export type EntryTypeRow = {
@@ -114,65 +114,61 @@ export function EntryTypeMixChart({
         </Button>
       </div>
 
-      <div style={{ height }} className="w-full">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <BarChart
-            data={visible}
-            layout="vertical"
-            margin={{ top: 4, right: 8, bottom: 30, left: 8 }}
-            stackOffset={mode === "percent" ? "expand" : "none"}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis
-              type="number"
-              domain={mode === "percent" ? [0, 100] : undefined}
-              tickFormatter={(v) =>
-                mode === "percent" ? `${Math.round(v)}%` : String(v)
-              }
-              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              allowDecimals={false}
+      <ChartFrame height={height}>
+        <BarChart
+          data={visible}
+          layout="vertical"
+          margin={{ top: 4, right: 8, bottom: 30, left: 8 }}
+          stackOffset={mode === "percent" ? "expand" : "none"}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis
+            type="number"
+            domain={mode === "percent" ? [0, 100] : undefined}
+            tickFormatter={(v) =>
+              mode === "percent" ? `${Math.round(v)}%` : String(v)
+            }
+            tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            allowDecimals={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="abbreviation"
+            tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+            stroke="var(--border)"
+            width={70}
+            interval={0}
+          />
+          <Tooltip
+            cursor={{ fill: "var(--muted)", opacity: 0.3 }}
+            contentStyle={{
+              background: "var(--popover)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              fontSize: 12,
+              color: "var(--popover-foreground)",
+            }}
+            formatter={(value, name) => {
+              const v = Number(value ?? 0);
+              return [
+                mode === "percent" ? `${v.toFixed(1)}%` : `${Math.round(v)}`,
+                String(name ?? ""),
+              ];
+            }}
+          />
+          <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
+          {SEGMENTS.map((seg) => (
+            <Bar
+              key={seg.key as string}
+              dataKey={seg.key as string}
+              name={seg.label}
+              stackId="a"
+              fill={seg.color}
             />
-            <YAxis
-              type="category"
-              dataKey="abbreviation"
-              tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-              stroke="var(--border)"
-              width={70}
-              interval={0}
-            />
-            <Tooltip
-              cursor={{ fill: "var(--muted)", opacity: 0.3 }}
-              contentStyle={{
-                background: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                fontSize: 12,
-                color: "var(--popover-foreground)",
-              }}
-              formatter={(value, name) => {
-                const v = Number(value ?? 0);
-                return [
-                  mode === "percent"
-                    ? `${v.toFixed(1)}%`
-                    : `${Math.round(v)}`,
-                  String(name ?? ""),
-                ];
-              }}
-            />
-            <Legend wrapperStyle={{ fontSize: 11 }} iconSize={8} />
-            {SEGMENTS.map((seg) => (
-              <Bar
-                key={seg.key as string}
-                dataKey={seg.key as string}
-                name={seg.label}
-                stackId="a"
-                fill={seg.color}
-              />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          ))}
+        </BarChart>
+      </ChartFrame>
     </div>
   );
 }

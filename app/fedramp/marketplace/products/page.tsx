@@ -5,6 +5,7 @@
  */
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { Section, MonoChip, Eyebrow } from "@/components/editorial";
 import {
   getFedrampProducts,
@@ -182,12 +183,12 @@ export default async function MarketplaceProductsPage({
                     </MonoChip>
                   ))}
                 </div>
-                <a
+                <Link
                   href="/fedramp/marketplace/products"
                   className="mt-3 inline-block font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:text-[var(--stamp)]"
                 >
                   Reset filters →
-                </a>
+                </Link>
               </div>
             ) : null}
           </div>

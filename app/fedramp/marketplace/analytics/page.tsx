@@ -3,9 +3,8 @@
  *
  * The original FedRAMP dashboard runs four bespoke db helpers
  * (`getAnnualAtoCounts`, `getReuseHeatmap`, `getAssessorLeaderboard`,
- * `getPipelineFunnel`). To respect file ownership of `lib/db.ts` (Foundation
- * agent), this page derives the same series locally from the existing
- * helpers — `getFedrampProducts`, `getFedrampAuthorizationsForProduct`,
+ * `getPipelineFunnel`). This page derives the same series locally from the
+ * existing `@/lib/db` helpers — `getFedrampProducts`, `getFedrampAuthorizationsForProduct`,
  * etc. The numbers are still computed on the server, in one render pass.
  */
 

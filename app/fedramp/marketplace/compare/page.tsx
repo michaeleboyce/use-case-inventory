@@ -10,7 +10,7 @@
  */
 
 import Link from "next/link";
-import { Eyebrow, MonoChip } from "@/components/editorial";
+import { Eyebrow } from "@/components/editorial";
 import {
   getFedrampProductById,
   getFedrampProducts,
