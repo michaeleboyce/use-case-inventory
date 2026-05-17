@@ -14,6 +14,7 @@ export default defineConfig([
     },
   },
   globalIgnores([
+    ".claude/**",
     ".next/**",
     "archive/**",
     "coverage/**",
