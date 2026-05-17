@@ -17,13 +17,7 @@
  */
 import Link from "next/link";
 
-import {
-  getDiscrepancyAgencies,
-  getDiscrepancyPatterns,
-  getDiscrepancyRows,
-  getDiscrepancySummary,
-} from "@/lib/discrepancies";
-import { canWriteResolutions } from "@/lib/resolutions";
+import { getDiscrepancySummary } from "@/lib/discrepancies";
 import type { DiscrepancyStatus } from "@/lib/types";
 import { Section, MonoChip } from "@/components/editorial";
 import { BulkResolveBar } from "@/components/bulk-resolve-bar";
@@ -32,6 +26,7 @@ import { DiscrepancyPatternCard } from "@/components/discrepancy/discrepancy-pat
 import { DiscrepancyAgencyPulse } from "@/components/discrepancy/discrepancy-agency-pulse";
 import { DiscrepancyPostureBanner } from "@/components/discrepancy/discrepancy-posture-banner";
 import { SessionCounterPill } from "@/components/session-counter-pill";
+import { buildDiscrepanciesViewModel } from "./_view-model";
 
 export const metadata = {
   title: "Discrepancies · Federal AI Use Case Inventory",
@@ -71,22 +66,22 @@ export default async function DiscrepanciesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const initialStatus = coerceStatus(params.status);
-  const initialAgency = coerceString(params.agency);
-  const initialQuery = coerceString(params.q);
-
-  const summary = getDiscrepancySummary();
-  const rows = getDiscrepancyRows();
-  const agencies = getDiscrepancyAgencies();
-  const patterns = getDiscrepancyPatterns();
-  const canWrite = canWriteResolutions();
-  // First unresolved audit id — drives the "Begin triage →" CTA.
-  const unresolvedRows = canWrite
-    ? getDiscrepancyRows({ unresolvedOnly: true })
-    : [];
-  const firstUnresolvedId =
-    unresolvedRows.length > 0 ? unresolvedRows[0].audit_id : null;
-  const totalUnresolved = unresolvedRows.length;
+  const {
+    summary,
+    rows,
+    agencies,
+    patterns,
+    canWrite,
+    firstUnresolvedId,
+    totalUnresolved,
+    initialStatus,
+    initialAgency,
+    initialQuery,
+  } = await buildDiscrepanciesViewModel({
+    initialStatus: coerceStatus(params.status),
+    initialAgency: coerceString(params.agency),
+    initialQuery: coerceString(params.q),
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 space-y-12">
