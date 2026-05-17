@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit --incremental false",
+    "test": "vitest run",
     "start": "next start"
   },
   "engines": {

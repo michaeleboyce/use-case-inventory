@@ -27,15 +27,31 @@ const DB_PATH = (() => {
 
 declare global {
   var __aiInventoryDb: Database.Database | undefined;
+  var __aiInventoryDbOverride: Database.Database | undefined;
 }
 
 export function getDb(): Database.Database {
+  // Test-injected override takes precedence — see `tests/setup.ts`. The
+  // override holds an in-memory database seeded from `tests/fixtures/*.sql`
+  // so domain modules can be exercised without touching the real DB file.
+  if (globalThis.__aiInventoryDbOverride) {
+    return globalThis.__aiInventoryDbOverride;
+  }
   if (!globalThis.__aiInventoryDb) {
     const db = new Database(DB_PATH, { readonly: true, fileMustExist: true });
     db.pragma("cache_size = -32000"); // ~32 MB page cache
     globalThis.__aiInventoryDb = db;
   }
   return globalThis.__aiInventoryDb;
+}
+
+/**
+ * Replace the DB returned by `getDb()` with a caller-provided handle.
+ * Intended for tests; pass `null` to clear the override and fall back to the
+ * real on-disk DB. Production code should never call this.
+ */
+export function setDbOverride(db: Database.Database | null): void {
+  globalThis.__aiInventoryDbOverride = db ?? undefined;
 }
 
 /** Expose a raw handle for ad-hoc scripts. Do not use from React trees. */
