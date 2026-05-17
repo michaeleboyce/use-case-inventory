@@ -2,7 +2,7 @@
 // (in the ETL repo at 2025-aia-use-case-inventory/).
 // If you change a weight or tier threshold here, change it there too.
 
-import type { ReadinessTier } from "./types";
+import type { ReadinessTier } from "./types/inventory";
 
 export const RUBRIC_VERSION = "1.1";
 

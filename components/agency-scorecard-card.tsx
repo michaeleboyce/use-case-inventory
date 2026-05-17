@@ -10,7 +10,7 @@
  * card elsewhere on the page.
  */
 import Link from "next/link";
-import type { AgencyReadinessWithName } from "@/lib/types";
+import type { AgencyReadinessWithName } from "@/lib/types/inventory";
 import { ReadinessSubscoreBar } from "./readiness-subscore-bar";
 
 // v1.1 capacity-first weights. MUST match scripts/compute_agency_readiness.py

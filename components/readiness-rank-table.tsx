@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { AgencyReadinessWithName } from "@/lib/types";
+import type { AgencyReadinessWithName } from "@/lib/types/inventory";
 
 /**
  * Sortable client-component ranked table for the /readiness hub.

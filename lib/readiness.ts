@@ -16,7 +16,7 @@ import type {
   AgencyReadiness,
   AgencyReadinessWithName,
   ReadinessTier,
-} from "./types";
+} from "./types/inventory";
 
 interface ReadinessRow {
   agency_id: number;
