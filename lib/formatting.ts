@@ -124,3 +124,17 @@ export function formatBoolFlag(v: number | null | undefined): string {
   if (v === 0) return "No";
   return "—";
 }
+
+/** snake_case category key → Title-Cased label (e.g. "general_llm" → "General Llm"). */
+export function humanizeCategory(category: string): string {
+  return category
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+/** Round numerator/denominator into a whole-percent string. "—" if denom 0. */
+export function formatWholePercent(numerator: number, denominator: number): string {
+  return denominator === 0
+    ? "—"
+    : `${Math.round((numerator / denominator) * 100)}%`;
+}

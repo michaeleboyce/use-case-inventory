@@ -1,36 +1,26 @@
 import Link from "next/link";
 import {
-  getAgencyMaturity,
-  getAgencyTypeByTier,
-  getCategoryDistribution,
-  getGlobalStats,
-  getMaturityTierSummary,
-  getRecentlyModifiedAgencies,
-  getTopProducts,
-} from "@/lib/db";
-import { formatDate, formatNumber } from "@/lib/formatting";
+  formatDate,
+  formatNumber,
+  formatWholePercent,
+  humanizeCategory,
+} from "@/lib/formatting";
 import { MaturityTierCard } from "@/components/maturity-tier-card";
 import { TopProductsChart } from "@/components/charts/top-products-chart";
 import { AgencyTypeChart } from "@/components/charts/agency-type-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
-import { getHeadlineStats } from "@/lib/readiness";
 import { buildUseCasesUrl } from "@/lib/urls";
-import {
-  buildHomeViewModel,
-  formatWholePercent,
-  humanizeCategory,
-} from "./_view-models/home";
+import { buildHomeViewModel } from "./_view-model";
 
-export default function HomePage() {
-  const stats = getGlobalStats();
-  const maturity = getAgencyMaturity();
-  const tiers = getMaturityTierSummary();
-  const topProducts = getTopProducts(10);
-  const agencyTypeData = getAgencyTypeByTier();
-  const recent = getRecentlyModifiedAgencies(5);
-  const readinessHeadline = getHeadlineStats();
+export default async function HomePage() {
   const {
+    stats,
+    maturity,
+    tiers,
+    agencyTypeData,
+    recent,
+    readinessHeadline,
     agenciesWithAgentic,
     agenciesWithCoding,
     agenciesWithCustom,
@@ -45,12 +35,7 @@ export default function HomePage() {
     topCategories,
     topProductsData,
     totalEntries,
-  } = buildHomeViewModel({
-    stats,
-    maturity,
-    topProducts,
-    categories: getCategoryDistribution(),
-  });
+  } = await buildHomeViewModel();
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
