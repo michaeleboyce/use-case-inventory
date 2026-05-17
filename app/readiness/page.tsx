@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Section } from "@/components/editorial";
-import { ReadinessHeadlineStat } from "@/components/readiness-headline-stat";
-import { ReadinessTierBand } from "@/components/readiness-tier-band";
-import { ReadinessRankTable } from "@/components/readiness-rank-table";
+import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
+import { ReadinessTierBand } from "@/components/readiness/readiness-tier-band";
+import { ReadinessRankTable } from "@/components/readiness/readiness-rank-table";
 import * as readinessLib from "@/lib/readiness";
 import {
   getAgencyReadinessRanked,

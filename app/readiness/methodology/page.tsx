@@ -9,7 +9,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Section, MonoChip } from "@/components/editorial";
-import { ReadinessRubricTable } from "@/components/readiness-rubric-table";
+import { ReadinessRubricTable } from "@/components/readiness/readiness-rubric-table";
 import {
   RUBRIC_VERSION,
   RUBRIC_DIMENSIONS,

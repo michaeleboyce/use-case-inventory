@@ -13,7 +13,7 @@ import { MaturityTierCard } from "@/components/maturity-tier-card";
 import { TopProductsChart } from "@/components/charts/top-products-chart";
 import { AgencyTypeChart } from "@/components/charts/agency-type-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
-import { ReadinessHeadlineStat } from "@/components/readiness-headline-stat";
+import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
 import { getHeadlineStats } from "@/lib/readiness";
 import { buildUseCasesUrl } from "@/lib/urls";
 import {
