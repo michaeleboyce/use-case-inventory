@@ -16,7 +16,16 @@ const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/use-cases", label: "Use Cases", kicker: "II" },
   { href: "/products", label: "Products", kicker: "III" },
   { href: "/analytics", label: "Analytics", kicker: "IV" },
-  { href: "/fedramp", label: "FedRAMP", kicker: "V" },
+];
+
+// FedRAMP is its own sub-area with an overview + three named surfaces;
+// expose them as a hover/focus dropdown so the section rail doesn't have
+// to swallow a dedicated link for each one.
+const FEDRAMP_SECTIONS: Array<{ href: string; label: string }> = [
+  { href: "/fedramp", label: "Overview" },
+  { href: "/fedramp/marketplace", label: "Marketplace" },
+  { href: "/fedramp/coverage", label: "Coverage" },
+  { href: "/fedramp/curate", label: "Curate" },
 ];
 
 // Lower-frequency surfaces, collapsed into a "More" dropdown.
@@ -86,6 +95,7 @@ export function Navigation() {
               {link.label}
             </NavLink>
           ))}
+          <FedrampMenu />
           <BrowseMenu />
           <MoreMenu />
         </nav>
@@ -173,6 +183,50 @@ function BrowseMenu() {
             className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             {d.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "FedRAMP" sub-area menu. Same CSS-only hover/focus-within pattern as
+ * BrowseMenu and MoreMenu. The trigger NavLink points to /fedramp (the
+ * overview page) and shows active state for any `/fedramp/*` path, so
+ * readers can either click the trigger to land on the overview or hover
+ * to jump straight into Marketplace / Coverage / Curate.
+ */
+function FedrampMenu() {
+  return (
+    <div className="group/fedramp relative -mt-px flex items-stretch">
+      <NavLink
+        href="/fedramp"
+        className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
+      >
+        <span
+          aria-hidden
+          className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
+        >
+          V
+        </span>
+        FedRAMP
+        <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
+          ▾
+        </span>
+      </NavLink>
+      <div
+        role="menu"
+        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[12rem] border border-border bg-background py-1 shadow-md group-hover/fedramp:block group-focus-within/fedramp:block"
+      >
+        {FEDRAMP_SECTIONS.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            role="menuitem"
+            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {s.label}
           </Link>
         ))}
       </div>
