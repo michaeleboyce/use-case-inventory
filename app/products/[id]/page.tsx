@@ -14,13 +14,14 @@ import { ProductCard } from "@/components/product-card";
 import { BackLink } from "@/components/back-link";
 import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial";
 import { Badge } from "@/components/ui/badge";
-import { FedrampCoverageBadge } from "@/components/FedrampCoverageBadge";
+import { FedrampCoverageBadge } from "@/components/fedramp/coverage-badge";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
 import {
   agencyUseCasesUrl,
   buildUseCasesUrl,
   productUseCasesUrl,
 } from "@/lib/urls";
+import { StatCell } from "./_sections/stat-cell";
 
 type ProductPageProps = { params: Promise<{ id: string }> };
 
@@ -512,40 +513,6 @@ export default async function ProductDetailPage(props: ProductPageProps) {
       </footer>
     </div>
   );
-}
-
-function StatCell({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: number;
-  href?: string;
-}) {
-  const inner = (
-    <>
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </div>
-      <div
-        className={`mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground transition-colors md:text-[2.8rem] ${
-          href ? "group-hover:text-[var(--stamp)]" : ""
-        }`}
-      >
-        {formatNumber(value)}
-      </div>
-    </>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="group block">
-        {inner}
-      </Link>
-    );
-  }
-  return <div>{inner}</div>;
 }
 
 // Pre-render known product IDs at build time.
