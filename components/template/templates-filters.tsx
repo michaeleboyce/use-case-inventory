@@ -5,7 +5,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { TemplateCard } from "@/components/template-card";
+import { TemplateCard } from "@/components/template/template-card";
 import { formatNumber, humanize } from "@/lib/formatting";
 import type { TemplateWithCounts } from "@/lib/types";
 

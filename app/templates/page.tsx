@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAllTemplates } from "@/lib/db";
-import { TemplatesFilters } from "@/components/templates-filters";
+import { TemplatesFilters } from "@/components/template/templates-filters";
 import { CapabilityCategoryChart } from "@/components/charts/capability-category-chart";
 import { Section, Figure } from "@/components/editorial";
 import { formatNumber } from "@/lib/formatting";
