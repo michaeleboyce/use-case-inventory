@@ -3,13 +3,8 @@ import { Section } from "@/components/editorial";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
 import { ReadinessTierBand } from "@/components/readiness/readiness-tier-band";
 import { ReadinessRankTable } from "@/components/readiness/readiness-rank-table";
-import * as readinessLib from "@/lib/readiness";
-import {
-  getAgencyReadinessRanked,
-  getHeadlineStats,
-  getReadinessTierSummary,
-} from "@/lib/readiness";
 import { formatDate, formatNumber } from "@/lib/formatting";
+import { buildReadinessViewModel } from "./_view-model";
 
 export const metadata = {
   title: "Federal AI Readiness · IFP",
@@ -17,125 +12,21 @@ export const metadata = {
     "A published rubric scoring federal agencies on adoption, frontier capability, procurement hygiene, reporting quality, and governance documentation.",
 };
 
-/**
- * Sub-story data sources are owned by Agent C and may not yet exist at the
- * time this page is wired up. We import them defensively and fall back to
- * empty arrays / nulls so the page renders cleanly either way. Once C lands
- * its `getVendorConcentration` / `getFrontierPenetration` /
- * `getReportingCompleteness` exports in `lib/readiness.ts`, the page picks
- * them up automatically with no edit here.
- */
-interface VendorConcentrationRow {
-  vendor: string;
-  use_case_count: number;
-  agency_count: number;
-  share_of_uc_pct: number;
-}
-interface FrontierPenetrationRow {
-  agency_abbreviation: string;
-  agency_name: string;
-  frontier_use_case_count: number;
-  total_use_case_count: number;
-  pct_frontier: number;
-}
-interface ReportingCompletenessRow {
-  agency_abbreviation: string;
-  agency_name: string;
-  completion_rate_pct: number;
-  fields_evaluated: number;
-}
-
-// Shape adapters — lib/readiness.ts exports getVendorConcentration /
-// getFrontierPenetration / getReportingCompleteness with their own shapes;
-// we adapt them into the row shapes this page expects.
-interface ReadinessLibExtras {
-  getVendorConcentration?: () => {
-    top_vendors: Array<{
-      vendor: string;
-      use_case_count: number;
-      agency_count: number;
-      share_of_total: number;
-    }>;
-    herfindahl_index: number;
-    top5_share: number;
-  };
-  getFrontierPenetration?: () => {
-    federal_frontier_pct: number;
-    top_agencies: Array<{
-      agency_abbreviation: string;
-      frontier_pct: number;
-      frontier_count: number;
-      total_count: number;
-    }>;
-  };
-  getReportingCompleteness?: () => Array<{
-    agency_abbreviation: string;
-    overall_completeness: number;
-    per_field: Record<string, number>;
-  }>;
-}
-
-function loadSubStories(): {
-  vendors: VendorConcentrationRow[];
-  vendorHerfindahl: number | null;
-  frontier: FrontierPenetrationRow[];
-  reporting: ReportingCompletenessRow[];
-} {
-  let vendors: VendorConcentrationRow[] = [];
-  let vendorHerfindahl: number | null = null;
-  let frontier: FrontierPenetrationRow[] = [];
-  let reporting: ReportingCompletenessRow[] = [];
-
-  const extras = readinessLib as unknown as ReadinessLibExtras;
-  try {
-    if (typeof extras.getVendorConcentration === "function") {
-      const vc = extras.getVendorConcentration();
-      vendors = vc.top_vendors.map((v) => ({
-        vendor: v.vendor,
-        use_case_count: v.use_case_count,
-        agency_count: v.agency_count,
-        share_of_uc_pct: v.share_of_total * 100,
-      }));
-      // HHI on the 0-10000 antitrust scale for inline display.
-      vendorHerfindahl = Math.round(vc.herfindahl_index * 10000);
-    }
-    if (typeof extras.getFrontierPenetration === "function") {
-      const fp = extras.getFrontierPenetration();
-      frontier = fp.top_agencies.map((r) => ({
-        agency_abbreviation: r.agency_abbreviation,
-        agency_name: r.agency_abbreviation,
-        frontier_use_case_count: r.frontier_count,
-        total_use_case_count: r.total_count,
-        pct_frontier: r.frontier_pct * 100,
-      }));
-    }
-    if (typeof extras.getReportingCompleteness === "function") {
-      const rc = extras.getReportingCompleteness();
-      reporting = rc.map((r) => ({
-        agency_abbreviation: r.agency_abbreviation,
-        agency_name: r.agency_abbreviation,
-        completion_rate_pct: r.overall_completeness * 100,
-        fields_evaluated: Object.keys(r.per_field).length,
-      }));
-    }
-  } catch {
-    // Defensive — extras may throw at runtime if they query a not-yet-built
-    // table; degrade to empty sections rather than crash the page.
-  }
-  return { vendors, vendorHerfindahl, frontier, reporting };
-}
-
-export default function ReadinessPage() {
-  const ranked = getAgencyReadinessRanked();
-  const tiers = getReadinessTierSummary();
-  const headline = getHeadlineStats();
-  const { vendors, vendorHerfindahl, frontier, reporting } = loadSubStories();
-
-  const totalScored = headline.total_agencies_scored;
-  const fedrampPct = Math.round(headline.fedramp_coverage_pct);
-  const internalBuildPct = Math.round(headline.internal_build_pct);
-  const productionPct = Math.round(headline.production_rate_pct);
-  const complianceGapPct = Math.round(headline.hi_no_risk_docs_pct);
+export default async function ReadinessPage() {
+  const {
+    ranked,
+    tiers,
+    headline,
+    vendors,
+    vendorHerfindahl,
+    frontier,
+    reporting,
+    totalScored,
+    fedrampPct,
+    internalBuildPct,
+    productionPct,
+    complianceGapPct,
+  } = await buildReadinessViewModel();
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
