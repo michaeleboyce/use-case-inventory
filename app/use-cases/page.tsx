@@ -7,16 +7,16 @@ import {
 } from "@/lib/db";
 import { formatNumber } from "@/lib/formatting";
 import type { UseCaseFilterInput } from "@/lib/types";
-import { UseCaseFilters } from "@/components/use-case-filters";
+import { UseCaseFilters } from "@/components/use-case/filters";
 import { MobileFiltersSheet } from "@/components/mobile-filters-sheet";
 import { PageSubnav } from "@/components/page-subnav";
-import { UseCaseTable } from "@/components/use-case-table";
-import { UseCaseGrid } from "@/components/use-case-grid";
+import { UseCaseTable } from "@/components/use-case/use-case-table";
+import { UseCaseGrid } from "@/components/use-case/use-case-grid";
 import {
   ExportCsvButton,
   Pagination,
   ViewToggle,
-} from "@/components/use-case-explorer-toolbar";
+} from "@/components/use-case/use-case-explorer-toolbar";
 
 export const metadata = {
   title: "Use Cases · Federal AI Inventory",
