@@ -13,9 +13,10 @@ import { CommandPaletteHint } from "./command-palette";
 // marketplace / coverage / curate routes and readers go there often.
 const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/agencies", label: "Agencies", kicker: "I" },
-  { href: "/use-cases", label: "Use Cases", kicker: "II" },
-  { href: "/products", label: "Products", kicker: "III" },
-  { href: "/analytics", label: "Analytics", kicker: "IV" },
+  { href: "/readiness", label: "Readiness", kicker: "II" },
+  { href: "/use-cases", label: "Use Cases", kicker: "III" },
+  { href: "/products", label: "Products", kicker: "IV" },
+  { href: "/analytics", label: "Analytics", kicker: "V" },
 ];
 
 // FedRAMP is its own sub-area with an overview + three named surfaces;
