@@ -12,11 +12,8 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getCrossCutSummary,
-  getCrossCutHeatmap,
-  type CrossCutKey,
-} from "@/lib/db";
+import { getCrossCutSummary, getCrossCutHeatmap } from "@/lib/db";
+import type { CrossCutKey } from "@/lib/types";
 import { Section, MonoChip } from "@/components/editorial";
 import { CrossCutList } from "@/components/cross-cut-list";
 import { CrossCutHeatmap } from "@/components/cross-cut-heatmap";

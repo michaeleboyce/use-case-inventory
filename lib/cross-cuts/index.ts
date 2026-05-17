@@ -11,7 +11,7 @@
  * If you add a new dimension to CrossCutDimension in lib/urls.ts, add its
  * provenance here. TagChip will auto-pick it up.
  */
-import type { CrossCutDimension } from "./urls";
+import type { CrossCutDimension } from "../urls";
 
 export type DimensionProvenance = {
   source: "omb" | "derived";

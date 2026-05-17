@@ -9,8 +9,8 @@
  * Pattern adapted from lib/hierarchy-db.ts: imports rawDb() from ./db,
  * defines small helper SELECTs, returns plain typed objects.
  */
-import { rawDb } from "./db";
-import { buildResolutionKey, getResolutionMap } from "./resolutions";
+import { rawDb } from "../db";
+import { buildResolutionKey, getResolutionMap } from "../resolutions";
 import type {
   DiscrepancyDetail,
   DiscrepancyDriftField,
@@ -21,7 +21,7 @@ import type {
   DiscrepancyStatus,
   DiscrepancySummary,
   ResolutionReason,
-} from "./types";
+} from "../types";
 
 // The 10 canonical fields surfaced in the per-case side-by-side. Each maps
 // to a column on use_cases (DB-side) and on omb_consolidated_rows (OMB

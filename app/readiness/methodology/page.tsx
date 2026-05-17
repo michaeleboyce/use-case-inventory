@@ -14,7 +14,7 @@ import {
   RUBRIC_VERSION,
   RUBRIC_DIMENSIONS,
   TIER_BANDS,
-} from "@/lib/readiness-rubric";
+} from "@/lib/readiness/rubric";
 import { getHeadlineStats } from "@/lib/readiness";
 
 export const metadata: Metadata = {

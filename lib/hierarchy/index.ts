@@ -12,13 +12,13 @@
  * Returns plain objects from sqlite — null is preserved as JS null.
  */
 
-import { rawDb } from "./db";
+import { rawDb } from "../db";
 import type {
   FederalOrganization,
   HierarchyBreadcrumb,
   OrgLevel,
   OrgWithUseCaseCount,
-} from "./types";
+} from "../types";
 
 // ---------------------------------------------------------------------------
 // SELECT projections

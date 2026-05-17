@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { getAgencyMaturity, getGlobalStats } from "@/lib/db";
-import { getFullHierarchyWithCounts } from "@/lib/hierarchy-db";
+import { getFullHierarchyWithCounts } from "@/lib/hierarchy";
 import { AgenciesTable, type AgencyRow } from "@/components/agencies-table";
 import { AgencyHierarchyTree } from "@/components/hierarchy";
 import { MetricTile } from "@/components/metric-tile";

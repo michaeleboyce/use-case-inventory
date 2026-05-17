@@ -7,7 +7,7 @@
  * must change too (see RUBRIC_DIMENSIONS comment).
  */
 
-import { RUBRIC_DIMENSIONS } from "@/lib/readiness-rubric";
+import { RUBRIC_DIMENSIONS } from "@/lib/readiness/rubric";
 
 export function ReadinessRubricTable() {
   return (

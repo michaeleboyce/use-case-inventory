@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { tagFilterUrl } from "@/lib/urls";
-import type { CrossCutKey, CrossCutValueRow } from "@/lib/db";
+import type { CrossCutKey, CrossCutValueRow } from "@/lib/types";
 import {
   MonoChip,
   SOPHISTICATION_LABELS,

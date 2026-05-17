@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { getAgencyById } from "@/lib/db";
-import { getOrganizationBySlugOrAbbr } from "@/lib/hierarchy-db";
+import { getOrganizationBySlugOrAbbr } from "@/lib/hierarchy";
 import { getAgencyReadinessByAbbr } from "@/lib/readiness";
 import { AgencyScorecardCard } from "@/components/agency-scorecard-card";
 import { PrintButton } from "./print-button";

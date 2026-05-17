@@ -7,8 +7,11 @@ import {
   SCOPE_LABELS,
   SOPHISTICATION_LABELS,
 } from "@/components/editorial";
-import type { PeerUseCaseRow } from "@/lib/db";
-import type { FedrampCoverageState, FedrampProduct } from "@/lib/types";
+import type {
+  FedrampCoverageState,
+  FedrampProduct,
+  PeerUseCaseRow,
+} from "@/lib/types";
 
 /** Renders a list of peer use cases — entries that share ≥3 analytical
  *  dimensions with the current use case (and are not from the same agency). */

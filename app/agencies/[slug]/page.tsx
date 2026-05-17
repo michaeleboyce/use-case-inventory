@@ -20,7 +20,7 @@ import {
   getOrganizationBreadcrumbs,
   getChildOrgRollups,
   getMaturityForOrg,
-} from "@/lib/hierarchy-db";
+} from "@/lib/hierarchy";
 import { HierarchyBreadcrumbs } from "@/components/hierarchy";
 import { BackLink } from "@/components/back-link";
 import type {

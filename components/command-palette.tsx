@@ -20,7 +20,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
-import type { CommandPaletteIndex } from "@/lib/db";
+import type { CommandPaletteIndex } from "@/lib/types";
 import {
   BarChart3,
   Box,

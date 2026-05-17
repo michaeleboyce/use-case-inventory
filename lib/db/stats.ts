@@ -6,7 +6,11 @@
 
 import { getDb } from "./shared/init";
 import { STAGE_BUCKET_SQL } from "./shared/sql-fragments";
-import type { GlobalStats, ProductCatalogStats } from "../types";
+import type {
+  CommandPaletteIndex,
+  GlobalStats,
+  ProductCatalogStats,
+} from "../types";
 
 export function getGlobalStats(): GlobalStats {
   const db = getDb();
@@ -103,23 +107,6 @@ export function getProductCatalogStats(): ProductCatalogStats {
       `,
     )
     .get()!;
-}
-
-/**
- * Command palette payload — small lists of agencies, products, templates, and
- * a capped list of use cases. The limit keeps the initial bundle small; fuzzy
- * matching happens client-side through cmdk.
- */
-export interface CommandPaletteIndex {
-  agencies: Array<{ id: number; abbreviation: string; name: string }>;
-  products: Array<{ id: number; canonical_name: string; vendor: string | null }>;
-  templates: Array<{ id: number; short_name: string | null; template_text: string }>;
-  useCases: Array<{
-    id: number;
-    slug: string | null;
-    use_case_name: string;
-    agency_abbreviation: string;
-  }>;
 }
 
 const _paletteCache = new Map<number, CommandPaletteIndex>();

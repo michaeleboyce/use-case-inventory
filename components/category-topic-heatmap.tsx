@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 import { buildUseCasesUrl } from "@/lib/urls";
-import type { CategoryTopicCrossTab } from "@/lib/db";
+import type { CategoryTopicCrossTab } from "@/lib/types";
 
 function titleCase(value: string): string {
   return value

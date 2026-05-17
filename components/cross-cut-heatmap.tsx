@@ -12,7 +12,7 @@
 
 import Link from "next/link";
 import { tagFilterUrl } from "@/lib/urls";
-import type { CrossCutKey } from "@/lib/db";
+import type { CrossCutKey } from "@/lib/types";
 import {
   SOPHISTICATION_LABELS,
   SCOPE_LABELS,

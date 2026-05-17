@@ -1,10 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
-import {
-  type AgencyCompareData,
-  getAgencies,
-  getAgencyCompareData,
-} from "@/lib/db";
+import { getAgencies, getAgencyCompareData } from "@/lib/db";
+import type { AgencyCompareData } from "@/lib/types";
 import {
   formatNumber,
   formatPercent,

@@ -15,7 +15,7 @@ import {
   getUseCaseFedrampCoverage,
   getPeerUseCases,
 } from "@/lib/db";
-import { getOrganizationById } from "@/lib/hierarchy-db";
+import { getOrganizationById } from "@/lib/hierarchy";
 import type {
   ConsolidatedWithTags,
   UseCaseWithTags,

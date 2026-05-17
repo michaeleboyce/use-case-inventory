@@ -35,7 +35,6 @@ export {
   getGlobalStats,
   getProductCatalogStats,
   getCommandPaletteIndex,
-  type CommandPaletteIndex,
 } from "./stats";
 export {
   getAgencies,
@@ -47,7 +46,6 @@ export {
   getAgencyOptions,
   getAgencyInventoryLinks,
   getAgencyCompareData,
-  type AgencyCompareData,
 } from "./agencies";
 export {
   getAllProducts,
@@ -83,10 +81,6 @@ export {
   getCrossCutSummary,
   getCrossCutHeatmap,
   getCategoryTopicCrossTab,
-  type CrossCutKey,
-  type CrossCutValueRow,
-  type CrossCutHeatmapCell,
-  type CategoryTopicCrossTab,
 } from "./analytics";
 export {
   getUseCasesForAgency,
@@ -109,7 +103,6 @@ export {
   getExternalEvidenceForUseCase,
   getExternalEvidenceForConsolidated,
   getPeerUseCases,
-  type PeerUseCaseRow,
 } from "./use-cases";
 export {
   getFedrampProducts,

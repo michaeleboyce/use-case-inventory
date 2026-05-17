@@ -1,4 +1,5 @@
 import { getDb } from "../shared/init";
+import type { PeerUseCaseRow } from "../../types";
 
 // -----------------------------------------------------------------------------
 // Related-entries discovery (sidebar on the detail page)
@@ -84,20 +85,6 @@ export function getRelatedByTemplate(
 // -----------------------------------------------------------------------------
 // Peer use cases (similarity sidebar on the detail page)
 // -----------------------------------------------------------------------------
-
-export interface PeerUseCaseRow {
-  id: number;
-  slug: string | null;
-  use_case_name: string;
-  agency_id: number;
-  agency_abbreviation: string;
-  agency_name: string;
-  ai_sophistication: string | null;
-  deployment_scope: string | null;
-  stage_of_development: string | null;
-  topic_area: string | null;
-  shared_dimensions: number;
-}
 
 export function getPeerUseCases(
   useCaseId: number,

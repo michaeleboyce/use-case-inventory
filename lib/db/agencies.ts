@@ -9,7 +9,12 @@
  */
 
 import { getDb } from "./shared/init";
-import type { Agency, AgencyMaturity, AgencyWithMaturity } from "../types";
+import type {
+  Agency,
+  AgencyCompareData,
+  AgencyMaturity,
+  AgencyWithMaturity,
+} from "../types";
 import { getProductsForAgency } from "./products";
 import { getEntryTypeBreakdown, getAISophisticationBreakdown } from "./analytics";
 
@@ -140,46 +145,6 @@ export function getAgencyInventoryLinks(): Array<{
        ORDER BY name COLLATE NOCASE ASC
     `)
     .all();
-}
-
-/**
- * Full comparison payload for a single agency — everything the /compare grid
- * needs, in one round trip.
- */
-export interface AgencyCompareData {
-  id: number;
-  name: string;
-  abbreviation: string;
-  agency_type: string | null;
-  status: string | null;
-  maturity_tier: string | null;
-  total_use_cases: number;
-  distinct_products_deployed: number;
-  general_llm_count: number;
-  coding_tool_count: number;
-  agentic_ai_count: number;
-  custom_system_count: number;
-  pct_deployed: number | null;
-  pct_high_impact: number | null;
-  pct_with_risk_docs: number | null;
-  year_over_year_growth: number | null;
-  has_enterprise_llm: number | null;
-  has_coding_assistants: number | null;
-  entry_type_mix: {
-    custom_system: number;
-    product_deployment: number;
-    bespoke_application: number;
-    generic_use_pattern: number;
-    product_feature: number;
-    unknown: number;
-  };
-  ai_sophistication_mix: Array<{ label: string; count: number }>;
-  top_products: Array<{
-    id: number;
-    canonical_name: string;
-    vendor: string | null;
-    use_case_count: number;
-  }>;
 }
 
 export function getAgencyCompareData(

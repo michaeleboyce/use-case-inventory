@@ -11,12 +11,12 @@
  * and the methodology page). Constants there MUST stay in sync with the
  * Python script of the same name.
  */
-import { rawDb } from "./db";
+import { rawDb } from "../db";
 import type {
   AgencyReadiness,
   AgencyReadinessWithName,
   ReadinessTier,
-} from "./types/inventory";
+} from "../types/inventory";
 
 interface ReadinessRow {
   agency_id: number;

@@ -404,3 +404,58 @@ export interface AgencyReadinessWithName extends AgencyReadiness {
   agency_name: string;
   agency_slug: string;
 }
+
+/**
+ * Full comparison payload for a single agency — everything the /compare grid
+ * needs, in one round trip.
+ */
+export interface AgencyCompareData {
+  id: number;
+  name: string;
+  abbreviation: string;
+  agency_type: string | null;
+  status: string | null;
+  maturity_tier: string | null;
+  total_use_cases: number;
+  distinct_products_deployed: number;
+  general_llm_count: number;
+  coding_tool_count: number;
+  agentic_ai_count: number;
+  custom_system_count: number;
+  pct_deployed: number | null;
+  pct_high_impact: number | null;
+  pct_with_risk_docs: number | null;
+  year_over_year_growth: number | null;
+  has_enterprise_llm: number | null;
+  has_coding_assistants: number | null;
+  entry_type_mix: {
+    custom_system: number;
+    product_deployment: number;
+    bespoke_application: number;
+    generic_use_pattern: number;
+    product_feature: number;
+    unknown: number;
+  };
+  ai_sophistication_mix: Array<{ label: string; count: number }>;
+  top_products: Array<{
+    id: number;
+    canonical_name: string;
+    vendor: string | null;
+    use_case_count: number;
+  }>;
+}
+
+/** Peer use case row surfaced in the similarity sidebar on the detail page. */
+export interface PeerUseCaseRow {
+  id: number;
+  slug: string | null;
+  use_case_name: string;
+  agency_id: number;
+  agency_abbreviation: string;
+  agency_name: string;
+  ai_sophistication: string | null;
+  deployment_scope: string | null;
+  stage_of_development: string | null;
+  topic_area: string | null;
+  shared_dimensions: number;
+}
