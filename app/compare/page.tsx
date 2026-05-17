@@ -1,6 +1,5 @@
 import * as React from "react";
 import Link from "next/link";
-import { getAgencies, getAgencyCompareData } from "@/lib/db";
 import type { AgencyCompareData } from "@/lib/types";
 import {
   formatNumber,
@@ -18,11 +17,7 @@ import {
   MonoChip,
 } from "@/components/editorial";
 import { agencyUseCasesUrl } from "@/lib/urls";
-import {
-  compareGridClass,
-  parseCompareAbbrs,
-  resolveSelectedAgencies,
-} from "../_view-models/compare";
+import { buildCompareViewModel } from "./_view-model";
 
 export const metadata = {
   title: "Compare agencies · Federal AI Use Case Inventory",
@@ -294,20 +289,8 @@ export default async function ComparePage({
   searchParams: Promise<{ a?: string | string[] }>;
 }) {
   const sp = await searchParams;
-  const raw = parseCompareAbbrs(sp.a);
-  const options = getAgencies().map((a) => ({
-    id: a.id,
-    name: a.name,
-    abbreviation: a.abbreviation,
-  }));
-
-  const selected = resolveSelectedAgencies(raw, options);
-
-  const compareData: AgencyCompareData[] = selected
-    .map((abbr) => getAgencyCompareData(abbr))
-    .filter((d): d is AgencyCompareData => d !== null);
-
-  const gridTemplate = compareGridClass(compareData.length);
+  const { options, selected, compareData, gridTemplate } =
+    await buildCompareViewModel({ rawAbbrs: sp.a });
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
