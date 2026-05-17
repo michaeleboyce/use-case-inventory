@@ -23,10 +23,10 @@ import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
 import {
   CheckRow,
-  EntryKindToggle,
   FilterGroup,
   MonoLabel,
-} from "./controls";
+} from "@/components/ui/filter-primitives";
+import { EntryKindToggle } from "./controls";
 import { labelFor, parseCsv, toggleInCsv } from "./filter-utils";
 
 export interface FilterOption {
