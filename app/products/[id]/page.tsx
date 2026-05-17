@@ -10,7 +10,7 @@ import {
   getProductsByVendor,
   getUseCasesForProduct,
 } from "@/lib/db";
-import { ProductCard } from "@/components/product-card";
+import { ProductCard } from "@/components/product/product-card";
 import { BackLink } from "@/components/back-link";
 import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial";
 import { Badge } from "@/components/ui/badge";

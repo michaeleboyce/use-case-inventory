@@ -7,7 +7,7 @@ import {
   getProductNamesById,
   getVendorMarketShare,
 } from "@/lib/db";
-import { ProductsFilters } from "@/components/products-filters";
+import { ProductsFilters } from "@/components/product/products-filters";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
 import { CategoryDistributionChart } from "@/components/charts/category-distribution-chart";
 import { Section, Figure } from "@/components/editorial";

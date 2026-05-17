@@ -40,7 +40,7 @@ import {
 
 import { AgencyHeader } from "@/components/agency-header";
 import { CapabilityFlags } from "@/components/capability-flags";
-import { ProductGrid } from "@/components/product-grid";
+import { ProductGrid } from "@/components/product/product-grid";
 import { BureauBreakdown } from "@/components/bureau-breakdown";
 import {
   IndividualUseCasesTable,

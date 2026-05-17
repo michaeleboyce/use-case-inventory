@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ProductCard } from "@/components/product-card";
+import { ProductCard } from "@/components/product/product-card";
 import { humanize, formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
 import type { ProductWithCounts } from "@/lib/types";
