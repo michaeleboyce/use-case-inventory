@@ -15,7 +15,7 @@ import Link from "next/link";
 import { getAgencyById } from "@/lib/db";
 import { getOrganizationBySlugOrAbbr } from "@/lib/hierarchy";
 import { getAgencyReadinessByAbbr } from "@/lib/readiness";
-import { AgencyScorecardCard } from "@/components/agency-scorecard-card";
+import { AgencyScorecardCard } from "@/components/agency/agency-scorecard-card";
 import { PrintButton } from "./print-button";
 
 export async function generateMetadata({

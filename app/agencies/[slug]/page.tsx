@@ -38,14 +38,14 @@ import {
   maturityTierLabel,
 } from "@/lib/formatting";
 
-import { AgencyHeader } from "@/components/agency-header";
+import { AgencyHeader } from "@/components/agency/agency-header";
 import { CapabilityFlags } from "@/components/capability-flags";
 import { ProductGrid } from "@/components/product/product-grid";
 import { BureauBreakdown } from "@/components/bureau-breakdown";
 import {
   IndividualUseCasesTable,
   ConsolidatedUseCasesTable,
-} from "@/components/agency-use-cases-table";
+} from "@/components/agency/agency-use-cases-table";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
 import { MetricTile } from "@/components/metric-tile";
@@ -65,7 +65,7 @@ import {
 } from "@/components/editorial";
 import { agencyUseCasesUrl } from "@/lib/urls";
 import { getAgencyReadinessByAbbr } from "@/lib/readiness";
-import { AgencyScorecardCard } from "@/components/agency-scorecard-card";
+import { AgencyScorecardCard } from "@/components/agency/agency-scorecard-card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   BreakdownChips,
