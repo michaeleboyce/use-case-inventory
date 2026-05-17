@@ -1,12 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import {
-  getAllProducts,
-  getCategoryDistribution,
-  getProductCatalogStats,
-  getProductNamesById,
-  getVendorMarketShare,
-} from "@/lib/db";
 import { ProductsFilters } from "@/components/product/products-filters";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
 import { CategoryDistributionChart } from "@/components/charts/category-distribution-chart";
@@ -14,6 +7,7 @@ import { Section, Figure } from "@/components/editorial";
 import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
+import { buildProductsViewModel } from "./_view-model";
 
 export const metadata = {
   title: "Products — Federal AI Use Case Inventory 2025",
@@ -21,18 +15,16 @@ export const metadata = {
     "Browse the commercial AI products reported by federal agencies, with vendor market share and per-product adoption.",
 };
 
-export default function ProductsPage() {
-  const products = getAllProducts();
-  const catalogStats = getProductCatalogStats();
-  const parentNames = getProductNamesById();
-  const vendorShare = getVendorMarketShare();
-  const categoryDistribution = getCategoryDistribution();
-
-  const totalAgencyMentions = products.reduce(
-    (acc, p) => acc + (p.agency_count ?? 0),
-    0,
-  );
-  const frontierCount = products.filter((p) => p.is_frontier_llm === 1).length;
+export default async function ProductsPage() {
+  const {
+    products,
+    catalogStats,
+    parentNames,
+    vendorShare,
+    categoryDistribution,
+    totalAgencyMentions,
+    frontierCount,
+  } = await buildProductsViewModel();
 
   return (
     <>
