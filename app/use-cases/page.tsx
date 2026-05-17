@@ -1,10 +1,3 @@
-import {
-  getAgencyOptions,
-  getProductOptions,
-  getUseCaseFacets,
-  getUseCasesFiltered,
-  getGlobalStats,
-} from "@/lib/db";
 import { formatNumber } from "@/lib/formatting";
 import type { UseCaseFilterInput } from "@/lib/types";
 import { UseCaseFilters } from "@/components/use-case/filters";
@@ -17,6 +10,11 @@ import {
   Pagination,
   ViewToggle,
 } from "@/components/use-case/use-case-explorer-toolbar";
+import {
+  buildUseCasesViewModel,
+  USE_CASES_PAGE_SIZE,
+  type UseCasesFilters,
+} from "./_view-model";
 
 export const metadata = {
   title: "Use Cases · Federal AI Inventory",
@@ -24,7 +22,7 @@ export const metadata = {
     "Browse all reported AI use cases across federal agencies. Filter by agency, entry type, AI sophistication, product, and more.",
 };
 
-const PAGE_SIZE = 100;
+const PAGE_SIZE = USE_CASES_PAGE_SIZE;
 
 type Search = Record<string, string | string[] | undefined>;
 
@@ -42,7 +40,7 @@ function parseCsv(v: string | string[] | undefined): string[] {
     .filter((x) => x.length > 0);
 }
 
-function buildFilters(sp: Search): UseCaseFilterInput & { page: number } {
+function buildFilters(sp: Search): UseCasesFilters {
   const page = Math.max(1, Number.parseInt(first(sp.page) ?? "1", 10) || 1);
 
   const filters: UseCaseFilterInput & { page: number } = {
@@ -172,22 +170,21 @@ export default async function UseCasesPage({
 }) {
   const sp = await searchParams;
   const filters = buildFilters(sp);
-  const page = filters.page;
   const view = first(sp.view) === "grid" ? "grid" : "table";
 
-  const [{ rows, total }, agencies, products, facets, stats] = await Promise.all([
-    Promise.resolve(getUseCasesFiltered(filters)),
-    Promise.resolve(getAgencyOptions()),
-    Promise.resolve(getProductOptions()),
-    Promise.resolve(getUseCaseFacets()),
-    Promise.resolve(getGlobalStats()),
-  ]);
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const lastRow = Math.min(total, page * PAGE_SIZE);
-
-  const totalInDb = stats.total_use_cases + stats.total_consolidated;
+  const {
+    rows,
+    total,
+    totalInDb,
+    page,
+    totalPages,
+    firstRow,
+    lastRow,
+    agencies,
+    products,
+    facets,
+    stats,
+  } = await buildUseCasesViewModel(filters);
 
   return (
     <>
