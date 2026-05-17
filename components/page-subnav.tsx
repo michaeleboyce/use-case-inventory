@@ -7,11 +7,14 @@
  * `href="#section-id"` matches an `id` on a target <Section> or <header>.
  *
  * Design choices:
- *  - Sticky at `top-[var(--nav-h,4rem)]` so it tucks under the masthead.
- *    The global nav doesn't currently expose --nav-h; we approximate with
- *    `top-[5.5rem]` (matches the masthead height when it's not in
- *    sticky/condensed state) and rely on the page's natural scroll padding
- *    via scroll-margin-top on each target.
+ *  - Sticky at `top-[var(--page-subnav-top)]` (set in globals.css per
+ *    breakpoint) so it tucks under the global masthead — which is taller
+ *    on mobile because the section rail wraps.
+ *  - Full-width rule band via `mx-[calc(50%-50vw)] w-screen` so the
+ *    border extends edge-to-edge like the main nav, while the inner
+ *    `max-w-[1400px] mx-auto` container keeps the tabs aligned under
+ *    the primary rail. (Earlier attempt used `left-1/2 -translate-x-1/2`,
+ *    which broke under position:sticky and pushed the band off-screen.)
  *  - Mono uppercase pills matching the existing filter-row aesthetic on
  *    /products. Active-state highlight via a single shared
  *    IntersectionObserver keyed off the tab `id`s. The tab whose target
@@ -82,9 +85,10 @@ export function PageSubnav({ tabs }: { tabs: PageSubnavTab[] }) {
       observer.observe(el);
     }
 
+    const ratios = ratiosRef.current;
     return () => {
       observer.disconnect();
-      ratiosRef.current.clear();
+      ratios.clear();
     };
   }, [tabs]);
 
@@ -92,30 +96,32 @@ export function PageSubnav({ tabs }: { tabs: PageSubnavTab[] }) {
   return (
     <nav
       aria-label="On this page"
-      className="sticky top-[5.5rem] z-30 -mx-4 mb-6 border-b border-border bg-background/92 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/75 md:-mx-8 md:px-8"
+      className="sticky top-[var(--page-subnav-top,6.5rem)] z-30 mx-[calc(50%-50vw)] mb-6 w-screen border-b border-border bg-background/92 backdrop-blur supports-[backdrop-filter]:bg-background/75"
     >
-      <ul className="flex items-stretch gap-0 overflow-x-auto">
-        {tabs.map((tab) => {
-          const active = activeId === tab.id;
-          return (
-            <li key={tab.id} className="flex items-stretch">
-              <Link
-                href={`#${tab.id}`}
-                data-active={active ? "true" : undefined}
-                aria-current={active ? "true" : undefined}
-                className={
-                  "flex items-center whitespace-nowrap border-b-2 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:px-4 " +
-                  (active
-                    ? "border-[var(--stamp)] text-foreground"
-                    : "border-transparent text-muted-foreground hover:border-[var(--stamp)] hover:text-foreground")
-                }
-              >
-                {tab.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="mx-auto max-w-[1400px] px-4 md:px-8">
+        <ul className="flex items-stretch gap-0 overflow-x-auto">
+          {tabs.map((tab) => {
+            const active = activeId === tab.id;
+            return (
+              <li key={tab.id} className="flex items-stretch">
+                <Link
+                  href={`#${tab.id}`}
+                  data-active={active ? "true" : undefined}
+                  aria-current={active ? "true" : undefined}
+                  className={
+                    "flex items-center whitespace-nowrap border-b-2 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors md:px-4 " +
+                    (active
+                      ? "border-[var(--stamp)] text-foreground"
+                      : "border-transparent text-muted-foreground hover:border-[var(--stamp)] hover:text-foreground")
+                  }
+                >
+                  {tab.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }

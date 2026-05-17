@@ -124,6 +124,17 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: oklch(0.78 0.014 60);
   --sidebar-ring: var(--ink);
+
+  /* Sticky-offset for the in-page subnav (PageSubnav). The global
+     masthead is taller on narrow viewports because the section rail
+     wraps to a second row, so we override per-breakpoint below. */
+  --page-subnav-top: 10.5rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-subnav-top: 6.5rem;
+  }
 }
 
 .dark {
@@ -293,4 +304,26 @@
 .dark .paper-grain::before {
   mix-blend-mode: screen;
   opacity: 0.16;
+}
+
+/* --------------------------------------------------------------------- */
+/* Print styles                                                            */
+/* --------------------------------------------------------------------- */
+/* Suppress site chrome (dateline, nav, footer, command palette, paper    */
+/* grain) so /agencies/[slug]/scorecard and any other print-friendly      */
+/* page renders clean on paper / in PDF export.                           */
+/* --------------------------------------------------------------------- */
+@media print {
+  body > header,
+  body > footer,
+  body > div[role="dialog"],
+  .paper-grain::before {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .ink-in {
+    animation: none !important;
+  }
 }

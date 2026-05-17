@@ -42,7 +42,7 @@ const isUncategorized = (t: string | null | undefined): boolean => {
 };
 
 const fieldClass =
-  "h-8 min-w-0 border border-border bg-background px-2 font-mono text-[11px] uppercase tracking-[0.08em] text-foreground focus:border-foreground focus:outline-none";
+  "h-8 min-w-0 border border-border bg-background px-2 font-mono text-[11px] tracking-[0.08em] text-foreground placeholder:uppercase placeholder:text-muted-foreground focus:border-foreground focus:outline-none";
 
 export function ProductsFilters({ products, parentNames }: Props) {
   const router = useRouter();
@@ -126,14 +126,31 @@ export function ProductsFilters({ products, parentNames }: Props) {
     return rows;
   }, [products, search, vendor, productType, frontierOnly, genaiOnly, sortKey]);
 
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    vendor !== ALL ||
+    productType !== ALL ||
+    frontierOnly ||
+    genaiOnly ||
+    sortKey !== "agency_count";
+
+  const resetFilters = () => {
+    setSearch("");
+    setVendor(ALL);
+    setProductType(ALL);
+    setFrontierOnly(false);
+    setGenaiOnly(false);
+    setSortKey("agency_count");
+  };
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="border-y-2 border-foreground py-3">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
+      <aside className="border-y-2 border-foreground py-4 lg:sticky lg:top-[9.25rem] lg:border-y-0 lg:border-r-2 lg:py-0 lg:pr-6">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
           <FilterField label="Search">
             <input
               type="search"
-              placeholder="Product name…"
+              placeholder="Product name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className={fieldClass + " w-full"}
@@ -182,12 +199,12 @@ export function ProductsFilters({ products, parentNames }: Props) {
             >
               <option value="agency_count">Agencies, desc</option>
               <option value="use_case_count">Entries, desc</option>
-              <option value="name">Name, A–Z</option>
+              <option value="name">Name, A-Z</option>
             </select>
           </FilterField>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-dotted border-border pt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+        <div className="mt-4 space-y-3 border-t border-dotted border-border pt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
           <label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
@@ -209,40 +226,59 @@ export function ProductsFilters({ products, parentNames }: Props) {
           {productType !== ALL && productType !== UNCLASSIFIED ? (
             <Link
               href={buildUseCasesUrl({ productCategories: [productType] })}
-              className="border border-dotted border-border px-2 py-0.5 text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
+              className="inline-flex border border-dotted border-border px-2 py-1 text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
               title={`Drill into all use cases that reference any product in the '${productType}' category`}
             >
               → See use cases in {humanize(productType)}
             </Link>
           ) : null}
-          <span className="ml-auto">
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="block border border-border px-2 py-1 text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
+            >
+              Reset filters
+            </button>
+          ) : null}
+        </div>
+      </aside>
+
+      <div className="min-w-0">
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-y border-border py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+          <span>
             <span className="tabular-nums text-foreground">
               {formatNumber(filtered.length)}
             </span>{" "}
             / {formatNumber(products.length)} products
           </span>
+          {hasActiveFilters ? (
+            <span className="text-foreground">Filtered catalogue</span>
+          ) : (
+            <span>Sorted by agency adoption</span>
+          )}
         </div>
-      </div>
 
-      {filtered.length === 0 ? (
-        <div className="flex h-40 items-center justify-center border border-dashed border-border font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-          — No products match these filters —
-        </div>
-      ) : (
-        <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              parentName={
-                p.parent_product_id != null
-                  ? (parentNames[p.parent_product_id] ?? null)
-                  : null
-              }
-            />
-          ))}
-        </div>
-      )}
+        {filtered.length === 0 ? (
+          <div className="flex h-40 items-center justify-center border border-dashed border-border font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            — No products match these filters —
+          </div>
+        ) : (
+          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                parentName={
+                  p.parent_product_id != null
+                    ? (parentNames[p.parent_product_id] ?? null)
+                    : null
+                }
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
