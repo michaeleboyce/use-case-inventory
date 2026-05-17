@@ -1,8 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { markResolved, unmarkResolved } from "@/app/discrepancies/actions";
+import {
+  RESOLUTION_REASON_LABELS,
+  type ResolutionReason,
+} from "@/lib/types";
 
 interface Props {
   auditId: number;
@@ -10,9 +15,16 @@ interface Props {
   name: string;
   resolvedAt: string | null;
   resolutionNote: string | null;
+  resolutionReason: ResolutionReason | null;
   /** When false, the form renders read-only with a "production is local-only" notice. */
   canWrite: boolean;
+  /** Prefetched, ordered list of all unresolved audit ids — used by the
+   *  detail page's "submit + advance" flow so we don't refetch on every
+   *  keypress. May be empty if the page didn't supply it. */
+  orderedAuditIds?: number[];
 }
+
+const REASON_KEYS = Object.keys(RESOLUTION_REASON_LABELS) as ResolutionReason[];
 
 export function ResolutionForm({
   auditId,
@@ -20,8 +32,12 @@ export function ResolutionForm({
   name,
   resolvedAt,
   resolutionNote,
+  resolutionReason,
   canWrite,
+  orderedAuditIds = [],
 }: Props) {
+  const router = useRouter();
+  const [reason, setReason] = useState<ResolutionReason | "">("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -60,6 +76,11 @@ export function ResolutionForm({
             </form>
           ) : null}
         </div>
+        {resolutionReason ? (
+          <span className="font-display text-sm text-stone-900">
+            Reason: {RESOLUTION_REASON_LABELS[resolutionReason]}
+          </span>
+        ) : null}
         {resolutionNote ? (
           <p className="whitespace-pre-wrap text-emerald-950">
             {resolutionNote}
@@ -102,36 +123,78 @@ export function ResolutionForm({
     );
   }
 
+  const canSubmit = reason !== "" && !pending;
+
   return (
     <form
       action={(fd) => {
+        if (reason === "") return;
         fd.set("auditId", String(auditId));
         fd.set("agency", agency);
         fd.set("name", name);
+        fd.set("reason", reason);
         startTransition(async () => {
           const r = await markResolved(fd);
-          if (!r.ok) setError(r.error ?? "Unknown error");
-          else setNote("");
+          if (!r.ok) {
+            setError(r.error ?? "Unknown error");
+            return;
+          }
+          setNote("");
+          setReason("");
+          setError(null);
+          // Auto-advance: if the user gave us an ordered list and there's a
+          // next unresolved id, route there. Otherwise just refresh the
+          // current page so the "resolved" state renders.
+          const idx = orderedAuditIds.indexOf(auditId);
+          const nextId =
+            idx >= 0 && idx + 1 < orderedAuditIds.length
+              ? orderedAuditIds[idx + 1]
+              : null;
+          if (nextId != null) {
+            router.push(`/discrepancies/${nextId}`);
+          } else {
+            router.refresh();
+          }
         });
       }}
       className="space-y-3 rounded border border-stone-200 p-4"
     >
       <label className="block text-xs uppercase tracking-wider text-stone-500">
-        Triage note (optional)
+        Resolution reason
+        <select
+          id="resolution-reason"
+          name="reason"
+          required
+          value={reason}
+          onChange={(e) => setReason(e.target.value as ResolutionReason)}
+          className="mt-1 block w-full rounded border border-stone-300 bg-white px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+        >
+          <option value="" disabled>
+            Select reason…
+          </option>
+          {REASON_KEYS.map((key) => (
+            <option key={key} value={key}>
+              {RESOLUTION_REASON_LABELS[key]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-xs uppercase tracking-wider text-stone-500">
+        Note (optional)
         <textarea
           name="note"
-          rows={3}
+          rows={2}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g., 'OMB-side typo, ignored' or 'Will ingest in next round; verified ID DHS-2577'"
+          placeholder="e.g., 'OMB-side typo, ignored' or 'Verified ID DHS-2577'"
           className="mt-1 block w-full rounded border border-stone-300 px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
         />
       </label>
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={pending}
-          className="rounded bg-stone-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+          disabled={!canSubmit}
+          className="rounded bg-stone-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "Saving…" : "Mark resolved"}
         </button>

@@ -7,11 +7,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getDiscrepancyDetail } from "@/lib/discrepancies";
+import { getDiscrepancyDetail, getDiscrepancyRows } from "@/lib/discrepancies";
 import { canWriteResolutions } from "@/lib/resolutions";
 import { Section, MonoChip } from "@/components/editorial";
 import { DiscrepancySideBySide } from "@/components/discrepancy-side-by-side";
+import { KeyboardShortcutHost } from "@/components/keyboard-shortcut-host";
 import { ResolutionForm } from "@/components/resolution-form";
+import { SessionCounterPill } from "@/components/session-counter-pill";
 
 const STATUS_LABEL: Record<string, string> = {
   matched_exact: "Exact match",
@@ -20,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
   omb_only: "OMB only (new in OMB)",
   db_only: "DB only (vanished from OMB)",
   duplicate_in_omb: "Duplicate in OMB",
+  consolidated_upstream: "Consolidated upstream by OMB",
 };
 
 export default async function DiscrepancyDetailPage({
@@ -36,15 +39,26 @@ export default async function DiscrepancyDetailPage({
 
   const { audit, drift } = detail;
   const statusLabel = STATUS_LABEL[audit.match_status] ?? audit.match_status;
+  const canWrite = canWriteResolutions();
+  // Server-prefetched ordered list of unresolved audit ids — drives both
+  // the resolution form's auto-advance and the j/k keyboard handlers.
+  const orderedAuditIds = canWrite
+    ? getDiscrepancyRows({ unresolvedOnly: true }).map((r) => r.audit_id)
+    : [];
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12 space-y-8">
-      <Link
-        href="/discrepancies"
-        className="text-sm text-stone-600 hover:text-stone-900"
-      >
-        ← All discrepancies
-      </Link>
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          href="/discrepancies"
+          className="text-sm text-stone-600 hover:text-stone-900"
+        >
+          ← All discrepancies
+        </Link>
+        {canWrite ? (
+          <SessionCounterPill totalUnresolved={orderedAuditIds.length} />
+        ) : null}
+      </div>
 
       <header className="space-y-2">
         <p className="eyebrow !text-[var(--stamp)]">§ {statusLabel}</p>
@@ -104,6 +118,60 @@ export default async function DiscrepancyDetailPage({
         }
       >
         <DiscrepancySideBySide detail={detail} />
+
+        {detail.consolidated_into_omb_id != null ? (
+          <aside className="border-l-4 border-[#d4b97a] bg-[#f6efdf] px-4 py-3 mt-6">
+            <p className="text-sm text-stone-800">
+              <strong className="font-display">
+                OMB rolled this into a generic category row.
+              </strong>{" "}
+              This DB row appears to have been consolidated upstream into{" "}
+              <span className="font-mono">#{detail.consolidated_into_omb_id}</span>
+              {' "'}
+              {detail.consolidated_into_omb_name}
+              {'"'}
+              {detail.consolidated_into_omb_bureau ? (
+                <>
+                  {" "}in the <em>{detail.consolidated_into_omb_bureau}</em> bureau
+                </>
+              ) : null}
+              .{" "}If you accept this explanation, mark resolved with reason
+              {' "Consolidated upstream by OMB"'}.
+            </p>
+          </aside>
+        ) : null}
+
+        {(detail.db_source_file || detail.omb_source_file) ? (
+          <footer className="mt-6 border-t border-stone-200 pt-3 font-mono text-[11px] text-stone-500 leading-relaxed">
+            {detail.db_source_file ? (
+              <div>
+                IFP DB row · source:{" "}
+                <span className="text-stone-700">{detail.db_source_file}</span>
+                {detail.db_ingested_at ? (
+                  <>
+                    {" "}· ingested{" "}
+                    {detail.db_ingested_at.slice(0, 19).replace("T", " ")}
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+            {detail.omb_source_file ? (
+              <div>
+                OMB row · source:{" "}
+                <span className="text-stone-700">{detail.omb_source_file}</span>
+                {detail.omb_source_row ? (
+                  <> · row {detail.omb_source_row}</>
+                ) : null}
+                {detail.omb_ingested_at ? (
+                  <>
+                    {" "}· ingested{" "}
+                    {detail.omb_ingested_at.slice(0, 19).replace("T", " ")}
+                  </>
+                ) : null}
+              </div>
+            ) : null}
+          </footer>
+        ) : null}
       </Section>
 
       <Section
@@ -118,9 +186,21 @@ export default async function DiscrepancyDetailPage({
           name={audit.use_case_name ?? ""}
           resolvedAt={audit.resolved_at}
           resolutionNote={detail.resolution_note}
-          canWrite={canWriteResolutions()}
+          resolutionReason={detail.resolution_reason}
+          canWrite={canWrite}
+          orderedAuditIds={orderedAuditIds}
         />
       </Section>
+
+      {canWrite ? (
+        <KeyboardShortcutHost
+          auditId={audit.audit_id}
+          agency={audit.agency_abbreviation ?? ""}
+          name={audit.use_case_name ?? ""}
+          resolved={audit.resolved_at != null}
+          orderedAuditIds={orderedAuditIds}
+        />
+      ) : null}
     </div>
   );
 }

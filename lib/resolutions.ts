@@ -18,6 +18,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import type { ResolutionReason } from "./types";
+
 const FILE = path.join(process.cwd(), "data", "discrepancy_resolutions.json");
 
 export interface Resolution {
@@ -27,6 +29,9 @@ export interface Resolution {
   resolved_at: string;
   /** Free-text triage note. Kept short; for paragraphs use a linked doc. */
   note: string;
+  /** Fixed-vocabulary reason code. Optional for backward compatibility
+   *  with rows written before the field existed. */
+  reason?: ResolutionReason | null;
 }
 
 interface ResolutionsFile {
@@ -40,16 +45,39 @@ export function buildResolutionKey(
   return `${(agency ?? "").trim()}::${(name ?? "").trim()}`;
 }
 
-/** Read all resolutions. Returns an empty array if the file is missing. */
+/** Read all resolutions. Returns an empty array if the file is missing.
+ *  Normalizes legacy rows (no `reason` field) to `reason: null` so callers
+ *  can read the field uniformly.
+ */
 export function readResolutions(): Resolution[] {
   if (!fs.existsSync(FILE)) return [];
   try {
     const text = fs.readFileSync(FILE, "utf8");
     const parsed = JSON.parse(text) as ResolutionsFile;
-    return Array.isArray(parsed.resolutions) ? parsed.resolutions : [];
+    if (!Array.isArray(parsed.resolutions)) return [];
+    return parsed.resolutions.map((r) => ({
+      ...r,
+      reason: (r.reason ?? null) as ResolutionReason | null,
+    }));
   } catch {
     return [];
   }
+}
+
+/** Look up a single resolution by key. Returns null when none exists. */
+export function getResolution(
+  key: string,
+): { resolved_at: string; note: string; reason: ResolutionReason | null } | null {
+  for (const r of readResolutions()) {
+    if (r.key === key) {
+      return {
+        resolved_at: r.resolved_at,
+        note: r.note,
+        reason: (r.reason ?? null) as ResolutionReason | null,
+      };
+    }
+  }
+  return null;
 }
 
 /**
@@ -67,7 +95,11 @@ export function canWriteResolutions(): boolean {
  * replaced (keeps the file at most one row per key). Throws when writes
  * are blocked.
  */
-export function upsertResolution(key: string, note: string): Resolution {
+export function upsertResolution(
+  key: string,
+  note: string,
+  reason: ResolutionReason | null = null,
+): Resolution {
   if (!canWriteResolutions()) {
     throw new Error(
       "Production filesystem is read-only — resolution writes are local-dev only.",
@@ -78,6 +110,7 @@ export function upsertResolution(key: string, note: string): Resolution {
     key,
     resolved_at: new Date().toISOString(),
     note: note.trim(),
+    reason: reason ?? null,
   };
   all.push(fresh);
   // Sort by resolved_at desc so the file stays scannable in PRs.

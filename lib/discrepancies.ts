@@ -15,9 +15,12 @@ import type {
   DiscrepancyDetail,
   DiscrepancyDriftField,
   DiscrepancyFilter,
+  DiscrepancyPattern,
+  DiscrepancyPatternKind,
   DiscrepancyRow,
   DiscrepancyStatus,
   DiscrepancySummary,
+  ResolutionReason,
 } from "./types";
 
 // The 10 canonical fields surfaced in the per-case side-by-side. Each maps
@@ -38,16 +41,19 @@ const CANONICAL_FIELDS = [
   "bureau_component",
 ] as const;
 
-// Status ordering for the table — most actionable first.
+// Status ordering for the table — most actionable first. `consolidated_upstream`
+// slots just below `db_only` (it's an explained subset of "DB row, no OMB
+// match"); user can still drill in to verify the aggregator's identity.
 const STATUS_ORDER_SQL = `
   CASE a.match_status
-    WHEN 'omb_only'         THEN 1
-    WHEN 'db_only'          THEN 2
-    WHEN 'suggested_rename' THEN 3
-    WHEN 'duplicate_in_omb' THEN 4
-    WHEN 'matched_fuzzy'    THEN 5
-    WHEN 'matched_exact'    THEN 6
-    ELSE 7
+    WHEN 'omb_only'             THEN 1
+    WHEN 'db_only'              THEN 2
+    WHEN 'consolidated_upstream' THEN 3
+    WHEN 'suggested_rename'     THEN 4
+    WHEN 'duplicate_in_omb'     THEN 5
+    WHEN 'matched_fuzzy'        THEN 6
+    WHEN 'matched_exact'        THEN 7
+    ELSE 8
   END
 `;
 
@@ -78,6 +84,7 @@ export function getDiscrepancySummary(): DiscrepancySummary {
     omb_only: map.omb_only ?? 0,
     db_only: map.db_only ?? 0,
     duplicate_in_omb: map.duplicate_in_omb ?? 0,
+    consolidated_upstream: map.consolidated_upstream ?? 0,
     total_with_drift: drift?.n ?? 0,
     total_pairs_compared: matched_exact + matched_fuzzy,
   };
@@ -126,7 +133,8 @@ export function getDiscrepancyRows(filter: DiscrepancyFilter = {}): DiscrepancyR
       a.omb_row_id                AS omb_row_id,
       o.use_case_id_omb           AS omb_use_case_id,
       ${driftCountSql}            AS drift_field_count,
-      a.resolved_at               AS resolved_at
+      a.resolved_at               AS resolved_at,
+      a.consolidated_into_omb_id  AS consolidated_into_omb_id
     FROM omb_match_audit a
     LEFT JOIN use_cases uc ON uc.id = a.use_case_id_db
     LEFT JOIN omb_consolidated_rows o ON o.id = a.omb_row_id
@@ -155,25 +163,52 @@ export function getDiscrepancyDetail(auditId: number): DiscrepancyDetail | null 
   }).join(", ");
   const ombAliases = CANONICAL_FIELDS.map((f) => `o.${f} AS omb_${f}`).join(", ");
 
+  // Detect whether `use_cases.source_file` exists at runtime — m001
+  // guarantees it, but defensive checks keep this resilient against
+  // schema drift on unrelated branches / older DB snapshots.
+  const useCaseCols = new Set(
+    rawDb()
+      .prepare<[], { name: string }>("SELECT name FROM pragma_table_info('use_cases')")
+      .all()
+      .map((r) => r.name),
+  );
+  const dbSourceFileExpr = useCaseCols.has("source_file")
+    ? "uc.source_file"
+    : "NULL";
+  const dbCreatedAtExpr = useCaseCols.has("created_at")
+    ? "uc.created_at"
+    : "NULL";
+
+  // Aliased join to the OMB aggregator row when consolidated_into_omb_id
+  // is set. Always LEFT JOIN; results are null for non-consolidated audits.
   const sql = `
     SELECT
-      a.id                  AS audit_id,
-      a.match_status        AS match_status,
-      a.match_score         AS match_score,
-      a.agency_abbreviation AS agency_abbreviation,
-      a.use_case_name       AS use_case_name,
-      a.use_case_id_db      AS db_use_case_id,
-      uc.use_case_id        AS db_use_case_id_text,
-      uc.slug               AS db_use_case_slug,
-      a.omb_row_id          AS omb_row_id,
-      o.use_case_id_omb     AS omb_use_case_id,
-      a.drift_fields_json   AS drift_fields_json,
-      a.resolved_at         AS resolved_at,
+      a.id                       AS audit_id,
+      a.match_status             AS match_status,
+      a.match_score              AS match_score,
+      a.agency_abbreviation      AS agency_abbreviation,
+      a.use_case_name            AS use_case_name,
+      a.use_case_id_db           AS db_use_case_id,
+      uc.use_case_id             AS db_use_case_id_text,
+      uc.slug                    AS db_use_case_slug,
+      a.omb_row_id               AS omb_row_id,
+      o.use_case_id_omb          AS omb_use_case_id,
+      a.drift_fields_json        AS drift_fields_json,
+      a.resolved_at              AS resolved_at,
+      a.consolidated_into_omb_id AS consolidated_into_omb_id,
+      ${dbSourceFileExpr}        AS db_source_file,
+      ${dbCreatedAtExpr}         AS db_ingested_at,
+      o.ingest_source_file       AS omb_source_file,
+      o.row_index_in_file        AS omb_source_row,
+      o.ingest_run_at            AS omb_ingested_at,
+      co.use_case_name           AS consolidated_into_omb_name,
+      co.bureau_component        AS consolidated_into_omb_bureau,
       ${dbAliases},
       ${ombAliases}
     FROM omb_match_audit a
     LEFT JOIN use_cases uc ON uc.id = a.use_case_id_db
     LEFT JOIN omb_consolidated_rows o ON o.id = a.omb_row_id
+    LEFT JOIN omb_consolidated_rows co ON co.id = a.consolidated_into_omb_id
     WHERE a.id = ?
   `;
 
@@ -214,6 +249,7 @@ export function getDiscrepancyDetail(auditId: number): DiscrepancyDetail | null 
     omb_use_case_id: row.omb_use_case_id as string | null,
     drift_field_count: drift.length,
     resolved_at: overlay?.resolved_at ?? (row.resolved_at as string | null),
+    consolidated_into_omb_id: (row.consolidated_into_omb_id as number | null) ?? null,
   };
 
   const hasDb = audit.db_use_case_id != null;
@@ -235,6 +271,16 @@ export function getDiscrepancyDetail(auditId: number): DiscrepancyDetail | null 
     db_row,
     omb_row,
     resolution_note: overlay?.note ?? null,
+    resolution_reason: (overlay?.reason ?? null) as ResolutionReason | null,
+    consolidated_into_omb_id: audit.consolidated_into_omb_id ?? null,
+    consolidated_into_omb_name: (row.consolidated_into_omb_name as string | null) ?? null,
+    consolidated_into_omb_bureau: (row.consolidated_into_omb_bureau as string | null) ?? null,
+    db_source_file: (row.db_source_file as string | null) ?? null,
+    db_source_row: null,
+    db_ingested_at: (row.db_ingested_at as string | null) ?? null,
+    omb_source_file: (row.omb_source_file as string | null) ?? null,
+    omb_source_row: (row.omb_source_row as number | null) ?? null,
+    omb_ingested_at: (row.omb_ingested_at as string | null) ?? null,
   };
 }
 
@@ -250,4 +296,208 @@ export function getDiscrepancyAgencies(): Array<{ agency: string; n: number }> {
        ORDER BY n DESC, agency_abbreviation ASC`,
     )
     .all();
+}
+
+// ─── Pattern detection ────────────────────────────────────────────────────
+//
+// Walks the audit table looking for clusters that explain large chunks of
+// the page at once. Four kinds:
+//   1. consolidation       — agency rolled up product-specific rows into an
+//                            OMB generic-category aggregator
+//   2. omb_duplicate_cluster — OMB filed the same row N times (≥3)
+//   3. bureau_split        — same-named row appears in multiple bureaus,
+//                            misclassified as duplicate
+//   4. name_drift_cluster  — agency has many suggested_rename rows in the
+//                            0.40–0.70 fuzzy band (taxonomy mismatch)
+//
+// Returns at most 6 patterns, sorted by affected-row count desc.
+
+interface RawAuditPatternRow {
+  audit_id: number;
+  match_status: DiscrepancyStatus;
+  match_score: number | null;
+  agency: string | null;
+  name: string | null;
+  bureau: string | null;
+  consolidated_into_omb_id: number | null;
+}
+
+function normalizeName(s: string | null): string {
+  return (s ?? "")
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function rootProductToken(s: string | null): string {
+  const norm = normalizeName(s);
+  const tokens = norm.split(" ").filter(
+    (t) => t.length > 2 && !["the", "for", "and", "with", "ai", "use", "case"].includes(t),
+  );
+  return tokens[0] ?? norm;
+}
+
+function makePattern(opts: {
+  id: string;
+  kind: DiscrepancyPatternKind;
+  agency: string;
+  title: string;
+  hypothesis: string;
+  auditIds: number[];
+  suggested_reason: ResolutionReason;
+  filter_url: string;
+}): DiscrepancyPattern {
+  return {
+    id: opts.id,
+    kind: opts.kind,
+    agency: opts.agency,
+    title: opts.title,
+    hypothesis: opts.hypothesis,
+    affected_audit_ids: opts.auditIds,
+    sample_audit_ids: opts.auditIds.slice(0, 3),
+    count: opts.auditIds.length,
+    suggested_reason: opts.suggested_reason,
+    filter_url: opts.filter_url,
+  };
+}
+
+export function getDiscrepancyPatterns(): DiscrepancyPattern[] {
+  const rows = rawDb()
+    .prepare<[], RawAuditPatternRow>(
+      `SELECT
+         a.id                       AS audit_id,
+         a.match_status             AS match_status,
+         a.match_score              AS match_score,
+         a.agency_abbreviation      AS agency,
+         a.use_case_name            AS name,
+         uc.bureau_component        AS bureau,
+         a.consolidated_into_omb_id AS consolidated_into_omb_id
+       FROM omb_match_audit a
+       LEFT JOIN use_cases uc ON uc.id = a.use_case_id_db
+       WHERE a.match_status != 'matched_exact'
+         AND a.agency_abbreviation IS NOT NULL`,
+    )
+    .all();
+
+  // Drop rows already resolved.
+  const resolutions = getResolutionMap();
+  const unresolved = rows.filter(
+    (r) => !resolutions.get(buildResolutionKey(r.agency, r.name))?.resolved_at,
+  );
+
+  const patterns: DiscrepancyPattern[] = [];
+
+  // 1. Consolidation clusters: (agency, consolidated_into_omb_id)
+  const consolidationBuckets = new Map<string, RawAuditPatternRow[]>();
+  for (const r of unresolved) {
+    if (r.match_status !== "consolidated_upstream" || r.consolidated_into_omb_id == null) continue;
+    const key = `${r.agency}::${r.consolidated_into_omb_id}`;
+    if (!consolidationBuckets.has(key)) consolidationBuckets.set(key, []);
+    consolidationBuckets.get(key)!.push(r);
+  }
+  for (const [, bucket] of consolidationBuckets) {
+    if (bucket.length < 2) continue;
+    const agency = bucket[0].agency!;
+    const ombId = bucket[0].consolidated_into_omb_id!;
+    patterns.push(
+      makePattern({
+        id: `${agency.toLowerCase()}-consolidation-${ombId}`,
+        kind: "consolidation",
+        agency,
+        title: `${agency} · ${bucket.length} product-specific rows rolled into one OMB category`,
+        hypothesis: `OMB consolidated ${bucket.length} agency-filed product rows into a single generic category row (OMB row #${ombId}). Likely intentional upstream rollup.`,
+        auditIds: bucket.map((r) => r.audit_id),
+        suggested_reason: "consolidated_upstream",
+        filter_url: `/discrepancies?status=consolidated_upstream&agency=${encodeURIComponent(agency)}`,
+      }),
+    );
+  }
+
+  // 2. OMB duplicate clusters: (agency, normalized name) where status=duplicate_in_omb
+  const dupBuckets = new Map<string, RawAuditPatternRow[]>();
+  for (const r of unresolved) {
+    if (r.match_status !== "duplicate_in_omb") continue;
+    const key = `${r.agency}::${normalizeName(r.name)}`;
+    if (!dupBuckets.has(key)) dupBuckets.set(key, []);
+    dupBuckets.get(key)!.push(r);
+  }
+  for (const [key, bucket] of dupBuckets) {
+    if (bucket.length < 3) continue;
+    const agency = bucket[0].agency!;
+    const bureaus = new Set(bucket.map((r) => r.bureau ?? ""));
+    if (bureaus.size > 1) {
+      // Cross-bureau — treat as bureau_split (handled below). Skip here.
+      continue;
+    }
+    patterns.push(
+      makePattern({
+        id: `${agency.toLowerCase()}-omb-dup-${key.split("::")[1].replace(/\s+/g, "-").slice(0, 40)}`,
+        kind: "omb_duplicate_cluster",
+        agency,
+        title: `${agency} · OMB filed "${bucket[0].name}" ${bucket.length}×`,
+        hypothesis: `OMB's consolidated XLSX has ${bucket.length} verbatim repetitions of this row in a single bureau. Likely OMB-side data entry artifact.`,
+        auditIds: bucket.map((r) => r.audit_id),
+        suggested_reason: "genuine_duplicate",
+        filter_url: `/discrepancies?status=duplicate_in_omb&agency=${encodeURIComponent(agency)}&q=${encodeURIComponent(bucket[0].name ?? "")}`,
+      }),
+    );
+  }
+
+  // 3. Bureau-split clusters: same root product token across multiple bureaus
+  const splitBuckets = new Map<string, RawAuditPatternRow[]>();
+  for (const r of unresolved) {
+    if (r.match_status !== "duplicate_in_omb") continue;
+    const root = rootProductToken(r.name);
+    if (!root || root.length < 3) continue;
+    const key = `${r.agency}::${root}`;
+    if (!splitBuckets.has(key)) splitBuckets.set(key, []);
+    splitBuckets.get(key)!.push(r);
+  }
+  for (const [key, bucket] of splitBuckets) {
+    const bureaus = new Set(bucket.map((r) => r.bureau ?? ""));
+    if (bucket.length < 3 || bureaus.size < 2) continue;
+    const agency = bucket[0].agency!;
+    const root = key.split("::")[1];
+    patterns.push(
+      makePattern({
+        id: `${agency.toLowerCase()}-bureau-split-${root}`,
+        kind: "bureau_split",
+        agency,
+        title: `${agency} · "${root}" appears in ${bureaus.size} bureaus as variant rows`,
+        hypothesis: `${bucket.length} rows sharing the "${root}" product root across ${bureaus.size} different bureaus. Flagged as duplicates but likely legitimately distinct bureau-specific deployments.`,
+        auditIds: bucket.map((r) => r.audit_id),
+        suggested_reason: "legitimately_distinct",
+        filter_url: `/discrepancies?status=duplicate_in_omb&agency=${encodeURIComponent(agency)}&q=${encodeURIComponent(root)}`,
+      }),
+    );
+  }
+
+  // 4. Name-drift clusters: per-agency suggested_rename in fuzzy band
+  const driftBuckets = new Map<string, RawAuditPatternRow[]>();
+  for (const r of unresolved) {
+    if (r.match_status !== "suggested_rename") continue;
+    if (r.match_score == null || r.match_score < 0.4 || r.match_score > 0.7) continue;
+    const key = r.agency!;
+    if (!driftBuckets.has(key)) driftBuckets.set(key, []);
+    driftBuckets.get(key)!.push(r);
+  }
+  for (const [agency, bucket] of driftBuckets) {
+    if (bucket.length < 5) continue;
+    patterns.push(
+      makePattern({
+        id: `${agency.toLowerCase()}-name-drift`,
+        kind: "name_drift_cluster",
+        agency,
+        title: `${agency} · ${bucket.length} rows with low-confidence name matches (0.4–0.7)`,
+        hypothesis: `Agency-filed names use a different taxonomy than OMB's consolidated names. ${bucket.length} rows fell into the suggested-rename band — taxonomy alignment, not data loss.`,
+        auditIds: bucket.map((r) => r.audit_id),
+        suggested_reason: "renamed",
+        filter_url: `/discrepancies?status=suggested_rename&agency=${encodeURIComponent(agency)}`,
+      }),
+    );
+  }
+
+  patterns.sort((a, b) => b.count - a.count);
+  return patterns.slice(0, 6);
 }

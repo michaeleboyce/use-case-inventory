@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { DiscrepancyRow, DiscrepancyStatus } from "@/lib/types";
 
@@ -12,6 +13,7 @@ const STATUS_LABEL: Record<DiscrepancyStatus, string> = {
   omb_only: "OMB only (new)",
   db_only: "DB only (vanished)",
   duplicate_in_omb: "Duplicate in OMB",
+  consolidated_upstream: "Consolidated upstream",
 };
 
 const STATUS_TONE: Record<DiscrepancyStatus, string> = {
@@ -21,32 +23,86 @@ const STATUS_TONE: Record<DiscrepancyStatus, string> = {
   omb_only: "bg-amber-50 text-amber-900",
   db_only: "bg-rose-50 text-rose-900",
   duplicate_in_omb: "bg-orange-50 text-orange-900",
+  consolidated_upstream: "bg-[#f6efdf] text-stone-800",
 };
 
 const STATUS_OPTIONS: DiscrepancyStatus[] = [
   "omb_only",
   "db_only",
+  "consolidated_upstream",
   "suggested_rename",
   "duplicate_in_omb",
   "matched_fuzzy",
   "matched_exact",
 ];
 
+const ALL_STATUSES = new Set<DiscrepancyStatus>(STATUS_OPTIONS);
+
+function isStatus(value: string | null): value is DiscrepancyStatus {
+  return value != null && ALL_STATUSES.has(value as DiscrepancyStatus);
+}
+
 export function DiscrepancyTable({
   rows,
   agencies,
+  initialStatus,
+  initialAgency,
+  initialQuery,
 }: {
   rows: DiscrepancyRow[];
   agencies: Array<{ agency: string; n: number }>;
+  initialStatus?: DiscrepancyStatus | "all";
+  initialAgency?: string;
+  initialQuery?: string;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [statusFilter, setStatusFilter] = useState<DiscrepancyStatus | "all">(
-    "all",
+    initialStatus ?? "all",
   );
-  const [agencyFilter, setAgencyFilter] = useState<string>("all");
+  const [agencyFilter, setAgencyFilter] = useState<string>(
+    initialAgency ?? "all",
+  );
   const [resolvedFilter, setResolvedFilter] = useState<
     "all" | "unresolved" | "resolved"
   >("unresolved");
-  const [search, setSearch] = useState<string>("");
+  const [search, setSearch] = useState<string>(initialQuery ?? "");
+
+  // Re-sync state from URL when it changes externally (e.g., pattern-card
+  // click). We compare to current state to avoid setState->push->setState
+  // loops with the writer effect below.
+  const lastWrittenUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    const urlStatus = searchParams.get("status");
+    const urlAgency = searchParams.get("agency");
+    const urlQuery = searchParams.get("q");
+    const nextStatus: DiscrepancyStatus | "all" = isStatus(urlStatus)
+      ? urlStatus
+      : "all";
+    const nextAgency = urlAgency ?? "all";
+    const nextQuery = urlQuery ?? "";
+    setStatusFilter((prev) => (prev === nextStatus ? prev : nextStatus));
+    setAgencyFilter((prev) => (prev === nextAgency ? prev : nextAgency));
+    setSearch((prev) => (prev === nextQuery ? prev : nextQuery));
+  }, [searchParams]);
+
+  // Push filter state into the URL so pattern-card links remain shareable
+  // and the back-button restores prior filter sets. router.replace +
+  // scroll:false keeps the page from jumping when the user changes filters.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (agencyFilter !== "all") params.set("agency", agencyFilter);
+    if (search.trim() !== "") params.set("q", search.trim());
+    const qs = params.toString();
+    const nextUrl = qs ? `?${qs}` : "";
+    if (lastWrittenUrlRef.current === nextUrl) return;
+    lastWrittenUrlRef.current = nextUrl;
+    const currentQs = searchParams.toString();
+    if (currentQs === qs) return;
+    router.replace(`/discrepancies${nextUrl}`, { scroll: false });
+  }, [statusFilter, agencyFilter, search, router, searchParams]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -69,6 +125,7 @@ export function DiscrepancyTable({
       omb_only: 0,
       db_only: 0,
       duplicate_in_omb: 0,
+      consolidated_upstream: 0,
     };
     for (const r of rows) out[r.match_status]++;
     return out;

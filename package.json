@@ -6,6 +6,7 @@
     "dev": "next dev",
     "prebuild": "node -e \"const fs=require('fs');const src='../data/federal_ai_inventory_2025.db';if(fs.existsSync(src))fs.copyFileSync(src,'data/federal_ai_inventory_2025.db')\"",
     "build": "next build",
+    "typecheck": "tsc --noEmit --incremental false",
     "start": "next start"
   },
   "engines": {
@@ -34,6 +35,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
