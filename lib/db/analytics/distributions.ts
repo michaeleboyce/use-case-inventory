@@ -1,6 +1,11 @@
 import { getDb } from "../shared/init";
-import type { BreakdownRow, CategoryDistributionRow, HeatmapCell, VendorShareRow, YoYRow } from "../../types";
-import { LLM_BUCKET_CASE, LLM_NORMALIZED_FIELDS } from "./shared";
+import { LLM_NORMALIZED_FIELDS } from "../shared/sql-fragments";
+import type {
+  BreakdownRow,
+  CategoryDistributionRow,
+  VendorShareRow,
+  YoYRow,
+} from "../../types";
 
 /** Year-over-year growth per agency (for analytics bar chart). */
 export function getYoYGrowthData(): YoYRow[] {
@@ -51,23 +56,6 @@ export function getCategoryDistribution(): CategoryDistributionRow[] {
        AND LOWER(TRIM(p.product_type)) <> 'unclassified'
      GROUP BY p.product_type
      ORDER BY use_case_count DESC, agency_count DESC, product_count DESC
-  `);
-  return stmt.all();
-}
-
-/** Product × agency heatmap cells (only non-zero combinations are returned). */
-export function getProductAgencyHeatmap(): HeatmapCell[] {
-  const stmt = getDb().prepare<[], HeatmapCell>(`
-    SELECT p.id AS product_id,
-           p.canonical_name AS product_name,
-           a.id AS agency_id,
-           a.abbreviation AS agency_abbreviation,
-           COUNT(*) AS count
-      FROM entry_product_edges sub
-      JOIN products p ON p.id = sub.product_id
-      JOIN agencies a ON a.id = sub.agency_id
-     GROUP BY p.id, a.id
-     ORDER BY count DESC
   `);
   return stmt.all();
 }
@@ -190,66 +178,6 @@ export function getAgencyTypeByTier(): Array<{
   );
 }
 
-/**
- * Dense product × agency matrix for the heatmap. Returns the top N products
- * × top M agencies; sparse cells (zeros) are filled in by the consumer.
- */
-export function getProductAgencyMatrix(
-  topProducts = 15,
-  topAgencies = 20,
-): {
-  products: Array<{ id: number; canonical_name: string; vendor: string | null; total: number }>;
-  agencies: Array<{ id: number; name: string; abbreviation: string; total: number }>;
-  cells: Array<{ product_id: number; agency_id: number; count: number }>;
-} {
-  const db = getDb();
-
-  // Heatmap must span both inventory tables — Copilot-style products that only
-  // surface in the consolidated filings were being dropped otherwise.
-  const products = db
-    .prepare<[number], { id: number; canonical_name: string; vendor: string | null; total: number }>(`
-      SELECT p.id, p.canonical_name, p.vendor, COUNT(epe.product_id) AS total
-        FROM products p
-        JOIN entry_product_edges epe ON epe.product_id = p.id
-       GROUP BY p.id
-       ORDER BY total DESC, p.canonical_name COLLATE NOCASE ASC
-       LIMIT ?
-    `)
-    .all(topProducts);
-
-  const agencies = db
-    .prepare<[number], { id: number; name: string; abbreviation: string; total: number }>(`
-      SELECT a.id, a.name, a.abbreviation, COUNT(ie.entry_id) AS total
-        FROM agencies a
-        JOIN inventory_entries ie ON ie.agency_id = a.id
-       GROUP BY a.id
-       ORDER BY total DESC, a.name COLLATE NOCASE ASC
-       LIMIT ?
-    `)
-    .all(topAgencies);
-
-  if (products.length === 0 || agencies.length === 0) {
-    return { products, agencies, cells: [] };
-  }
-
-  const productIds = products.map((p) => p.id);
-  const agencyIds = agencies.map((a) => a.id);
-  const pPh = productIds.map(() => "?").join(",");
-  const aPh = agencyIds.map(() => "?").join(",");
-
-  const cells = db
-    .prepare<number[], { product_id: number; agency_id: number; count: number }>(`
-      SELECT product_id, agency_id, COUNT(*) AS count
-        FROM entry_product_edges
-       WHERE product_id IN (${pPh})
-         AND agency_id IN (${aPh})
-       GROUP BY product_id, agency_id
-    `)
-    .all(...productIds, ...agencyIds);
-
-  return { products, agencies, cells };
-}
-
 /** Distribution of tag.architecture_type across all entries (individual + consolidated). */
 export function getArchitectureDistribution(): BreakdownRow[] {
   const stmt = getDb().prepare<[], BreakdownRow>(`
@@ -260,85 +188,6 @@ export function getArchitectureDistribution(): BreakdownRow[] {
      ORDER BY count DESC
   `);
   return stmt.all();
-}
-
-/**
- * Vendor share restricted to general-LLM entries. Bucketed via
- * cots_vendor / tool_vendor strings on use_case_tags. Rows with no vendor at
- * all bucket to "Vendor unspecified" so the reader can see how much of the
- * LLM-access reporting is agency-wide-without-naming-the-tool.
- */
-export function getLLMVendorShare(): BreakdownRow[] {
-  const stmt = getDb().prepare<[], BreakdownRow>(`
-    WITH tagged AS (
-      SELECT ${LLM_NORMALIZED_FIELDS}
-        FROM use_case_tags t
-        LEFT JOIN use_cases uc ON uc.id = t.use_case_id
-       WHERE t.ai_sophistication = 'general_llm'
-    )
-    SELECT ${LLM_BUCKET_CASE} AS label,
-           COUNT(*) AS count
-      FROM tagged
-     GROUP BY label
-     ORDER BY count DESC
-  `);
-  return stmt.all();
-}
-
-/**
- * Per-agency rollup of the LLM "Vendor unspecified" gap surfaced by
- * `getLLMVendorShare` / Insight Card G. Same fallback chain as
- * `getLLMVendorShare` (cots_vendor → tool_vendor → use_cases.vendor_name →
- * '' with placeholder filtering): an entry counts as "unspecified" when
- * neither the tag fields nor the OMB-filed vendor_name / system_name name
- * a vendor or product. Ranked by absolute unspecified count desc so the
- * worst contributors surface first; the analytics page renders the top 10
- * as a horizontal bar list under Fig. 07.
- */
-export function getLLMVendorVisibilityByAgency(): Array<{
-  agency_id: number;
-  abbreviation: string;
-  name: string;
-  total: number;
-  unspecified: number;
-  share: number;
-}> {
-  const stmt = getDb().prepare<
-    [],
-    {
-      agency_id: number;
-      abbreviation: string;
-      name: string;
-      total: number;
-      unspecified: number;
-    }
-  >(`
-    WITH tagged AS (
-      SELECT a.id AS agency_id,
-             a.abbreviation,
-             a.name,
-             ${LLM_NORMALIZED_FIELDS}
-        FROM use_case_tags t
-        JOIN use_cases uc ON uc.id = t.use_case_id
-        JOIN agencies a ON a.id = uc.agency_id
-       WHERE t.ai_sophistication = 'general_llm'
-    )
-    SELECT agency_id,
-           abbreviation,
-           name,
-           COUNT(*) AS total,
-           SUM(CASE WHEN v_lower = '' AND p_lower = '' THEN 1 ELSE 0 END)
-             AS unspecified
-      FROM tagged
-     GROUP BY agency_id, abbreviation, name
-    HAVING unspecified > 0
-     ORDER BY unspecified DESC, total DESC
-  `);
-  const rows = stmt.all();
-  return rows.map((r) => ({
-    ...r,
-    share: r.total > 0 ? r.unspecified / r.total : 0,
-  }));
 }
 
 /**
@@ -608,37 +457,6 @@ export function getMaturityScatterData(): Array<{
       JOIN agency_ai_maturity m ON m.agency_id = a.id
      WHERE m.year_over_year_growth IS NOT NULL
        AND m.total_use_cases IS NOT NULL
-  `);
-  return stmt.all();
-}
-
-/** Agencies that have enterprise-wide LLM access. */
-export function getEnterpriseLLMAgencies(): Array<{
-  agency_id: number;
-  name: string;
-  abbreviation: string;
-  general_llm_count: number;
-  has_enterprise_llm: number | null;
-}> {
-  const stmt = getDb().prepare<
-    [],
-    {
-      agency_id: number;
-      name: string;
-      abbreviation: string;
-      general_llm_count: number;
-      has_enterprise_llm: number | null;
-    }
-  >(`
-    SELECT a.id AS agency_id,
-           a.name,
-           a.abbreviation,
-           COALESCE(m.general_llm_count, 0) AS general_llm_count,
-           m.has_enterprise_llm AS has_enterprise_llm
-      FROM agencies a
-      LEFT JOIN agency_ai_maturity m ON m.agency_id = a.id
-     WHERE a.status IN ('FOUND_2025','FOUND_2024_ONLY')
-     ORDER BY has_enterprise_llm DESC, general_llm_count DESC, a.name COLLATE NOCASE ASC
   `);
   return stmt.all();
 }
