@@ -27,10 +27,10 @@ import { canWriteResolutions } from "@/lib/resolutions";
 import type { DiscrepancyStatus } from "@/lib/types";
 import { Section, MonoChip } from "@/components/editorial";
 import { BulkResolveBar } from "@/components/bulk-resolve-bar";
-import { DiscrepancyTable } from "@/components/discrepancy-table";
-import { DiscrepancyPatternCard } from "@/components/discrepancy-pattern-card";
-import { DiscrepancyAgencyPulse } from "@/components/discrepancy-agency-pulse";
-import { DiscrepancyPostureBanner } from "@/components/discrepancy-posture-banner";
+import { DiscrepancyTable } from "@/components/discrepancy/discrepancy-table";
+import { DiscrepancyPatternCard } from "@/components/discrepancy/discrepancy-pattern-card";
+import { DiscrepancyAgencyPulse } from "@/components/discrepancy/discrepancy-agency-pulse";
+import { DiscrepancyPostureBanner } from "@/components/discrepancy/discrepancy-posture-banner";
 import { SessionCounterPill } from "@/components/session-counter-pill";
 
 export const metadata = {

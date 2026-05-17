@@ -10,7 +10,7 @@ import { notFound } from "next/navigation";
 import { getDiscrepancyDetail, getDiscrepancyRows } from "@/lib/discrepancies";
 import { canWriteResolutions } from "@/lib/resolutions";
 import { Section, MonoChip } from "@/components/editorial";
-import { DiscrepancySideBySide } from "@/components/discrepancy-side-by-side";
+import { DiscrepancySideBySide } from "@/components/discrepancy/discrepancy-side-by-side";
 import { KeyboardShortcutHost } from "@/components/keyboard-shortcut-host";
 import { ResolutionForm } from "@/components/resolution-form";
 import { SessionCounterPill } from "@/components/session-counter-pill";
