@@ -24,7 +24,7 @@ import { STAGE_BUCKET_SQL } from "./shared/sql-fragments";
 // callers keep working without changes.
 export { rawDb, STAGE_BUCKET_SQL };
 
-// Domain modules (per-domain split in progress; see virtual-sniffing-peacock.md).
+// Domain modules. Keep this barrel stable so route code can import from @/lib/db.
 export {
   getAllTemplates,
   getTemplateById,
@@ -146,9 +146,6 @@ export {
   getLinkQueueRows,
 } from "./fedramp";
 
-// All query functions now live under ./db/<domain>.ts and are re-exported
-// above. STAGE_BUCKET_SQL, DB_PATH, getDb(), and rawDb() live in
-// ./db/shared/{init,sql-fragments}.ts. This barrel will be folded into
-// ./db/index.ts (Phase 5 of the split) once all consumers have migrated
-// to deep-importing — for now it preserves the @/lib/db import surface.
-
+// Most query implementations live under ./db/<domain>/ or ./db/<domain>.ts and
+// are re-exported above. STAGE_BUCKET_SQL, DB_PATH, getDb(), and rawDb() live
+// in ./db/shared/{init,sql-fragments}.ts.

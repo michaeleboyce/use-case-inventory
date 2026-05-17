@@ -26,7 +26,6 @@ const DB_PATH = (() => {
 })();
 
 declare global {
-  // eslint-disable-next-line no-var
   var __aiInventoryDb: Database.Database | undefined;
 }
 

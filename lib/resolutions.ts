@@ -15,12 +15,12 @@
  *     "local-only" notice and disables the Mark/Unmark buttons.
  *   - To deploy resolutions, commit the JSON file and push.
  */
-import fs from "node:fs";
-import path from "node:path";
-
 import type { ResolutionReason } from "./types";
-
-const FILE = path.join(process.cwd(), "data", "discrepancy_resolutions.json");
+import {
+  canWriteResolutionStorage,
+  readResolutionFile,
+  writeResolutionFile,
+} from "./resolutions/storage";
 
 export interface Resolution {
   /** `${agency_abbreviation}::${use_case_name}` — see buildResolutionKey. */
@@ -32,10 +32,6 @@ export interface Resolution {
   /** Fixed-vocabulary reason code. Optional for backward compatibility
    *  with rows written before the field existed. */
   reason?: ResolutionReason | null;
-}
-
-interface ResolutionsFile {
-  resolutions: Resolution[];
 }
 
 export function buildResolutionKey(
@@ -50,18 +46,10 @@ export function buildResolutionKey(
  *  can read the field uniformly.
  */
 export function readResolutions(): Resolution[] {
-  if (!fs.existsSync(FILE)) return [];
-  try {
-    const text = fs.readFileSync(FILE, "utf8");
-    const parsed = JSON.parse(text) as ResolutionsFile;
-    if (!Array.isArray(parsed.resolutions)) return [];
-    return parsed.resolutions.map((r) => ({
-      ...r,
-      reason: (r.reason ?? null) as ResolutionReason | null,
-    }));
-  } catch {
-    return [];
-  }
+  return readResolutionFile().map((r) => ({
+    ...r,
+    reason: (r.reason ?? null) as ResolutionReason | null,
+  }));
 }
 
 /** Look up a single resolution by key. Returns null when none exists. */
@@ -87,7 +75,7 @@ export function getResolution(
  * signal. We treat any other environment as "local dev OK to write."
  */
 export function canWriteResolutions(): boolean {
-  return process.env.VERCEL !== "1";
+  return canWriteResolutionStorage();
 }
 
 /**
@@ -115,12 +103,7 @@ export function upsertResolution(
   all.push(fresh);
   // Sort by resolved_at desc so the file stays scannable in PRs.
   all.sort((a, b) => (a.resolved_at < b.resolved_at ? 1 : -1));
-  const out = {
-    _about:
-      "Human-curated triage decisions for /discrepancies. Keyed by (agency::use_case_name) — stable across ETL re-runs even though omb_match_audit.id is regenerated on each load. Edit only via the dashboard's Mark/Unmark buttons in local dev (npm run dev), then commit + push to deploy. Writes are blocked in production (Vercel filesystems are ephemeral).",
-    resolutions: all,
-  };
-  fs.writeFileSync(FILE, JSON.stringify(out, null, 2) + "\n", "utf8");
+  writeResolutionFile(all);
   return fresh;
 }
 
@@ -134,12 +117,7 @@ export function deleteResolution(key: string): void {
   const all = readResolutions();
   const filtered = all.filter((r) => r.key !== key);
   if (filtered.length === all.length) return;
-  const out = {
-    _about:
-      "Human-curated triage decisions for /discrepancies. Keyed by (agency::use_case_name) — stable across ETL re-runs even though omb_match_audit.id is regenerated on each load. Edit only via the dashboard's Mark/Unmark buttons in local dev (npm run dev), then commit + push to deploy. Writes are blocked in production (Vercel filesystems are ephemeral).",
-    resolutions: filtered,
-  };
-  fs.writeFileSync(FILE, JSON.stringify(out, null, 2) + "\n", "utf8");
+  writeResolutionFile(filtered);
 }
 
 /** Build a Map<key, Resolution> for O(1) overlay onto query results. */
