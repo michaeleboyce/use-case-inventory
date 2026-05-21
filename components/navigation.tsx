@@ -11,12 +11,21 @@ import { CommandPaletteHint } from "./command-palette";
 // Primary nav: the high-frequency surfaces. Kept inline on the section rail.
 // FedRAMP promoted from "More" — it's a real sub-area with its own
 // marketplace / coverage / curate routes and readers go there often.
+// Non-menu primary surfaces. Readiness (kicker II) renders as a dropdown
+// between Agencies and Use Cases — see ReadinessMenu / the nav body.
 const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/agencies", label: "Agencies", kicker: "I" },
-  { href: "/readiness", label: "Readiness", kicker: "II" },
   { href: "/use-cases", label: "Use Cases", kicker: "III" },
   { href: "/products", label: "Products", kicker: "IV" },
   { href: "/analytics", label: "Analytics", kicker: "V" },
+];
+
+// Readiness is its own sub-area with an overview + two named surfaces;
+// expose them as a hover/focus dropdown the same way FedRAMP works.
+const READINESS_SECTIONS: Array<{ href: string; label: string }> = [
+  { href: "/readiness", label: "Overview" },
+  { href: "/readiness/access", label: "AI Access & Scale" },
+  { href: "/readiness/methodology", label: "Methodology" },
 ];
 
 // FedRAMP is its own sub-area with an overview + three named surfaces;
@@ -81,20 +90,15 @@ export function Navigation() {
             still fits without horizontal scroll on typical viewports;
             on very narrow mobile widths the items wrap, which is fine. */}
         <nav className="mt-1 flex flex-wrap items-stretch gap-0 border-t border-border/70 text-sm">
-          {PRIMARY.map((link) => (
-            <NavLink
-              key={link.href}
-              href={link.href}
-              className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
-            >
-              <span
-                aria-hidden
-                className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
-              >
-                {link.kicker}
-              </span>
-              {link.label}
-            </NavLink>
+          {/* Agencies (I) */}
+          {PRIMARY.slice(0, 1).map((link) => (
+            <PrimaryNavLink key={link.href} link={link} />
+          ))}
+          {/* Readiness (II) — dropdown */}
+          <ReadinessMenu />
+          {/* Use Cases (III), Products (IV), Analytics (V) */}
+          {PRIMARY.slice(1).map((link) => (
+            <PrimaryNavLink key={link.href} link={link} />
           ))}
           <FedrampMenu />
           <BrowseMenu />
@@ -102,6 +106,73 @@ export function Navigation() {
         </nav>
       </div>
     </header>
+  );
+}
+
+/** A single numbered primary nav link (Agencies, Use Cases, …). */
+function PrimaryNavLink({
+  link,
+}: {
+  link: { href: string; label: string; kicker: string };
+}) {
+  return (
+    <NavLink
+      href={link.href}
+      className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
+    >
+      <span
+        aria-hidden
+        className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
+      >
+        {link.kicker}
+      </span>
+      {link.label}
+    </NavLink>
+  );
+}
+
+/**
+ * "Readiness" sub-area menu. Same CSS-only hover/focus-within pattern as
+ * FedrampMenu. The trigger NavLink points to /readiness (the scorecard)
+ * and shows active state for any `/readiness/*` path, so readers can click
+ * the trigger to land on the scorecard or hover to jump straight to AI
+ * Access & Scale / Methodology. Keeps roman kicker II so the numbered
+ * section sequence (I · II · III · IV · V) stays intact.
+ */
+function ReadinessMenu() {
+  return (
+    <div className="group/readiness relative -mt-px flex items-stretch">
+      <NavLink
+        href="/readiness"
+        className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
+      >
+        <span
+          aria-hidden
+          className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
+        >
+          II
+        </span>
+        Readiness
+        <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
+          ▾
+        </span>
+      </NavLink>
+      <div
+        role="menu"
+        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[14rem] border border-border bg-background py-1 shadow-md group-hover/readiness:block group-focus-within/readiness:block"
+      >
+        {READINESS_SECTIONS.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            role="menuitem"
+            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {s.label}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 

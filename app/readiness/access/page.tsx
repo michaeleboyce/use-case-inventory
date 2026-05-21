@@ -84,10 +84,12 @@ export default function AiAccessPage() {
             employees
           </strong>{" "}
           and {c.most} to most. {partialPilot} run partial or pilot
-          deployments, {c.unknown} have no public statement of scope, and{" "}
-          {c.none} has paused staff AI use. Every finding below is backed by a
-          verbatim quote and a dated public source; where no public evidence
-          exists, the gap is recorded rather than hidden.
+          deployments, {c.latent} have only latent access — a Microsoft 365
+          entitlement with no deliberate rollout — {c.unknown} have no public
+          statement of scope, and {c.none} has paused staff AI use. Most
+          findings below are backed by a verbatim quote and a dated public
+          source; where no public evidence exists, the gap is recorded rather
+          than hidden.
         </p>
       </header>
 

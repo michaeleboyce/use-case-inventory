@@ -451,12 +451,16 @@ export interface AgencyCompareData {
 // Source table: agency_ai_access_evidence (ETL migration m008).
 // -----------------------------------------------------------------------------
 
-/** Availability tier — who CAN use the tool, not who actively does. */
+/** Availability tier — who CAN use the tool, not who actively does.
+ *  `latent`: a Microsoft 365 Copilot Chat entitlement exists (any
+ *  M365-licensed user can reach it) but no deliberate agency-wide
+ *  rollout is documented. */
 export type AgencyAiAccessCoverage =
   | "all"
   | "most"
   | "partial"
   | "pilot"
+  | "latent"
   | "unknown"
   | "none";
 

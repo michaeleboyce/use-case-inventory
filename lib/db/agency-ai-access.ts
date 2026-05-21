@@ -21,8 +21,9 @@ const COVERAGE_RANK: Record<string, number> = {
   most: 2,
   partial: 3,
   pilot: 4,
-  unknown: 5,
-  none: 6,
+  latent: 5,
+  unknown: 6,
+  none: 7,
 };
 
 const COVERAGE_VALUES: AgencyAiAccessCoverage[] = [
@@ -30,6 +31,7 @@ const COVERAGE_VALUES: AgencyAiAccessCoverage[] = [
   "most",
   "partial",
   "pilot",
+  "latent",
   "unknown",
   "none",
 ];

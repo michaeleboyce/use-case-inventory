@@ -38,6 +38,13 @@ const BANDS: Array<{
     accent: "bg-orange-600",
   },
   {
+    key: "latent",
+    label: "Latent",
+    blurb:
+      "Copilot Chat reachable via existing Microsoft 365 licensing — no deliberate rollout",
+    accent: "bg-violet-500",
+  },
+  {
     key: "unknown",
     label: "Scope unclear",
     blurb: "A deployment exists but its availability scope is not public",
@@ -56,8 +63,9 @@ const COVERAGE_RANK: Record<string, number> = {
   most: 1,
   partial: 2,
   pilot: 3,
-  unknown: 4,
-  none: 5,
+  latent: 4,
+  unknown: 5,
+  none: 6,
 };
 
 export function AiAccessCoverageBand({ rows }: { rows: AgencyAiAccessRow[] }) {

@@ -11,6 +11,7 @@ const COVERAGE_CHIP: Record<AgencyAiAccessCoverage, string> = {
   most: "bg-teal-100 text-teal-900 border-teal-300",
   partial: "bg-amber-100 text-amber-900 border-amber-300",
   pilot: "bg-orange-100 text-orange-900 border-orange-300",
+  latent: "bg-violet-100 text-violet-900 border-violet-300",
   unknown: "bg-stone-100 text-stone-700 border-stone-300",
   none: "bg-rose-100 text-rose-900 border-rose-300",
 };
@@ -20,6 +21,7 @@ const COVERAGE_LABEL: Record<AgencyAiAccessCoverage, string> = {
   most: "Most staff",
   partial: "Partial",
   pilot: "Pilot",
+  latent: "Latent",
   unknown: "Scope unclear",
   none: "None / paused",
 };
@@ -61,18 +63,24 @@ export function AiAccessTable({ rows }: { rows: AgencyAiAccessRow[] }) {
 
             {/* Right column — the finding */}
             <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap items-baseline gap-x-2">
-                {r.tool_name ? (
-                  <span className="font-display italic text-[1.05rem] text-stone-900">
-                    {r.tool_name}
+              {r.tool_name ? (
+                <span className="font-display italic text-[1.05rem] text-stone-900">
+                  {r.tool_name}
+                </span>
+              ) : null}
+
+              {/* Absolute scale — surfaced prominently: a "partial" tier can
+                  still mean a five-figure userbase (DHS ~19,000). */}
+              {r.estimated_users ? (
+                <div className="flex items-baseline gap-2 border-l-2 border-stone-300 pl-2">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-stone-400">
+                    Scale
                   </span>
-                ) : null}
-                {r.estimated_users ? (
-                  <span className="font-mono text-xs text-stone-500">
+                  <span className="font-mono text-xs text-stone-700">
                     {r.estimated_users}
                   </span>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
 
               <p className="text-sm leading-snug text-stone-700">
                 {r.finding}
