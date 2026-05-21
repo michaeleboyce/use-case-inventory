@@ -9,3 +9,4 @@ export * from "./types/hierarchy";
 export * from "./types/analytics";
 export * from "./types/fedramp";
 export * from "./types/discrepancies";
+export * from "./types/year-comparison";

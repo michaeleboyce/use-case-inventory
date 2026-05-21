@@ -142,6 +142,13 @@ export {
   getLinkQueueGroups,
   getLinkQueueRows,
 } from "./fedramp";
+export {
+  getYearComparisonAggregates,
+  getLineageBreakdown,
+  getPerAgencyLineage,
+  getRetiredBreakdown,
+  getLineageSamples,
+} from "./year-comparison";
 
 // Most query implementations live under ./db/<domain>/ or ./db/<domain>.ts and
 // are re-exported above. STAGE_BUCKET_SQL, DB_PATH, getDb(), and rawDb() live

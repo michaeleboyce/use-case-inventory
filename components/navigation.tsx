@@ -41,6 +41,7 @@ const FEDRAMP_SECTIONS: Array<{ href: string; label: string }> = [
 // Lower-frequency surfaces, collapsed into a "More" dropdown.
 const MORE: Array<{ href: string; label: string }> = [
   { href: "/compare", label: "Compare" },
+  { href: "/compare-years", label: "Compare Years" },
   { href: "/templates", label: "Templates" },
   { href: "/discrepancies", label: "Discrepancies" },
   { href: "/about", label: "Colophon" },
