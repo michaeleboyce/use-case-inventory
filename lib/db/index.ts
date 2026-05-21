@@ -48,6 +48,10 @@ export {
   getAgencyCompareData,
 } from "./agencies";
 export {
+  getAgencyAiAccessEvidence,
+  getAiAccessSummary,
+} from "./agency-ai-access";
+export {
   getAllProducts,
   getProductById,
   getTopProducts,

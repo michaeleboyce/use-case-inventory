@@ -20,6 +20,8 @@ import {
   getHeadlineStats,
   getReadinessTierSummary,
 } from "@/lib/readiness";
+import { getAiAccessSummary } from "@/lib/db";
+import type { AiAccessSummary } from "@/lib/types";
 
 interface VendorConcentrationRow {
   vendor: string;
@@ -135,6 +137,9 @@ export interface ReadinessViewModel {
   internalBuildPct: number;
   productionPct: number;
   complianceGapPct: number;
+  /** Null if the agency_ai_access_evidence table is absent (degrades the
+   *  teaser gracefully rather than crashing /readiness). */
+  aiAccess: AiAccessSummary | null;
 }
 
 export async function buildReadinessViewModel(): Promise<ReadinessViewModel> {
@@ -142,6 +147,14 @@ export async function buildReadinessViewModel(): Promise<ReadinessViewModel> {
   const tiers = getReadinessTierSummary();
   const headline = getHeadlineStats();
   const { vendors, vendorHerfindahl, frontier, reporting } = loadSubStories();
+
+  let aiAccess: AiAccessSummary | null = null;
+  try {
+    aiAccess = getAiAccessSummary();
+  } catch {
+    // Table not present (e.g. older DB snapshot) — teaser is omitted.
+    aiAccess = null;
+  }
 
   return {
     ranked,
@@ -156,5 +169,6 @@ export async function buildReadinessViewModel(): Promise<ReadinessViewModel> {
     internalBuildPct: Math.round(headline.internal_build_pct),
     productionPct: Math.round(headline.production_rate_pct),
     complianceGapPct: Math.round(headline.hi_no_risk_docs_pct),
+    aiAccess,
   };
 }

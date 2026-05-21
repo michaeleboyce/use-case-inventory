@@ -445,6 +445,52 @@ export interface AgencyCompareData {
   }>;
 }
 
+// -----------------------------------------------------------------------------
+// AI Access & Scale — researched public evidence of how widely each agency
+// has deployed a general-purpose AI tool. Backs /readiness/access.
+// Source table: agency_ai_access_evidence (ETL migration m008).
+// -----------------------------------------------------------------------------
+
+/** Availability tier — who CAN use the tool, not who actively does. */
+export type AgencyAiAccessCoverage =
+  | "all"
+  | "most"
+  | "partial"
+  | "pilot"
+  | "unknown"
+  | "none";
+
+/** One researched finding: an agency + tool + availability assessment,
+ *  backed by a verbatim quote and a source URL (or a recorded gap). */
+export interface AgencyAiAccessRow {
+  id: number;
+  agency_id: number | null;
+  agency_abbreviation: string;
+  agency_name: string | null;
+  tool_name: string | null;
+  finding: string;
+  estimated_users: string | null;
+  coverage_assessment: AgencyAiAccessCoverage | null;
+  exact_quote: string | null;
+  source_url: string | null;
+  source_title: string | null;
+  source_date: string | null;
+  source_type: string | null;
+  confidence: "high" | "medium" | "low" | null;
+  status: "corroborated" | "searched_no_source";
+  notes: string | null;
+  captured_at: string;
+}
+
+/** Rollup for the /readiness/access header + the /readiness teaser. */
+export interface AiAccessSummary {
+  total_agencies: number;
+  by_coverage: Record<AgencyAiAccessCoverage, number>;
+  corroborated_findings: number;
+  searched_no_source: number;
+  computed_at: string | null;
+}
+
 /** Peer use case row surfaced in the similarity sidebar on the detail page. */
 export interface PeerUseCaseRow {
   id: number;

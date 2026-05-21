@@ -26,6 +26,7 @@ export default async function ReadinessPage() {
     internalBuildPct,
     productionPct,
     complianceGapPct,
+    aiAccess,
   } = await buildReadinessViewModel();
 
   return (
@@ -150,6 +151,37 @@ export default async function ReadinessPage() {
           Click any agency code to open its detailed scorecard.
         </p>
       </Section>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* AI Access & Scale — teaser linking to /readiness/access            */}
+      {/* ----------------------------------------------------------------- */}
+      {aiAccess ? (
+        <Link
+          href="/readiness/access"
+          className="group mt-6 block border border-stone-300 bg-[#f6efdf] p-5 transition-colors hover:border-stone-900 md:p-6"
+        >
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Companion view
+          </div>
+          <div className="mt-1 font-display text-[1.6rem] italic leading-tight text-foreground">
+            AI Access &amp; Scale
+          </div>
+          <p className="mt-2 max-w-prose text-sm leading-snug text-foreground/85">
+            Readiness scores how well agencies <em>build and govern</em> AI.
+            The companion view asks a blunter question — how widely is a
+            general-purpose AI tool actually <em>available</em> to staff?{" "}
+            <span className="font-medium text-foreground">
+              {aiAccess.by_coverage.all} of {aiAccess.total_agencies} CFO Act
+              agencies have made one available to all employees
+            </span>
+            ; {aiAccess.by_coverage.partial + aiAccess.by_coverage.pilot} run
+            partial or pilot deployments. Every finding is source-backed.
+          </p>
+          <div className="mt-3 font-mono text-xs font-medium text-foreground underline decoration-dotted underline-offset-4 group-hover:text-[var(--stamp)]">
+            See AI Access &amp; Scale →
+          </div>
+        </Link>
+      ) : null}
 
       {/* ----------------------------------------------------------------- */}
       {/* § 03 — RANKED                                                      */}
