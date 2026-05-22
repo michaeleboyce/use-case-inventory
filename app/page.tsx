@@ -10,7 +10,7 @@ import { TopProductsChart } from "@/components/charts/top-products-chart";
 import { AgencyTypeChart } from "@/components/charts/agency-type-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
-import { buildUseCasesUrl } from "@/lib/urls";
+import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
 import { buildHomeViewModel } from "./_view-model";
 
 export default async function HomePage() {
@@ -310,27 +310,33 @@ export default async function HomePage() {
                 label="Coding assistants"
                 count={stats.total_coding_entries}
                 pct={formatWholePercent(stats.total_coding_entries, totalEntries)}
-                href={buildUseCasesUrl({ isCodingTool: true })}
+                href={buildUseCasesUrl({ isCodingTool: true, entryKind: "all" })}
                 accent="verified"
               />
               <StatGlance
                 label="Generative AI"
                 count={genAIEntries}
                 pct={formatWholePercent(genAIEntries, totalEntries)}
-                href={buildUseCasesUrl({ isGenAI: true })}
+                href={buildUseCasesUrl({ isGenAI: true, entryKind: "all" })}
                 accent="stamp"
               />
               <StatGlance
                 label="Agentic AI"
                 count={agenticEntries}
                 pct={formatWholePercent(agenticEntries, totalEntries)}
-                href={buildUseCasesUrl({ aiSophistications: ["agentic"] })}
+                href={buildUseCasesUrl({
+                  aiSophistications: ["agentic"],
+                  entryKind: "all",
+                })}
               />
               <StatGlance
                 label="High-impact"
                 count={stats.total_high_impact_entries}
                 pct={formatWholePercent(stats.total_high_impact_entries, totalEntries)}
-                href={buildUseCasesUrl({ highImpactDesignations: ["high_impact"] })}
+                href={buildUseCasesUrl({
+                  highImpactDesignations: ["high_impact"],
+                  entryKind: "all",
+                })}
               />
             </div>
           </div>
@@ -377,27 +383,27 @@ export default async function HomePage() {
                 label="With enterprise LLM"
                 count={agenciesWithEnterpriseLLM}
                 pct={formatWholePercent(agenciesWithEnterpriseLLM, reportingAgencies)}
-                href={buildUseCasesUrl({ isGeneralLLMAccess: true })}
+                href={buildAgenciesUrl({ hasEnterpriseLlm: true })}
                 accent="stamp"
               />
               <StatGlance
                 label="With coding assistants"
                 count={agenciesWithCoding}
                 pct={formatWholePercent(agenciesWithCoding, reportingAgencies)}
-                href={buildUseCasesUrl({ isCodingTool: true })}
+                href={buildAgenciesUrl({ hasCoding: true })}
                 accent="verified"
               />
               <StatGlance
                 label="With agentic AI"
                 count={agenciesWithAgentic}
                 pct={formatWholePercent(agenciesWithAgentic, reportingAgencies)}
-                href={buildUseCasesUrl({ aiSophistications: ["agentic"] })}
+                href={buildAgenciesUrl({ hasAgentic: true })}
               />
               <StatGlance
                 label="With custom AI"
                 count={agenciesWithCustom}
                 pct={formatWholePercent(agenciesWithCustom, reportingAgencies)}
-                href={buildUseCasesUrl({ entryTypes: ["custom_system"] })}
+                href={buildAgenciesUrl({ hasCustom: true })}
               />
             </div>
           </div>
@@ -488,7 +494,7 @@ export default async function HomePage() {
             note={
               <>
                 <Link
-                  href={buildUseCasesUrl({ isGeneralLLMAccess: false })}
+                  href={buildAgenciesUrl({ hasEnterpriseLlm: false })}
                   className="font-medium text-foreground transition-colors hover:text-[var(--stamp)]"
                 >
                   {missingEnterpriseLLM.length} of {maturity.length}
@@ -506,7 +512,7 @@ export default async function HomePage() {
             note={
               <>
                 <Link
-                  href={buildUseCasesUrl({ isCodingTool: false })}
+                  href={buildAgenciesUrl({ hasCoding: false })}
                   className="font-medium text-foreground transition-colors hover:text-[var(--stamp)]"
                 >
                   {missingCoding.length} of {maturity.length}

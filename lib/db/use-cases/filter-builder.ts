@@ -1,4 +1,7 @@
-import { STAGE_BUCKET_SQL } from "../shared/sql-fragments";
+import {
+  LLM_VENDOR_UNSPECIFIED_PREDICATE,
+  STAGE_BUCKET_SQL,
+} from "../shared/sql-fragments";
 import type { UseCaseFilterInput } from "../../types";
 
 /**
@@ -36,6 +39,7 @@ export function hasUseCaseOnlyFilter(filters: UseCaseFilterInput): boolean {
     filters.aiClassification != null ||
     filters.isHighImpact != null ||
     filters.vendor != null ||
+    filters.vendorUnspecified != null ||
     (filters.bureaus != null && filters.bureaus.length > 0) ||
     (filters.topicAreas != null && filters.topicAreas.length > 0)
   );
@@ -66,7 +70,9 @@ export function needsTagJoin(filters: UseCaseFilterInput): boolean {
     filters.isGeneralLLMAccess != null ||
     filters.isPublicFacing != null ||
     filters.hasATOorFedRAMP != null ||
-    filters.hasMeaningfulRiskDocs != null
+    filters.hasMeaningfulRiskDocs != null ||
+    // vendorUnspecified's predicate reads tag.* columns, so it needs the join.
+    filters.vendorUnspecified != null
   );
 }
 
@@ -206,6 +212,10 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
   if (filters.vendor) {
     rowWhere.push("LOWER(uc.vendor_name) LIKE LOWER(?)");
     rowParams.push(`%${filters.vendor}%`);
+  }
+  if (filters.vendorUnspecified === true) {
+    // References tag.* and uc.* — needsTagJoin() emits the LEFT JOIN.
+    rowWhere.push(`(${LLM_VENDOR_UNSPECIFIED_PREDICATE})`);
   }
   if (filters.search) {
     rowWhere.push(

@@ -116,6 +116,8 @@ function buildFilters(sp: Search): UseCasesFilters {
   if (first(sp.public_facing) === "1") filters.isPublicFacing = true;
   if (first(sp.has_ato) === "1") filters.hasATOorFedRAMP = true;
   if (first(sp.risk_docs) === "1") filters.hasMeaningfulRiskDocs = true;
+  // Drill-through-only (Insight Card G): no filter-rail control, like `vendor`.
+  if (first(sp.vendor_unspecified) === "1") filters.vendorUnspecified = true;
 
   // Entry-kind toggle. Absent → individual-only (default). The drill-through
   // helpers in lib/urls.ts emit `entry_kind=all` so product / agency / template

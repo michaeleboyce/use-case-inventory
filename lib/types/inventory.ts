@@ -366,6 +366,11 @@ export interface UseCaseFilterInput {
   isPublicFacing?: boolean;
   hasATOorFedRAMP?: boolean;
   hasMeaningfulRiskDocs?: boolean;
+  /** Drill-through-only: individual use cases that name neither a vendor nor a
+   *  product (the "Vendor unspecified" bucket on the LLM-vendor donut). Applies
+   *  the same vendor/product normalization as `LLM_NORMALIZED_FIELDS`. Like
+   *  `vendor`, this is a use-case-only filter with no filter-rail control. */
+  vendorUnspecified?: boolean;
 }
 
 /** Normalized stage-of-development bucket keys. Matches `STAGE_BUCKET_SQL`

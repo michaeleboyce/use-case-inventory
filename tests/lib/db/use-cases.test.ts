@@ -54,6 +54,38 @@ describe("getUseCasesFiltered", () => {
     expect(rows).toHaveLength(3);
   });
 
+  it("filters to entries naming neither a vendor nor a product (vendorUnspecified)", () => {
+    // Fixture use cases VA-002, VA-005, DHS-001, DHS-004 (ids 2/5/6/9) have a
+    // NULL vendor_name and no product/system name; the seed leaves every tag
+    // vendor/product field unset, so the predicate resolves via vendor_name.
+    const { rows, total } = getUseCasesFiltered({ vendorUnspecified: true });
+    expect(total).toBe(4);
+    expect(rows).toHaveLength(4);
+    for (const r of rows) {
+      expect(r.kind).toBe("use_case");
+      if (r.kind === "use_case") {
+        expect(r.vendor_name == null || r.vendor_name === "").toBe(true);
+      }
+    }
+  });
+
+  it("AND-composes vendorUnspecified with a sophistication filter", () => {
+    // The same 4 unspecified rows are all classical_ml; none are frontier_llm.
+    // This is the composition Insight Card G relies on (general_llm + gap).
+    expect(
+      getUseCasesFiltered({
+        aiSophistications: ["classical_ml"],
+        vendorUnspecified: true,
+      }).total,
+    ).toBe(4);
+    expect(
+      getUseCasesFiltered({
+        aiSophistications: ["frontier_llm"],
+        vendorUnspecified: true,
+      }).total,
+    ).toBe(0);
+  });
+
   it("returns the 4 consolidated rows when entryKind=consolidated", () => {
     const { rows, total } = getUseCasesFiltered({ entryKind: "consolidated" });
     expect(total).toBe(4);

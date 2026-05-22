@@ -55,6 +55,8 @@ export type AgencyRow = {
   year_over_year_growth: number | null;
   has_enterprise_llm: number | null;
   has_coding_assistants: number | null;
+  has_agentic_ai: number | null;
+  has_custom_ai: number | null;
 };
 
 type TriState = "any" | "yes" | "no";
@@ -89,12 +91,17 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
   const initialTier = searchParams.get("tier") ?? "all";
   const initialLLM = (searchParams.get("llm") as TriState | null) ?? "any";
   const initialCoding = (searchParams.get("coding") as TriState | null) ?? "any";
+  const initialAgentic =
+    (searchParams.get("agentic") as TriState | null) ?? "any";
+  const initialCustom = (searchParams.get("custom") as TriState | null) ?? "any";
   const initialQuery = searchParams.get("q") ?? "";
 
   const [type, setType] = useState<string>(initialType);
   const [tier, setTier] = useState<string>(initialTier);
   const [llm, setLLM] = useState<TriState>(initialLLM);
   const [coding, setCoding] = useState<TriState>(initialCoding);
+  const [agentic, setAgentic] = useState<TriState>(initialAgentic);
+  const [custom, setCustom] = useState<TriState>(initialCustom);
   const [query, setQuery] = useState<string>(initialQuery);
   const [sorting, setSorting] = useState<SortingState>([
     { id: "total_use_cases", desc: true },
@@ -106,6 +113,8 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
     tier?: string;
     llm?: TriState;
     coding?: TriState;
+    agentic?: TriState;
+    custom?: TriState;
     q?: string;
   }) {
     const params = new URLSearchParams(searchParams.toString());
@@ -121,6 +130,8 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
     setOrDelete("tier", next.tier ?? tier, "all");
     setOrDelete("llm", next.llm ?? llm, "any");
     setOrDelete("coding", next.coding ?? coding, "any");
+    setOrDelete("agentic", next.agentic ?? agentic, "any");
+    setOrDelete("custom", next.custom ?? custom, "any");
     setOrDelete("q", next.q ?? query, "");
     const qs = params.toString();
     startTransition(() => {
@@ -140,6 +151,10 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
       if (llm === "no" && r.has_enterprise_llm === 1) return false;
       if (coding === "yes" && r.has_coding_assistants !== 1) return false;
       if (coding === "no" && r.has_coding_assistants === 1) return false;
+      if (agentic === "yes" && r.has_agentic_ai !== 1) return false;
+      if (agentic === "no" && r.has_agentic_ai === 1) return false;
+      if (custom === "yes" && r.has_custom_ai !== 1) return false;
+      if (custom === "no" && r.has_custom_ai === 1) return false;
       if (q) {
         if (
           !r.name.toLowerCase().includes(q) &&
@@ -150,7 +165,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
       }
       return true;
     });
-  }, [rows, type, tier, llm, coding, query]);
+  }, [rows, type, tier, llm, coding, agentic, custom, query]);
 
   const columns = useMemo(
     () => [
@@ -396,6 +411,34 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
               { value: "any", label: "Coding: Any" },
               { value: "yes", label: "Has coding tools" },
               { value: "no", label: "No coding tools" },
+            ]}
+          />
+          <LabeledSelect
+            label="Agentic"
+            value={agentic}
+            onChange={(v) => {
+              const next = v as TriState;
+              setAgentic(next);
+              syncUrl({ agentic: next });
+            }}
+            options={[
+              { value: "any", label: "Agentic: Any" },
+              { value: "yes", label: "Has agentic AI" },
+              { value: "no", label: "No agentic AI" },
+            ]}
+          />
+          <LabeledSelect
+            label="Custom"
+            value={custom}
+            onChange={(v) => {
+              const next = v as TriState;
+              setCustom(next);
+              syncUrl({ custom: next });
+            }}
+            options={[
+              { value: "any", label: "Custom: Any" },
+              { value: "yes", label: "Has custom AI" },
+              { value: "no", label: "No custom AI" },
             ]}
           />
         </div>

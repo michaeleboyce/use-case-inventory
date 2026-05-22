@@ -39,6 +39,7 @@ const BOOL_PARAMS: Array<
   ["isPublicFacing", "public_facing"],
   ["hasATOorFedRAMP", "has_ato"],
   ["hasMeaningfulRiskDocs", "risk_docs"],
+  ["vendorUnspecified", "vendor_unspecified"],
 ];
 
 /** Build a `/use-cases?...` URL from a filter object. Skips empty arrays. */
@@ -77,12 +78,19 @@ export function buildUseCasesUrl(
   return qs ? `/use-cases?${qs}` : "/use-cases";
 }
 
-/** Build an `/agencies?...` URL. */
+/** Build an `/agencies?...` URL.
+ *
+ *  Capability flags emit the `AgenciesTable` TriState vocabulary
+ *  (`yes` / `no`) — that is the exact param shape the directory table reads
+ *  via `useSearchParams` and writes back. Emitting `1` / `0` here would parse
+ *  as neither `yes` nor `no`, so the table would silently skip the filter. */
 export function buildAgenciesUrl(opts: {
   tier?: string | string[];
   type?: string | string[];
   hasEnterpriseLlm?: boolean;
   hasCoding?: boolean;
+  hasAgentic?: boolean;
+  hasCustom?: boolean;
   q?: string;
 } = {}): string {
   const params = new URLSearchParams();
@@ -90,10 +98,17 @@ export function buildAgenciesUrl(opts: {
   if (tier) params.set("tier", tier);
   const type = Array.isArray(opts.type) ? opts.type.join(",") : opts.type;
   if (type) params.set("type", type);
-  if (opts.hasEnterpriseLlm === true) params.set("llm", "1");
-  if (opts.hasEnterpriseLlm === false) params.set("llm", "0");
-  if (opts.hasCoding === true) params.set("coding", "1");
-  if (opts.hasCoding === false) params.set("coding", "0");
+  const triState = (v: boolean | undefined): string | undefined =>
+    v === true ? "yes" : v === false ? "no" : undefined;
+  for (const [flag, param] of [
+    [opts.hasEnterpriseLlm, "llm"],
+    [opts.hasCoding, "coding"],
+    [opts.hasAgentic, "agentic"],
+    [opts.hasCustom, "custom"],
+  ] as const) {
+    const v = triState(flag);
+    if (v) params.set(param, v);
+  }
   if (opts.q) params.set("q", opts.q);
   const qs = params.toString();
   return qs ? `/agencies?${qs}` : "/agencies";

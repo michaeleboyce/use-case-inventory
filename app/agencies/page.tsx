@@ -7,7 +7,7 @@ import { AgencyHierarchyTree } from "@/components/hierarchy";
 import { MetricTile } from "@/components/metric-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
-import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
+import { buildAgenciesUrl } from "@/lib/urls";
 
 export const metadata = {
   title: "Agencies · Federal AI Use Case Inventory",
@@ -39,6 +39,8 @@ export default async function AgenciesPage({
     year_over_year_growth: a.maturity?.year_over_year_growth ?? null,
     has_enterprise_llm: a.maturity?.has_enterprise_llm ?? null,
     has_coding_assistants: a.maturity?.has_coding_assistants ?? null,
+    has_agentic_ai: a.maturity?.has_agentic_ai ?? null,
+    has_custom_ai: a.maturity?.has_custom_ai ?? null,
   }));
 
   const total = tableRows.length;
@@ -125,7 +127,7 @@ export default async function AgenciesPage({
               value={`${customHeavy}/${total}`}
               sublabel="≥ 10 custom systems"
               accent="highlight"
-              href={buildUseCasesUrl({ entryTypes: ["custom_system"] })}
+              href={buildAgenciesUrl({ hasCustom: true })}
             />
           </div>
         </div>

@@ -120,6 +120,49 @@ export const LLM_NORMALIZED_FIELDS = `
   END AS p_lower`;
 
 /**
+ * WHERE predicate: the entry names neither a vendor nor a product — the
+ * "Vendor unspecified" bucket from `LLM_BUCKET_CASE` (`v_lower='' AND
+ * p_lower=''`). Backs the `vendorUnspecified` filter on `/use-cases`.
+ *
+ * This is the predicate form of `LLM_NORMALIZED_FIELDS` re-aliased to the
+ * use-cases query's table aliases (`tag` for use_case_tags, `uc` for
+ * use_cases). The COALESCE chains and placeholder lists are kept byte-identical
+ * to `LLM_NORMALIZED_FIELDS` above so this filter reproduces the same count the
+ * analytics donut / Insight Card G report — edit both together.
+ */
+export const LLM_VENDOR_UNSPECIFIED_PREDICATE = `
+  LOWER(TRIM(COALESCE(
+    NULLIF(tag.cots_vendor,''),
+    NULLIF(tag.tool_vendor,''),
+    CASE
+      WHEN LOWER(TRIM(COALESCE(uc.vendor_name,'')))
+        IN ('n/a','not available','none','tbd','tbd.','unknown','')
+      THEN ''
+      ELSE uc.vendor_name
+    END,
+    ''
+  ))) = ''
+  AND
+  CASE
+    WHEN LOWER(TRIM(COALESCE(
+           NULLIF(tag.cots_product_name,''),
+           NULLIF(tag.tool_product_name,''),
+           uc.system_name,
+           ''
+         )))
+      IN ('n/a','not available','none','tbd','tbd.','unknown','',
+          'redacted for cybersecurity purposes.','redacted',
+          'r&d user','cs-ssp-123,cybersecurity system security plan for azure platform')
+    THEN ''
+    ELSE LOWER(TRIM(COALESCE(
+      NULLIF(tag.cots_product_name,''),
+      NULLIF(tag.tool_product_name,''),
+      uc.system_name,
+      ''
+    )))
+  END = ''`;
+
+/**
  * Bucket the (v_lower, p_lower) pair emitted by `LLM_NORMALIZED_FIELDS`
  * into editorial vendor names. Ordered most-specific → most-general.
  * "Agency platform" is checked FIRST (before Microsoft) so an agency

@@ -197,7 +197,7 @@ export default async function AnalyticsPage() {
             accent="verified"
             headline={<>Agencies that reported deploying GitHub Copilot.</>}
             subtext="Coding copilots are the single fastest-adopted AI category in government."
-            href={buildUseCasesUrl({ isCodingTool: true })}
+            href={buildAgenciesUrl({ hasCoding: true })}
           />
           <InsightCard
             kicker="C · Top product"
@@ -270,7 +270,10 @@ export default async function AnalyticsPage() {
               </>
             }
             subtext={`${insights.general_llm_unspecified} of ${insights.general_llm_total} entries report agency-wide LLM access without specifying the underlying tool — even after recovering vendor info from the OMB-filed vendor_name and system_name columns. See Fig. 07's "Vendor unspecified" slice.`}
-            href={buildUseCasesUrl({ isGeneralLLMAccess: true })}
+            href={buildUseCasesUrl({
+              aiSophistications: ["general_llm"],
+              vendorUnspecified: true,
+            })}
           />
         </div>
 
