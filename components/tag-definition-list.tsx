@@ -241,7 +241,7 @@ export function TagDefinitionList({ tags }: { tags: UseCaseTag | null }) {
         return (
           <div
             key={String(spec.key)}
-            className="grid grid-cols-1 gap-1 border-b border-border py-3 sm:grid-cols-[240px,1fr,auto] sm:items-baseline sm:gap-6"
+            className="grid grid-cols-1 gap-1 border-b border-border py-3 sm:grid-cols-[240px_minmax(0,1fr)_auto] sm:items-baseline sm:gap-6"
           >
             <dt className="flex flex-col">
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground">
