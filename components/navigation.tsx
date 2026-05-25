@@ -18,6 +18,7 @@ const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
   { href: "/use-cases", label: "Use Cases", kicker: "III" },
   { href: "/products", label: "Products", kicker: "IV" },
   { href: "/analytics", label: "Analytics", kicker: "V" },
+  { href: "/policy", label: "Policy", kicker: "VI" },
 ];
 
 // Readiness is its own sub-area with an overview + two named surfaces;
