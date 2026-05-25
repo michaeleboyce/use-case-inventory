@@ -310,7 +310,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Entry type */}
-      <FilterGroup title="Entry type">
+      <FilterGroup title="Entry type" defaultOpen={false}>
         {facets.tagEntryTypes.map((v) => (
           <CheckRow
             key={v}
@@ -421,7 +421,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Deployment scope */}
-      <FilterGroup title="Deployment scope">
+      <FilterGroup title="Deployment scope" defaultOpen={false}>
         {facets.tagDeploymentScopes.map((v) => (
           <CheckRow
             key={v}
@@ -445,7 +445,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Use type */}
-      <FilterGroup title="Use type">
+      <FilterGroup title="Use type" defaultOpen={false}>
         {facets.tagUseTypes.map((v) => (
           <CheckRow
             key={v}
@@ -503,7 +503,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* High impact designation */}
-      <FilterGroup title="High-impact">
+      <FilterGroup title="High-impact" defaultOpen={false}>
         {facets.tagHighImpactDesignations.map((v) => (
           <CheckRow
             key={v}
@@ -515,7 +515,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Boolean toggles */}
-      <FilterGroup title="Attributes">
+      <FilterGroup title="Attributes" defaultOpen={false}>
         <CheckRow
           checked={currentParams.get("coding_tool") === "1"}
           onToggle={() => toggleBool("coding_tool")}

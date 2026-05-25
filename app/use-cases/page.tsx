@@ -243,7 +243,7 @@ export default async function UseCasesPage({
       {/* ------------------------------------------------------------ */}
       {/* EXPLORER — filter rail + results pane                         */}
       {/* ------------------------------------------------------------ */}
-      <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[260px,1fr] lg:gap-8">
+      <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8">
         {/* Filter rail.
            Scroll fix: the outer cell is *not* height-constrained. We
            only make the inner panel sticky on lg+, and cap its own
