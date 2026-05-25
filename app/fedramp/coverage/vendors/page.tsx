@@ -1,29 +1,26 @@
 import Link from "next/link";
 import {
+  getAgencies,
   getCoverageVendorRows,
   getFedrampSnapshot,
+  getUseCasesForCoverageProduct,
 } from "@/lib/db";
-import type { CoverageVendorRow, FedrampSnapshot } from "@/lib/types";
+import type {
+  CoverageUseCaseRow,
+  CoverageVendorRow,
+  FedrampSnapshot,
+} from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
-import { Section, MonoChip } from "@/components/editorial";
+import { Section } from "@/components/editorial";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
+import { CoverageAgencyFilter } from "@/components/coverage/coverage-agency-filter";
+import { VendorsTable } from "./_sections/vendors-table";
 
 export const metadata = {
   title: "Vendor coverage · FedRAMP × AI Inventory",
   description:
-    "Inventory products ranked by reach, with FedRAMP authorization status. Mention volume by matched / unmatched.",
+    "Inventory products ranked by reach, with FedRAMP authorization status — expand any row to see the actual use cases that mention it.",
 };
-
-function safeRows(): { rows: CoverageVendorRow[]; error: string | null } {
-  try {
-    return { rows: getCoverageVendorRows(), error: null };
-  } catch (err) {
-    return {
-      rows: [],
-      error: err instanceof Error ? err.message : "Unknown error.",
-    };
-  }
-}
 
 function safeSnapshot(): FedrampSnapshot | null {
   try {
@@ -33,25 +30,56 @@ function safeSnapshot(): FedrampSnapshot | null {
   }
 }
 
-function impactTone(level: string | null): "stamp" | "verified" | "ink" | "muted" {
-  const v = (level ?? "").toLowerCase();
-  if (v === "high") return "verified";
-  if (v === "moderate") return "stamp";
-  if (v === "low" || v === "li-saas") return "muted";
-  return "ink";
-}
+export default async function FedrampCoverageVendorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ agency?: string }>;
+}) {
+  const sp = await searchParams;
+  const agencyFilter = (sp.agency ?? "").trim().toUpperCase() || null;
 
-export default function FedrampCoverageVendorsPage() {
-  const { rows, error } = safeRows();
+  const agencies = getAgencies();
+  const agencyMatch = agencyFilter
+    ? agencies.find(
+        (a) => a.abbreviation.toUpperCase() === agencyFilter,
+      ) ?? null
+    : null;
+  const effectiveAgencyId = agencyMatch?.id ?? null;
+
+  let rows: CoverageVendorRow[] = [];
+  let error: string | null = null;
+  try {
+    rows = getCoverageVendorRows(
+      effectiveAgencyId != null ? { agencyId: effectiveAgencyId } : {},
+    );
+  } catch (err) {
+    error = err instanceof Error ? err.message : "Unknown error.";
+  }
   const snapshot = safeSnapshot();
 
-  // Top 30 by reach for the table; full count flagged below.
+  // Top 30 by reach for the table; full list flagged in the lede.
   const ranked = rows
     .slice()
     .sort((a, b) => b.use_case_count - a.use_case_count)
     .slice(0, 30);
 
-  // Aggregate matched / unmatched mention volume for the bar chart.
+  // Attach the top-10 use-case detail per row server-side. No client fetch.
+  type RankedWithDetail = CoverageVendorRow & {
+    _detail: CoverageUseCaseRow[];
+    _totalUseCases: number;
+  };
+  const rankedWithDetail: RankedWithDetail[] = ranked.map((r) => {
+    const detail = getUseCasesForCoverageProduct(r.inventory_product_id, {
+      agencyId: effectiveAgencyId ?? undefined,
+      limit: 10,
+    });
+    return {
+      ...r,
+      _detail: detail,
+      _totalUseCases: r.use_case_count,
+    };
+  });
+
   const matchedMentions = rows.reduce(
     (acc, r) => acc + (r.has_fedramp_link ? r.use_case_count : 0),
     0,
@@ -60,7 +88,6 @@ export default function FedrampCoverageVendorsPage() {
     (acc, r) => acc + (r.has_fedramp_link ? 0 : r.use_case_count),
     0,
   );
-
   const matchedProducts = rows.filter((r) => r.has_fedramp_link === 1).length;
   const totalProducts = rows.length;
 
@@ -69,12 +96,16 @@ export default function FedrampCoverageVendorsPage() {
     { label: "Not on FedRAMP", count: unmatchedMentions },
   ];
 
+  const headline = agencyMatch
+    ? `${agencyMatch.abbreviation} mentions ${formatNumber(totalProducts)} distinct AI products`
+    : `${formatNumber(matchedProducts)} of ${formatNumber(totalProducts)} inventory products map to a FedRAMP product`;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-2">
-            <div className="eyebrow !text-[var(--stamp)]">Panel 1</div>
+            <div className="eyebrow !text-[var(--stamp)]">AI → FedRAMP</div>
             <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               Vendor coverage
             </div>
@@ -93,19 +124,43 @@ export default function FedrampCoverageVendorsPage() {
             <em className="italic">FedRAMP authorization</em>?
           </h1>
           <p className="mt-6 max-w-prose text-[1.02rem] leading-[1.55] text-foreground/85">
-            <span className="font-medium text-foreground">
-              {formatNumber(matchedProducts)}
-            </span>{" "}
-            of <span className="font-medium">{formatNumber(totalProducts)}</span>{" "}
-            inventory products map to a FedRAMP product. By raw mention volume,{" "}
-            agencies report{" "}
-            <span className="font-medium">{formatNumber(matchedMentions)}</span>{" "}
-            use cases against FedRAMP-matched products and{" "}
-            <span className="font-medium">{formatNumber(unmatchedMentions)}</span>{" "}
-            against products without a FedRAMP listing.
+            {agencyMatch ? (
+              <>
+                Scoped to {agencyMatch.name} ({agencyMatch.abbreviation}).{" "}
+                {headline}; {formatNumber(matchedMentions)} mentions are on
+                FedRAMP-matched products and {formatNumber(unmatchedMentions)}{" "}
+                are not.
+              </>
+            ) : (
+              <>
+                <span className="font-medium text-foreground">
+                  {formatNumber(matchedProducts)}
+                </span>{" "}
+                of <span className="font-medium">{formatNumber(totalProducts)}</span>{" "}
+                inventory products map to a FedRAMP product. By raw mention
+                volume, agencies report{" "}
+                <span className="font-medium">{formatNumber(matchedMentions)}</span>{" "}
+                use cases against FedRAMP-matched products and{" "}
+                <span className="font-medium">{formatNumber(unmatchedMentions)}</span>{" "}
+                against products without a FedRAMP listing.
+              </>
+            )}
+          </p>
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            Click any row to see the use cases that name that product.
           </p>
         </div>
       </header>
+
+      <div className="mt-6">
+        <CoverageAgencyFilter
+          options={agencies.map((a) => ({
+            abbreviation: a.abbreviation,
+            name: a.name,
+          }))}
+          value={agencyMatch?.abbreviation ?? null}
+        />
+      </div>
 
       {error ? (
         <Section number="I" title="No data" lede="The FedRAMP tables aren&rsquo;t loaded.">
@@ -118,7 +173,9 @@ export default function FedrampCoverageVendorsPage() {
       ) : rows.length === 0 ? (
         <Section number="I" title="No products" lede="Nothing to rank.">
           <p className="border-t-2 border-foreground pt-4 text-sm text-muted-foreground">
-            The inventory has no products with reportable use-case counts.
+            {agencyMatch
+              ? `${agencyMatch.abbreviation} has no use cases with linked AI products.`
+              : "The inventory has no products with reportable use-case counts."}
           </p>
         </Section>
       ) : (
@@ -144,100 +201,14 @@ export default function FedrampCoverageVendorsPage() {
           <Section
             number="II"
             title="Top 30 products by reach"
-            lede="Inventory products ranked by total use-case mentions; FedRAMP linkage shown alongside."
+            lede="Inventory products ranked by total use-case mentions. Click any row to expand — top-10 use cases inline, plus a 'see all' link into the explorer for filtering."
           >
-            <div className="overflow-x-auto border-t-2 border-foreground">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      #
-                    </th>
-                    <th className="px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Product
-                    </th>
-                    <th className="px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Vendor
-                    </th>
-                    <th className="px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Use cases
-                    </th>
-                    <th className="px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Agencies
-                    </th>
-                    <th className="px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      FedRAMP
-                    </th>
-                    <th className="px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Impact
-                    </th>
-                    <th className="px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      ATOs
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranked.map((row, i) => (
-                    <tr
-                      key={row.inventory_product_id}
-                      className="border-b border-border/60 hover:bg-muted/30"
-                    >
-                      <td className="px-2 py-2 font-mono text-[11px] tabular-nums text-muted-foreground">
-                        {String(i + 1).padStart(2, "0")}
-                      </td>
-                      <td className="px-2 py-2">
-                        <Link
-                          href={`/products/${row.inventory_product_id}`}
-                          className="text-foreground hover:text-[var(--stamp)]"
-                        >
-                          {row.canonical_name}
-                        </Link>
-                      </td>
-                      <td className="px-2 py-2 text-muted-foreground">
-                        {row.vendor ?? "—"}
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums">
-                        {formatNumber(row.use_case_count)}
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
-                        {formatNumber(row.agency_count)}
-                      </td>
-                      <td className="px-2 py-2">
-                        {row.has_fedramp_link === 1 && row.fedramp_id ? (
-                          <MonoChip
-                            href={`/fedramp/marketplace/products/${row.fedramp_id}`}
-                            tone="verified"
-                            size="xs"
-                            title={`${row.fedramp_csp ?? ""} ${row.fedramp_cso ?? ""}`.trim()}
-                          >
-                            {row.fedramp_id}
-                          </MonoChip>
-                        ) : (
-                          <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 py-2">
-                        {row.fedramp_impact_level ? (
-                          <MonoChip tone={impactTone(row.fedramp_impact_level)} size="xs">
-                            {row.fedramp_impact_level}
-                          </MonoChip>
-                        ) : (
-                          <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
-                        {row.fedramp_ato_count > 0
-                          ? formatNumber(row.fedramp_ato_count)
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="border-t-2 border-foreground pt-4">
+              <VendorsTable
+                rows={rankedWithDetail}
+                agencyAbbr={agencyMatch?.abbreviation ?? null}
+                agencyId={agencyMatch?.id ?? null}
+              />
             </div>
             <p className="mt-3 font-mono text-[11px] text-muted-foreground">
               Source: <span className="text-foreground">products</span> ⨝{" "}

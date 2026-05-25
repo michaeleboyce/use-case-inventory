@@ -5,7 +5,8 @@ import {
 } from "@/lib/db";
 import type { CoverageAgencyRow, FedrampSnapshot } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
-import { Section, MonoChip } from "@/components/editorial";
+import { Section } from "@/components/editorial";
+import { AgenciesCoverageTable } from "./_sections/agencies-table";
 
 export const metadata = {
   title: "Agency gap analysis · FedRAMP × AI Inventory",
@@ -114,74 +115,9 @@ export default function FedrampCoverageAgenciesPage() {
         <Section
           number="I"
           title="Per-agency rollup"
-          lede="Sorted by largest authorized-but-unreported gap. Use cases include both individual and consolidated entries."
+          lede="Sorted by largest authorized-but-unreported gap. Use cases include both individual and consolidated entries. Search to narrow."
         >
-          <div className="overflow-x-auto border-t-2 border-foreground">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <Th>#</Th>
-                  <Th>Agency</Th>
-                  <Th align="left">Name</Th>
-                  <Th align="right">Use cases</Th>
-                  <Th align="right">AI products in ATO scope</Th>
-                  <Th align="right">Reported (matched)</Th>
-                  <Th align="right">Gap</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {ranked.map((row, i) => {
-                  const href = `/fedramp/coverage/agencies/${row.agency_abbreviation}`;
-                  const isGap = row.authorized_but_unreported > 0;
-                  return (
-                    <tr
-                      key={row.inventory_agency_id}
-                      className="border-b border-border/60 hover:bg-muted/30"
-                    >
-                      <td className="px-2 py-2 font-mono text-[11px] tabular-nums text-muted-foreground">
-                        {String(i + 1).padStart(2, "0")}
-                      </td>
-                      <td className="px-2 py-2">
-                        <MonoChip href={href} tone="stamp" size="xs">
-                          {row.agency_abbreviation}
-                        </MonoChip>
-                      </td>
-                      <td className="px-2 py-2">
-                        <Link
-                          href={href}
-                          className="text-foreground hover:text-[var(--stamp)]"
-                        >
-                          {row.agency_name}
-                        </Link>
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums">
-                        {formatNumber(row.use_case_count)}
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums">
-                        {row.fedramp_authorized_count > 0
-                          ? formatNumber(row.fedramp_authorized_count)
-                          : "—"}
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
-                        {row.fedramp_used_count > 0
-                          ? formatNumber(row.fedramp_used_count)
-                          : "—"}
-                      </td>
-                      <td
-                        className={`px-2 py-2 text-right tabular-nums ${
-                          isGap
-                            ? "font-medium text-[var(--stamp)]"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {isGap ? formatNumber(row.authorized_but_unreported) : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <AgenciesCoverageTable rows={ranked} />
           <p className="mt-3 font-mono text-[11px] text-muted-foreground">
             Source: <span className="text-foreground">agencies</span> ⨝{" "}
             <span className="text-foreground">fedramp_agency_links</span> ⨝{" "}
@@ -195,24 +131,6 @@ export default function FedrampCoverageAgenciesPage() {
 
       <SnapshotFooter snapshot={snapshot} />
     </div>
-  );
-}
-
-function Th({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) {
-  return (
-    <th
-      className={`px-2 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground ${
-        align === "right" ? "text-right" : "text-left"
-      }`}
-    >
-      {children}
-    </th>
   );
 }
 

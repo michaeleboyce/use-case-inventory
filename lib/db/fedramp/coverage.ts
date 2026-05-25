@@ -1,6 +1,14 @@
 import { getDb } from "../shared/init";
 import { EFFECTIVE_FEDRAMP_LINKS_CTE } from "../shared/sql-fragments";
-import type { CoverageAgencyDrill, CoverageAgencyRow, CoverageFitCell, CoverageStat, CoverageVendorRow } from "../../types";
+import type {
+  AgencyAtoRow,
+  CoverageAgencyDrill,
+  CoverageAgencyRow,
+  CoverageFitCell,
+  CoverageStat,
+  CoverageUseCaseRow,
+  CoverageVendorRow,
+} from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
 
 /** Hub stats for /fedramp/coverage. */
@@ -120,16 +128,67 @@ export function getCoverageHubStats(): CoverageStat[] {
 /** Panel 1 — vendor coverage rows. One per inventory product.
  *  Phase-5: links flow through `effective_fedramp_links` so children with
  *  inherited coverage are NOT shown as "no FedRAMP". `has_fedramp_link`
- *  counts both direct and inherited; `fedramp_inherited` flags inheritance. */
-export function getCoverageVendorRows(): CoverageVendorRow[] {
+ *  counts both direct and inherited; `fedramp_inherited` flags inheritance.
+ *
+ *  When `agencyId` is set, `use_case_count` / `agency_count` scope to rows
+ *  reported by that agency only — letting the page filter by "show me the
+ *  AI products DOD names without FedRAMP".
+ */
+export function getCoverageVendorRows(opts: { agencyId?: number } = {}): CoverageVendorRow[] {
+  const { agencyId } = opts;
+  if (agencyId == null) {
+    return getDb()
+      .prepare<[], CoverageVendorRow>(`
+        WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
+        SELECT p.id AS inventory_product_id,
+               p.canonical_name,
+               p.vendor,
+               COALESCE(uc.use_case_count, 0) AS use_case_count,
+               COALESCE(uc.agency_count, 0) AS agency_count,
+               CASE WHEN fpl.fedramp_id IS NOT NULL THEN 1 ELSE 0 END AS has_fedramp_link,
+               fpl.fedramp_id AS fedramp_id,
+               fp.csp AS fedramp_csp,
+               fp.cso AS fedramp_cso,
+               fp.impact_level AS fedramp_impact_level,
+               fp.status AS fedramp_status,
+               COALESCE(ato.ato_count, 0) AS fedramp_ato_count,
+               CASE WHEN fpl.inherited_from_parent_id IS NOT NULL THEN 1 ELSE 0 END
+                 AS fedramp_inherited
+          FROM products p
+          LEFT JOIN (
+            SELECT product_id,
+                   COUNT(*) AS use_case_count,
+                   COUNT(DISTINCT agency_id) AS agency_count
+              FROM entry_product_edges
+             GROUP BY product_id
+          ) uc ON uc.product_id = p.id
+          LEFT JOIN (
+            SELECT inventory_product_id,
+                   MIN(fedramp_id) AS fedramp_id,
+                   MIN(inherited_from_parent_id) AS inherited_from_parent_id
+              FROM effective_fedramp_links
+             GROUP BY inventory_product_id
+          ) fpl ON fpl.inventory_product_id = p.id
+          LEFT JOIN fedramp_products fp ON fp.fedramp_id = fpl.fedramp_id
+          LEFT JOIN (
+            SELECT fedramp_id, COUNT(*) AS ato_count
+              FROM fedramp_authorizations
+             GROUP BY fedramp_id
+          ) ato ON ato.fedramp_id = fpl.fedramp_id
+         ORDER BY use_case_count DESC, p.canonical_name COLLATE NOCASE ASC
+      `)
+      .all();
+  }
+  // Agency-scoped variant: per-product counts limited to this agency's
+  // edges. Products with zero rows from this agency are dropped.
   return getDb()
-    .prepare<[], CoverageVendorRow>(`
+    .prepare<[number], CoverageVendorRow>(`
       WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
       SELECT p.id AS inventory_product_id,
              p.canonical_name,
              p.vendor,
-             COALESCE(uc.use_case_count, 0) AS use_case_count,
-             COALESCE(uc.agency_count, 0) AS agency_count,
+             uc.use_case_count,
+             uc.agency_count,
              CASE WHEN fpl.fedramp_id IS NOT NULL THEN 1 ELSE 0 END AS has_fedramp_link,
              fpl.fedramp_id AS fedramp_id,
              fp.csp AS fedramp_csp,
@@ -140,17 +199,15 @@ export function getCoverageVendorRows(): CoverageVendorRow[] {
              CASE WHEN fpl.inherited_from_parent_id IS NOT NULL THEN 1 ELSE 0 END
                AS fedramp_inherited
         FROM products p
-        LEFT JOIN (
+        JOIN (
           SELECT product_id,
                  COUNT(*) AS use_case_count,
                  COUNT(DISTINCT agency_id) AS agency_count
             FROM entry_product_edges
+           WHERE agency_id = ?
            GROUP BY product_id
         ) uc ON uc.product_id = p.id
         LEFT JOIN (
-          -- One representative effective link per inventory product. We
-          -- prefer the shallowest (depth=0 = direct) and lowest fedramp_id
-          -- as a deterministic tiebreaker.
           SELECT inventory_product_id,
                  MIN(fedramp_id) AS fedramp_id,
                  MIN(inherited_from_parent_id) AS inherited_from_parent_id
@@ -163,9 +220,9 @@ export function getCoverageVendorRows(): CoverageVendorRow[] {
             FROM fedramp_authorizations
            GROUP BY fedramp_id
         ) ato ON ato.fedramp_id = fpl.fedramp_id
-       ORDER BY use_case_count DESC, p.canonical_name COLLATE NOCASE ASC
+       ORDER BY uc.use_case_count DESC, p.canonical_name COLLATE NOCASE ASC
     `)
-    .all();
+    .all(agencyId);
 }
 
 /**
@@ -175,23 +232,25 @@ export function getCoverageVendorRows(): CoverageVendorRow[] {
  * without a FedRAMP link are excluded; they belong on Panel 1's "no
  * FedRAMP" segment.
  */
-export function getCoverageFitGrid(): CoverageFitCell[] {
-  return getDb()
-    .prepare<[], CoverageFitCell>(`
-      SELECT t.high_impact_designation AS high_impact_designation,
-             fp.impact_level AS fedramp_impact_level,
-             COUNT(*) AS use_case_count
-        FROM use_cases uc
-        JOIN use_case_tags t ON t.use_case_id = uc.id
-        JOIN entry_product_edges epe
-          ON epe.entry_kind = 'use_case'
-         AND epe.entry_id = uc.id
-        JOIN fedramp_product_links fpl ON fpl.inventory_product_id = epe.product_id
-        JOIN fedramp_products fp ON fp.fedramp_id = fpl.fedramp_id
-       GROUP BY t.high_impact_designation, fp.impact_level
-       ORDER BY t.high_impact_designation, fp.impact_level
-    `)
-    .all();
+export function getCoverageFitGrid(opts: { agencyId?: number } = {}): CoverageFitCell[] {
+  const { agencyId } = opts;
+  const where = agencyId != null ? `WHERE uc.agency_id = ?` : "";
+  const stmt = getDb().prepare<unknown[], CoverageFitCell>(`
+    SELECT t.high_impact_designation AS high_impact_designation,
+           fp.impact_level AS fedramp_impact_level,
+           COUNT(*) AS use_case_count
+      FROM use_cases uc
+      JOIN use_case_tags t ON t.use_case_id = uc.id
+      JOIN entry_product_edges epe
+        ON epe.entry_kind = 'use_case'
+       AND epe.entry_id = uc.id
+      JOIN fedramp_product_links fpl ON fpl.inventory_product_id = epe.product_id
+      JOIN fedramp_products fp ON fp.fedramp_id = fpl.fedramp_id
+      ${where}
+     GROUP BY t.high_impact_designation, fp.impact_level
+     ORDER BY t.high_impact_designation, fp.impact_level
+  `);
+  return agencyId != null ? stmt.all(agencyId) : stmt.all();
 }
 
 /** Panel 3 — agency coverage. */
@@ -378,8 +437,13 @@ export function getCoverageAgencyDrill(
   };
 }
 
-/** Panel 4 — FedRAMP-mapped inventory products with zero inventory mentions. */
-export function getCoverageUnusedProducts(): Array<{
+/** Panel 4 — FedRAMP-mapped inventory products with zero inventory mentions.
+ *
+ *  When `agencyId` is set, narrows to products that ALSO sit in this
+ *  agency's ATO scope. Useful for "show me FedRAMP products DHS is
+ *  authorized to use but never reports in its AI inventory."
+ */
+export function getCoverageUnusedProducts(opts: { agencyId?: number } = {}): Array<{
   inventory_product_id: number;
   canonical_name: string;
   vendor: string | null;
@@ -389,49 +453,215 @@ export function getCoverageUnusedProducts(): Array<{
   fedramp_impact_level: string | null;
   fedramp_ato_count: number;
 }> {
+  const { agencyId } = opts;
+  const agencyFilter =
+    agencyId != null
+      ? `AND EXISTS (
+           SELECT 1 FROM fedramp_authorizations auth
+             JOIN fedramp_agency_links al ON al.fedramp_agency_id = auth.agency_id
+            WHERE auth.fedramp_id = fp.fedramp_id
+              AND al.inventory_agency_id = ?
+         )`
+      : "";
+  const stmt = getDb().prepare<
+    unknown[],
+    {
+      inventory_product_id: number;
+      canonical_name: string;
+      vendor: string | null;
+      fedramp_id: string;
+      fedramp_csp: string;
+      fedramp_cso: string;
+      fedramp_impact_level: string | null;
+      fedramp_ato_count: number;
+    }
+  >(`
+    WITH RECURSIVE descendant_chain(root_id, descendant_id) AS (
+      SELECT id, id FROM products
+      UNION ALL
+      SELECT dc.root_id, p.id
+        FROM descendant_chain dc
+        JOIN products p ON p.parent_product_id = dc.descendant_id
+    )
+    SELECT p.id AS inventory_product_id,
+           p.canonical_name,
+           p.vendor,
+           fp.fedramp_id,
+           fp.csp AS fedramp_csp,
+           fp.cso AS fedramp_cso,
+           fp.impact_level AS fedramp_impact_level,
+           COALESCE(ato.c, 0) AS fedramp_ato_count
+      FROM fedramp_product_links fpl
+      JOIN products p ON p.id = fpl.inventory_product_id
+      JOIN fedramp_products fp ON fp.fedramp_id = fpl.fedramp_id
+      LEFT JOIN (
+        SELECT fedramp_id, COUNT(*) AS c FROM fedramp_authorizations GROUP BY fedramp_id
+      ) ato ON ato.fedramp_id = fp.fedramp_id
+     WHERE NOT EXISTS (
+       SELECT 1 FROM descendant_chain dc
+        JOIN entry_product_edges epe ON epe.product_id = dc.descendant_id
+       WHERE dc.root_id = p.id
+     )
+     ${agencyFilter}
+     ORDER BY ato.c DESC NULLS LAST, p.canonical_name COLLATE NOCASE ASC
+  `);
+  return agencyId != null ? stmt.all(agencyId) : stmt.all();
+}
+
+/* --------------------------------------------------------------------- */
+/* New drill helpers for the expandable coverage UI.                     */
+/* Each returns per-use-case detail (top N, Deployed-first) for a single */
+/* product-or-cell, with an optional agency scope.                       */
+/* --------------------------------------------------------------------- */
+
+/** Stable sort key: Deployed first, then Pilot, then Pre-deployment,
+ *  then Retired. SQLite lacks a portable enum sort, so we materialize it
+ *  via CASE. */
+const STAGE_ORDER_SQL = `
+  CASE
+    WHEN uc.stage_of_development LIKE '%Deployed%' THEN 0
+    WHEN uc.stage_of_development LIKE '%Pilot%'    THEN 1
+    WHEN uc.stage_of_development LIKE '%Pre-deployment%' OR uc.stage_of_development LIKE '%pre-deployment%' THEN 2
+    WHEN uc.stage_of_development LIKE '%Retired%'  THEN 3
+    ELSE 4
+  END
+`;
+
+/** Top-N use cases referencing a given inventory product. Used by the
+ *  vendors-page row expansion and the per-agency drill page. */
+export function getUseCasesForCoverageProduct(
+  productId: number,
+  opts: { agencyId?: number; limit?: number } = {},
+): CoverageUseCaseRow[] {
+  const { agencyId, limit = 10 } = opts;
+  const where = agencyId != null ? "AND uc.agency_id = ?" : "";
+  const stmt = getDb().prepare<unknown[], CoverageUseCaseRow>(`
+    SELECT uc.id,
+           uc.slug,
+           a.abbreviation AS agency_abbreviation,
+           uc.use_case_name,
+           uc.stage_of_development,
+           SUBSTR(COALESCE(uc.problem_statement, ''), 1, 200) AS problem_snippet
+      FROM use_cases uc
+      JOIN agencies a ON a.id = uc.agency_id
+      JOIN entry_product_edges epe
+        ON epe.entry_kind = 'use_case'
+       AND epe.entry_id = uc.id
+     WHERE epe.product_id = ?
+       ${where}
+     ORDER BY ${STAGE_ORDER_SQL}, uc.use_case_name COLLATE NOCASE ASC
+     LIMIT ?
+  `);
+  return agencyId != null
+    ? stmt.all(productId, agencyId, limit)
+    : stmt.all(productId, limit);
+}
+
+/** Distinct agencies that hold an ATO for the given FedRAMP product but
+ *  do NOT report a use case for it (directly or via the parent-product
+ *  walk that the rest of the dashboard uses). The inverse drill for the
+ *  /fedramp/coverage/products "authorized but unused" view. */
+export function getAgenciesWithoutUseForFedrampProduct(
+  fedrampId: string,
+): AgencyAtoRow[] {
   return getDb()
-    .prepare<
-      [],
-      {
-        inventory_product_id: number;
-        canonical_name: string;
-        vendor: string | null;
-        fedramp_id: string;
-        fedramp_csp: string;
-        fedramp_cso: string;
-        fedramp_impact_level: string | null;
-        fedramp_ato_count: number;
-      }
-    >(`
-      WITH RECURSIVE descendant_chain(root_id, descendant_id) AS (
-        SELECT id, id FROM products
-        UNION ALL
-        SELECT dc.root_id, p.id
-          FROM descendant_chain dc
-          JOIN products p ON p.parent_product_id = dc.descendant_id
-      )
-      SELECT p.id AS inventory_product_id,
-             p.canonical_name,
-             p.vendor,
-             fp.fedramp_id,
-             fp.csp AS fedramp_csp,
-             fp.cso AS fedramp_cso,
-             fp.impact_level AS fedramp_impact_level,
-             COALESCE(ato.c, 0) AS fedramp_ato_count
-        FROM fedramp_product_links fpl
-        JOIN products p ON p.id = fpl.inventory_product_id
-        JOIN fedramp_products fp ON fp.fedramp_id = fpl.fedramp_id
-        LEFT JOIN (
-          SELECT fedramp_id, COUNT(*) AS c FROM fedramp_authorizations GROUP BY fedramp_id
-        ) ato ON ato.fedramp_id = fp.fedramp_id
-       -- A product is "unused" only if NO descendant (incl. self) is referenced
-       -- from any authoritative product edge.
-       WHERE NOT EXISTS (
-         SELECT 1 FROM descendant_chain dc
-          JOIN entry_product_edges epe ON epe.product_id = dc.descendant_id
-         WHERE dc.root_id = p.id
-       )
-       ORDER BY ato.c DESC NULLS LAST, p.canonical_name COLLATE NOCASE ASC
+    .prepare<[string, string], AgencyAtoRow>(`
+      WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
+      SELECT a.id          AS inventory_agency_id,
+             a.name        AS agency_name,
+             a.abbreviation AS agency_abbreviation,
+             MAX(auth.ato_issuance_date) AS ato_issuance_date,
+             MIN(auth.ato_type)          AS authorization_type
+        FROM fedramp_authorizations auth
+        JOIN fedramp_agency_links al ON al.fedramp_agency_id = auth.agency_id
+        JOIN agencies a ON a.id = al.inventory_agency_id
+       WHERE auth.fedramp_id = ?
+         AND NOT EXISTS (
+           SELECT 1
+             FROM effective_fedramp_links fpl
+             JOIN entry_product_edges epe ON epe.product_id = fpl.inventory_product_id
+            WHERE fpl.fedramp_id = ?
+              AND epe.agency_id = a.id
+         )
+       GROUP BY a.id
+       ORDER BY a.name COLLATE NOCASE ASC
     `)
-    .all();
+    .all(fedrampId, fedrampId);
+}
+
+/** Top-N use cases sitting in a (high_impact_designation, impact_level)
+ *  fit-grid cell, optionally agency-scoped. Used by the fit page when a
+ *  user wants to inspect "which use cases live in the rights-impacting ×
+ *  Low impact-level misfit bucket." */
+export function getUseCasesForFitCell(
+  highImpactDesignation: string | null,
+  fedrampImpactLevel: string | null,
+  opts: { agencyId?: number; limit?: number } = {},
+): CoverageUseCaseRow[] {
+  const { agencyId, limit = 10 } = opts;
+  const designationClause =
+    highImpactDesignation == null
+      ? "t.high_impact_designation IS NULL"
+      : "t.high_impact_designation = ?";
+  const impactClause =
+    fedrampImpactLevel == null
+      ? "fp.impact_level IS NULL"
+      : "fp.impact_level = ?";
+  const agencyClause = agencyId != null ? "AND uc.agency_id = ?" : "";
+  const params: unknown[] = [];
+  if (highImpactDesignation != null) params.push(highImpactDesignation);
+  if (fedrampImpactLevel != null) params.push(fedrampImpactLevel);
+  if (agencyId != null) params.push(agencyId);
+  params.push(limit);
+  const stmt = getDb().prepare<unknown[], CoverageUseCaseRow>(`
+    SELECT uc.id,
+           uc.slug,
+           a.abbreviation AS agency_abbreviation,
+           uc.use_case_name,
+           uc.stage_of_development,
+           SUBSTR(COALESCE(uc.problem_statement, ''), 1, 200) AS problem_snippet
+      FROM use_cases uc
+      JOIN agencies a ON a.id = uc.agency_id
+      JOIN use_case_tags t ON t.use_case_id = uc.id
+      JOIN entry_product_edges epe
+        ON epe.entry_kind = 'use_case'
+       AND epe.entry_id = uc.id
+      JOIN fedramp_product_links fpl ON fpl.inventory_product_id = epe.product_id
+      JOIN fedramp_products fp ON fp.fedramp_id = fpl.fedramp_id
+     WHERE ${designationClause}
+       AND ${impactClause}
+       ${agencyClause}
+     ORDER BY ${STAGE_ORDER_SQL}, uc.use_case_name COLLATE NOCASE ASC
+     LIMIT ?
+  `);
+  return stmt.all(...params);
+}
+
+/** Top-N use cases at a specific agency that reference a specific product.
+ *  Used by `/fedramp/coverage/agencies/[abbr]` per-row expansions. */
+export function getUseCasesForCoverageAgencyProduct(
+  agencyId: number,
+  productId: number,
+  opts: { limit?: number } = {},
+): CoverageUseCaseRow[] {
+  const { limit = 10 } = opts;
+  return getDb()
+    .prepare<[number, number, number], CoverageUseCaseRow>(`
+      SELECT uc.id,
+             uc.slug,
+             a.abbreviation AS agency_abbreviation,
+             uc.use_case_name,
+             uc.stage_of_development,
+             SUBSTR(COALESCE(uc.problem_statement, ''), 1, 200) AS problem_snippet
+        FROM use_cases uc
+        JOIN agencies a ON a.id = uc.agency_id
+        JOIN entry_product_edges epe
+          ON epe.entry_kind = 'use_case'
+         AND epe.entry_id = uc.id
+       WHERE epe.product_id = ?
+         AND uc.agency_id = ?
+       ORDER BY ${STAGE_ORDER_SQL}, uc.use_case_name COLLATE NOCASE ASC
+       LIMIT ?
+    `)
+    .all(productId, agencyId, limit);
 }

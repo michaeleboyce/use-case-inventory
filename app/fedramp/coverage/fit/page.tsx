@@ -1,11 +1,14 @@
 import Link from "next/link";
 import {
+  getAgencies,
   getCoverageFitGrid,
   getFedrampSnapshot,
 } from "@/lib/db";
 import type { CoverageFitCell, FedrampSnapshot } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
+import { buildUseCasesUrl } from "@/lib/urls";
 import { Section } from "@/components/editorial";
+import { CoverageAgencyFilter } from "@/components/coverage/coverage-agency-filter";
 
 export const metadata = {
   title: "Authorization fit · FedRAMP × AI Inventory",
@@ -13,9 +16,11 @@ export const metadata = {
     "Use cases by rights/safety designation × FedRAMP impact level. Cells highlight where impact level may be too low for the reported use.",
 };
 
-function safeGrid(): { grid: CoverageFitCell[]; error: string | null } {
+function safeGrid(
+  opts: { agencyId?: number } = {},
+): { grid: CoverageFitCell[]; error: string | null } {
   try {
-    return { grid: getCoverageFitGrid(), error: null };
+    return { grid: getCoverageFitGrid(opts), error: null };
   } catch (err) {
     return {
       grid: [],
@@ -31,6 +36,18 @@ function safeSnapshot(): FedrampSnapshot | null {
     return null;
   }
 }
+
+// Map our grid-row key to the `high_impact` URL filter value the
+// /use-cases explorer understands. `null` means we can't deep-link
+// (the "Unknown" row collects rows with no designation tag).
+const ROW_TO_FILTER: Record<string, string | null> = {
+  rights_impacting: "rights_impacting",
+  safety_impacting: "safety_impacting",
+  both: "rights_and_safety_impacting",
+  high_impact: "high_impact",
+  neither: "neither",
+  unknown: null,
+};
 
 // Canonical row / column orderings.
 const ROWS: Array<{ key: string; label: string }> = [
@@ -98,8 +115,22 @@ const TONE_CLASS: Record<CellTone, string> = {
   muted: "bg-transparent text-muted-foreground",
 };
 
-export default function FedrampCoverageFitPage() {
-  const { grid, error } = safeGrid();
+export default async function FedrampCoverageFitPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ agency?: string }>;
+}) {
+  const sp = await searchParams;
+  const agencyFilter = (sp.agency ?? "").trim().toUpperCase() || null;
+  const agencies = getAgencies();
+  const agencyMatch = agencyFilter
+    ? agencies.find(
+        (a) => a.abbreviation.toUpperCase() === agencyFilter,
+      ) ?? null
+    : null;
+  const { grid, error } = safeGrid(
+    agencyMatch ? { agencyId: agencyMatch.id } : {},
+  );
   const snapshot = safeSnapshot();
 
   // Build a lookup keyed on (rowKey, colKey).
@@ -158,16 +189,42 @@ export default function FedrampCoverageFitPage() {
             <em className="italic">appropriate</em> for what they&rsquo;re doing?
           </h1>
           <p className="mt-6 max-w-prose text-[1.02rem] leading-[1.55] text-foreground/85">
-            Federal AI policy designates use cases as rights- or
-            safety-impacting. FedRAMP authorizes products at Low / Moderate /
-            High impact. The grid below shows where the two columns disagree.
-            Cells in <span className="text-[var(--stamp)] font-medium">vermilion</span>{" "}
-            indicate use cases reported as rights- or safety-impacting that ride
-            on a Low- or Moderate-impact authorization — a potential misfit
-            worth examining.
+            {agencyMatch ? (
+              <>
+                Scoped to {agencyMatch.name} ({agencyMatch.abbreviation}).
+                Federal AI policy designates use cases as rights- or
+                safety-impacting; FedRAMP authorizes products at Low / Moderate
+                / High impact. The grid below shows where the two columns
+                disagree for this agency.
+              </>
+            ) : (
+              <>
+                Federal AI policy designates use cases as rights- or
+                safety-impacting. FedRAMP authorizes products at Low / Moderate
+                / High impact. The grid below shows where the two columns
+                disagree. Cells in{" "}
+                <span className="text-[var(--stamp)] font-medium">vermilion</span>{" "}
+                indicate use cases reported as rights- or safety-impacting that
+                ride on a Low- or Moderate-impact authorization — a potential
+                misfit worth examining.
+              </>
+            )}
+          </p>
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            Click any non-zero cell to inspect the use cases in that bucket.
           </p>
         </div>
       </header>
+
+      <div className="mt-6">
+        <CoverageAgencyFilter
+          options={agencies.map((a) => ({
+            abbreviation: a.abbreviation,
+            name: a.name,
+          }))}
+          value={agencyMatch?.abbreviation ?? null}
+        />
+      </div>
 
       {error ? (
         <Section number="I" title="No data" lede="The FedRAMP tables aren&rsquo;t loaded.">
@@ -231,17 +288,42 @@ export default function FedrampCoverageFitPage() {
                     {COLS.map((c) => {
                       const v = lookup.get(`${r.key}|${c.key}`) ?? 0;
                       const tone = cellTone(r.key, c.key, v);
+                      const designation = ROW_TO_FILTER[r.key];
+                      const cellHref =
+                        v > 0 && designation
+                          ? buildUseCasesUrl({
+                              highImpactDesignations: [designation],
+                              ...(agencyMatch
+                                ? { agencyIds: [agencyMatch.id] }
+                                : {}),
+                              entryKind: "all",
+                            })
+                          : null;
                       return (
                         <td
                           key={c.key}
-                          className={`px-3 py-2.5 text-right tabular-nums ${TONE_CLASS[tone]}`}
+                          className={`px-0 py-0 text-right tabular-nums ${TONE_CLASS[tone]} ${
+                            tone === "misfit"
+                              ? "border border-[color-mix(in_oklab,var(--stamp)_60%,transparent)]"
+                              : ""
+                          }`}
                         >
                           {v === 0 ? (
-                            <span className="font-mono text-[11px] text-muted-foreground">
+                            <span className="block px-3 py-2.5 font-mono text-[11px] text-muted-foreground">
                               —
                             </span>
+                          ) : cellHref ? (
+                            <Link
+                              href={cellHref}
+                              className="block px-3 py-2.5 text-foreground hover:text-[var(--stamp)] hover:underline"
+                              title={`Inspect the ${formatNumber(v)} use cases in this bucket`}
+                            >
+                              {formatNumber(v)}
+                            </Link>
                           ) : (
-                            formatNumber(v)
+                            <span className="block px-3 py-2.5">
+                              {formatNumber(v)}
+                            </span>
                           )}
                         </td>
                       );

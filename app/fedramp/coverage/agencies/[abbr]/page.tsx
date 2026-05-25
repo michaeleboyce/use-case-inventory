@@ -2,10 +2,16 @@ import Link from "next/link";
 import {
   getCoverageAgencyDrill,
   getFedrampSnapshot,
+  getUseCasesForCoverageAgencyProduct,
 } from "@/lib/db";
-import type { CoverageAgencyDrill, FedrampSnapshot } from "@/lib/types";
+import type {
+  CoverageAgencyDrill,
+  CoverageUseCaseRow,
+  FedrampSnapshot,
+} from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section, MonoChip } from "@/components/editorial";
+import { MentionedWithoutAtoTable } from "./_sections/mentioned-without-ato-table";
 
 export async function generateMetadata({
   params,
@@ -123,6 +129,24 @@ export default async function FedrampCoverageAgencyDrillPage({
 
   const { agency, authorized_but_unreported, mentioned_without_ato, unresolved_tokens } =
     drill;
+
+  // Attach top-10 use cases per "mentioned without ATO" row, server-side.
+  // Cheap — each row's product is a single id lookup; rows are O(few-dozen).
+  type MentionedRowWithDetail =
+    CoverageAgencyDrill["mentioned_without_ato"][number] & {
+      _detail: CoverageUseCaseRow[];
+      _totalUseCases: number;
+    };
+  const mentionedWithDetail: MentionedRowWithDetail[] =
+    mentioned_without_ato.map((p) => ({
+      ...p,
+      _detail: getUseCasesForCoverageAgencyProduct(
+        agency.id,
+        p.inventory_product_id,
+        { limit: 10 },
+      ),
+      _totalUseCases: p.use_case_count,
+    }));
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
@@ -250,7 +274,7 @@ export default async function FedrampCoverageAgencyDrillPage({
       <Section
         number="II"
         title="Mentioned without an ATO on file"
-        lede="Products this agency reports using whose FedRAMP listing isn&rsquo;t paired with an ATO at this agency."
+        lede="Products this agency reports using whose FedRAMP listing isn&rsquo;t paired with an ATO at this agency. Click a row to see the actual use cases."
       >
         {mentioned_without_ato.length === 0 ? (
           <p className="border-t-2 border-foreground pt-4 max-w-prose text-sm text-muted-foreground">
@@ -258,55 +282,12 @@ export default async function FedrampCoverageAgencyDrillPage({
             matching ATO record. Nothing to flag here.
           </p>
         ) : (
-          <div className="overflow-x-auto border-t-2 border-foreground">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <Th align="left">Product</Th>
-                  <Th align="left">CSP / offering</Th>
-                  <Th align="left">FedRAMP</Th>
-                  <Th align="right">Use cases</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {mentioned_without_ato.map((p) => (
-                  <tr
-                    key={p.inventory_product_id}
-                    className="border-b border-border/60 hover:bg-muted/30"
-                  >
-                    <td className="px-2 py-2">
-                      <Link
-                        href={`/products/${p.inventory_product_id}`}
-                        className="text-foreground hover:text-[var(--stamp)]"
-                      >
-                        {p.canonical_name}
-                      </Link>
-                    </td>
-                    <td className="px-2 py-2 text-muted-foreground">
-                      {[p.csp, p.cso].filter(Boolean).join(" · ") || "—"}
-                    </td>
-                    <td className="px-2 py-2">
-                      {p.fedramp_id ? (
-                        <MonoChip
-                          href={`/fedramp/marketplace/products/${p.fedramp_id}`}
-                          tone="stamp"
-                          size="xs"
-                        >
-                          {p.fedramp_id}
-                        </MonoChip>
-                      ) : (
-                        <span className="font-mono text-[10.5px] text-muted-foreground">
-                          —
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 py-2 text-right tabular-nums">
-                      {formatNumber(p.use_case_count)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="border-t-2 border-foreground pt-4">
+            <MentionedWithoutAtoTable
+              rows={mentionedWithDetail}
+              agencyId={agency.id}
+              agencyAbbr={agency.abbreviation}
+            />
           </div>
         )}
       </Section>

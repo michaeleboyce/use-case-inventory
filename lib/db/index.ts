@@ -139,6 +139,10 @@ export {
   getCoverageAgencyRows,
   getCoverageAgencyDrill,
   getCoverageUnusedProducts,
+  getUseCasesForCoverageProduct,
+  getAgenciesWithoutUseForFedrampProduct,
+  getUseCasesForFitCell,
+  getUseCasesForCoverageAgencyProduct,
   getLinkQueueGroups,
   getLinkQueueRows,
 } from "./fedramp";

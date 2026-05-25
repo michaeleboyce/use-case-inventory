@@ -168,6 +168,35 @@ export interface CoverageAgencyRow {
 }
 
 /**
+ * One use case as surfaced by the expandable coverage drills (vendors row
+ * → its use cases, fit cell → its use cases, per-agency drill → use cases
+ * per product). `problem_snippet` is the first ≤200 chars of
+ * `problem_statement`, used inline on coverage pages.
+ */
+export interface CoverageUseCaseRow {
+  id: number;
+  slug: string | null;
+  agency_abbreviation: string;
+  use_case_name: string;
+  stage_of_development: string | null;
+  problem_snippet: string | null;
+}
+
+/**
+ * One agency that holds a FedRAMP authorization for a product but reports
+ * zero AI use cases naming it. Returned by
+ * `getAgenciesWithoutUseForFedrampProduct` for the "FedRAMP → AI" inverse
+ * drill on /fedramp/coverage/products.
+ */
+export interface AgencyAtoRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string;
+  ato_issuance_date: string | null;
+  authorization_type: string | null;
+}
+
+/**
  * Per-agency drill (the VA-style story). Three lists of products plus a
  * raw token report for unresolved cases.
  */
