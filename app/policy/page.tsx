@@ -3,6 +3,7 @@
 import { buildPolicyViewModel } from "./_view-model";
 import { ComplianceScorecard } from "./_sections/compliance-scorecard";
 import { PagesByAgencyChart } from "./_sections/pages-by-agency-chart";
+import { DocumentDirectory } from "./_sections/document-directory";
 
 export const metadata = { title: "Federal AI Policy" };
 
@@ -60,6 +61,13 @@ export default async function PolicyPage() {
           </h2>
           <PagesByAgencyChart rows={vm.pagesByAgency} />
         </div>
+      </section>
+
+      <section className="mb-12">
+        <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
+          All policy documents
+        </h2>
+        <DocumentDirectory documents={vm.documents} />
       </section>
     </main>
   );
