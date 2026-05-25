@@ -1,6 +1,7 @@
 // app/policy/page.tsx — top-level /policy section.
 
 import { buildPolicyViewModel } from "./_view-model";
+import { PagesByAgencyChart } from "./_sections/pages-by-agency-chart";
 
 export const metadata = { title: "Federal AI Policy" };
 
@@ -43,6 +44,23 @@ export default async function PolicyPage() {
           value={`${vm.stats.plans_published} / ${vm.stats.total_agencies}`}
           hint="public agency plan"
         />
+      </section>
+
+      <section className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="rounded-sm border border-border bg-card/40 p-4">
+          <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
+            Compliance scorecard
+          </h2>
+          <p className="text-sm text-foreground/60">
+            Scorecard table lands in the next task.
+          </p>
+        </div>
+        <div className="rounded-sm border border-border bg-card/40 p-4">
+          <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
+            Pages of policy by agency
+          </h2>
+          <PagesByAgencyChart rows={vm.pagesByAgency} />
+        </div>
       </section>
     </main>
   );
