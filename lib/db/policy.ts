@@ -59,10 +59,10 @@ export function getPolicyStats(): PolicyStats {
     }>(
       `SELECT
          COUNT(*) AS total_agencies,
-         SUM(CASE WHEN ai_strategy_year >= 2025 THEN 1 ELSE 0 END)
-           AS strategies_published,
-         SUM(CASE WHEN compliance_plan_year >= 2025 THEN 1 ELSE 0 END)
-           AS plans_published,
+         (SELECT COUNT(DISTINCT agency_abbr) FROM agency_ai_policy_documents
+           WHERE document_type = 'M-25-21 AI Strategy') AS strategies_published,
+         (SELECT COUNT(DISTINCT agency_abbr) FROM agency_ai_policy_documents
+           WHERE document_type = 'M-25-21 Compliance Plan') AS plans_published,
          MAX(date_searched) AS last_refreshed
        FROM agency_ai_policy_compliance
        WHERE searched = 1`,
