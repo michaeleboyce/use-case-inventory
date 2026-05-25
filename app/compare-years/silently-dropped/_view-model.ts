@@ -32,10 +32,19 @@ import type {
   SilentlyDroppedSummary,
 } from "@/lib/types";
 
+/** A `SilentlyDroppedAgencyRow` decorated with its sorted per-use-case rows,
+ *  used by the §III table to render an expandable sub-row per agency. */
+export type SilentlyDroppedAgencyRowExpanded = SilentlyDroppedAgencyRow & {
+  rows: SilentlyDroppedRow[];
+};
+
 export interface SilentlyDroppedViewModel {
   summary: SilentlyDroppedSummary;
   byStage: SilentlyDroppedStageRow[];
   byAgency: SilentlyDroppedAgencyRow[];
+  /** Per-agency aggregates with their sorted (Deployed-first) use-case rows
+   *  attached. Includes USAID; the page peels that row out separately. */
+  byAgencyExpanded: SilentlyDroppedAgencyRowExpanded[];
   /** All non-USAID silently-dropped rows, used by the §V full-list table. */
   allRows: SilentlyDroppedRow[];
   /** Curated case-study pool for §IV (4–6 rows, prose commentary inline). */
@@ -110,6 +119,27 @@ export async function buildSilentlyDroppedViewModel(): Promise<SilentlyDroppedVi
   const byStage = getSilentlyDroppedByStage();
   const byAgency = getSilentlyDroppedByAgency();
   const allRows = getSilentlyDroppedRows({ includeDissolved: false });
+  // Second fetch including USAID, so the §III table can expand USAID's row
+  // and reveal its 137 dropped use cases too. Cheap — ~600 rows total.
+  const allRowsWithDissolved = getSilentlyDroppedRows({
+    includeDissolved: true,
+  });
+
+  // Group by agency abbreviation, then attach to each aggregate row. Sorted
+  // Deployed-first via the same `exampleScore` helper §IV uses.
+  const rowsByAbbr = new Map<string, SilentlyDroppedRow[]>();
+  for (const r of allRowsWithDissolved) {
+    const key = r.agency_abbreviation ?? "?";
+    const arr = rowsByAbbr.get(key) ?? [];
+    arr.push(r);
+    rowsByAbbr.set(key, arr);
+  }
+  for (const arr of rowsByAbbr.values()) {
+    arr.sort((a, b) => exampleScore(b) - exampleScore(a));
+  }
+  const byAgencyExpanded: SilentlyDroppedAgencyRowExpanded[] = byAgency.map(
+    (a) => ({ ...a, rows: rowsByAbbr.get(a.abbreviation) ?? [] }),
+  );
 
   // Curate examples from the non-USAID, substantive-narrative pool.
   const pool = allRows.filter(
@@ -120,5 +150,12 @@ export async function buildSilentlyDroppedViewModel(): Promise<SilentlyDroppedVi
   );
   const examples = pickRoundRobin(pool, 6);
 
-  return { summary, byStage, byAgency, allRows, examples };
+  return {
+    summary,
+    byStage,
+    byAgency,
+    byAgencyExpanded,
+    allRows,
+    examples,
+  };
 }

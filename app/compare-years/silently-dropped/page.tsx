@@ -114,7 +114,8 @@ function StageBar({ value, max }: { value: number; max: number }) {
 
 export default async function SilentlyDroppedPage() {
   const vm = await buildSilentlyDroppedViewModel();
-  const { summary, byStage, byAgency, allRows, examples } = vm;
+  const { summary, byStage, byAgency, byAgencyExpanded, allRows, examples } =
+    vm;
 
   // Display-rounded headline counts.
   const headlineDrop = roundTo(summary.nonUsaidActiveDropped, 10);
@@ -127,7 +128,12 @@ export default async function SilentlyDroppedPage() {
   // Non-USAID agency rows, sorted by absolute drop count desc; USAID row
   // peeled out for a separate dissolved-agency callout.
   const usaidRow = byAgency.find((r) => r.is_dissolved) ?? null;
-  const otherAgencyRows = byAgency.filter((r) => !r.is_dissolved);
+  // Use the expanded variant for the §III table so rows can drill into their
+  // per-use-case lists inline. USAID is included (and renders the `dissolved`
+  // marker) so its 137 dropped use cases can be inspected the same way as
+  // every other agency's; the out-of-band callout above still flags the
+  // categorical difference.
+  const otherAgencyRows = byAgencyExpanded;
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
@@ -414,9 +420,11 @@ export default async function SilentlyDroppedPage() {
               <span className="font-mono tabular-nums text-[var(--stamp)]">
                 {formatNumber(usaidRow.dropped)}
               </span>{" "}
-              of those were active when last filed. These are excluded from
-              the ledger below because the disappearance is agency-wide and
-              structural — not a per-use-case compliance gap.
+              of those were active when last filed. The row appears in the
+              ledger below tagged <em className="italic">dissolved</em> so
+              its individual use cases stay browsable, but read it as
+              agency-wide structural disappearance rather than a per-use-case
+              compliance gap.
             </p>
           </div>
         ) : null}
@@ -424,10 +432,12 @@ export default async function SilentlyDroppedPage() {
         <div className="mt-8">
           <Eyebrow color="stamp">Fig. 2 · Agency ledger</Eyebrow>
           <p className="mb-4 mt-1.5 max-w-prose text-xs text-muted-foreground">
-            Sortable. Click a row to open the agency detail page. Rows with
-            blank <em>Filed 2024</em> are agencies whose 2024 records joined
-            via abbreviation mapping but whose source files used a legacy
-            agency code we don&apos;t map back; see §VI.
+            Sortable. Click a row to expand and inspect that agency&apos;s
+            silently-dropped use cases inline; click the agency name itself
+            to open the agency detail page. Rows with blank{" "}
+            <em>Filed 2024</em> are agencies whose 2024 records joined via
+            abbreviation mapping but whose source files used a legacy agency
+            code we don&apos;t map back; see §VI.
           </p>
           <SilentlyDroppedAgencyTable rows={otherAgencyRows} />
         </div>
