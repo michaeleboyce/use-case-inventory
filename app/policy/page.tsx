@@ -1,6 +1,7 @@
 // app/policy/page.tsx — top-level /policy section.
 
 import { buildPolicyViewModel } from "./_view-model";
+import { ComplianceScorecard } from "./_sections/compliance-scorecard";
 import { PagesByAgencyChart } from "./_sections/pages-by-agency-chart";
 
 export const metadata = { title: "Federal AI Policy" };
@@ -51,9 +52,7 @@ export default async function PolicyPage() {
           <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
             Compliance scorecard
           </h2>
-          <p className="text-sm text-foreground/60">
-            Scorecard table lands in the next task.
-          </p>
+          <ComplianceScorecard rows={vm.compliance} />
         </div>
         <div className="rounded-sm border border-border bg-card/40 p-4">
           <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
