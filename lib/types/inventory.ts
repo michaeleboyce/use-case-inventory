@@ -366,6 +366,18 @@ export interface UseCaseFilterInput {
   isPublicFacing?: boolean;
   hasATOorFedRAMP?: boolean;
   hasMeaningfulRiskDocs?: boolean;
+  /** OMB-filed `is_withheld` — multi-select on the canonical values (a/b/c/d).
+   *  Multiple values = OR. Use-case arm only. */
+  isWithhelds?: string[];
+  /** OMB-filed `contracting_usage` (DB: `development_type`) — Purchased /
+   *  In-house / Both. Multiple values = OR. Use-case arm only. */
+  contractingUsages?: string[];
+  /** OMB-filed `has_pii` — when true, restricts to rows where the agency
+   *  affirmed PII. Use-case arm only. */
+  hasPii?: boolean;
+  /** OMB-filed `has_custom_code` — when true, restricts to rows where the
+   *  agency reported custom code. Use-case arm only. */
+  hasCustomCode?: boolean;
   /** Drill-through-only: individual use cases that name neither a vendor nor a
    *  product (the "Vendor unspecified" bucket on the LLM-vendor donut). Applies
    *  the same vendor/product normalization as `LLM_NORMALIZED_FIELDS`. Like

@@ -22,6 +22,10 @@ export function getUseCaseFacets(): {
   tagHighImpactDesignations: string[];
   topicAreas: string[];
   productCategories: string[];
+  bureaus: string[];
+  maturityTiers: string[];
+  isWithhelds: string[];
+  contractingUsages: string[];
 } {
   const db = getDb();
   const distinct = (table: string, col: string) =>
@@ -68,6 +72,60 @@ export function getUseCaseFacets(): {
     .all()
     .map((r) => r.v);
 
+  // Bureau facet — count-ranked, threshold to suppress the long tail of
+  // single-row variants (bureau_component is one of the messiest source
+  // columns with parenthetical org codes, pipe-delimited multi-bureau lists,
+  // etc. — see scripts/backfill_bureau_orgs.py for the per-agency parsers).
+  const bureaus = db
+    .prepare<[], { v: string }>(
+      `SELECT bureau_component AS v
+         FROM use_cases
+        WHERE bureau_component IS NOT NULL AND bureau_component <> ''
+        GROUP BY bureau_component
+       HAVING COUNT(*) >= 3
+        ORDER BY COUNT(*) DESC, bureau_component COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
+
+  // Maturity tier — IFP-computed rubric. Small enum.
+  const maturityTiers = db
+    .prepare<[], { v: string }>(
+      `SELECT DISTINCT maturity_tier AS v
+         FROM agency_ai_maturity
+        WHERE maturity_tier IS NOT NULL AND maturity_tier <> ''
+        ORDER BY maturity_tier COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
+
+  // is_withheld / development_type — surface the OMB-canonical values that
+  // actually appear in the DB, count-ranked. Filtering matches exact value
+  // so the user sees and picks the same string the SQL will compare against.
+  const isWithhelds = db
+    .prepare<[], { v: string }>(
+      `SELECT is_withheld AS v
+         FROM use_cases
+        WHERE is_withheld IS NOT NULL AND is_withheld <> ''
+        GROUP BY is_withheld
+       HAVING COUNT(*) >= 3
+        ORDER BY COUNT(*) DESC, is_withheld COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
+
+  const contractingUsages = db
+    .prepare<[], { v: string }>(
+      `SELECT development_type AS v
+         FROM use_cases
+        WHERE development_type IS NOT NULL AND development_type <> ''
+        GROUP BY development_type
+       HAVING COUNT(*) >= 3
+        ORDER BY COUNT(*) DESC, development_type COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
+
   return {
     stages: distinct("use_cases", "stage_of_development"),
     aiClassifications: distinct("use_cases", "ai_classification"),
@@ -81,5 +139,9 @@ export function getUseCaseFacets(): {
     tagHighImpactDesignations: distinct("use_case_tags", "high_impact_designation"),
     topicAreas,
     productCategories,
+    bureaus,
+    maturityTiers,
+    isWithhelds,
+    contractingUsages,
   };
 }

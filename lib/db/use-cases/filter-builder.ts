@@ -41,7 +41,11 @@ export function hasUseCaseOnlyFilter(filters: UseCaseFilterInput): boolean {
     filters.vendor != null ||
     filters.vendorUnspecified != null ||
     (filters.bureaus != null && filters.bureaus.length > 0) ||
-    (filters.topicAreas != null && filters.topicAreas.length > 0)
+    (filters.topicAreas != null && filters.topicAreas.length > 0) ||
+    (filters.isWithhelds != null && filters.isWithhelds.length > 0) ||
+    (filters.contractingUsages != null && filters.contractingUsages.length > 0) ||
+    filters.hasPii != null ||
+    filters.hasCustomCode != null
   );
 }
 
@@ -287,6 +291,31 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
       )`,
     );
     rowParams.push(...filters.productCategories);
+  }
+  if (filters.isWithhelds && filters.isWithhelds.length > 0) {
+    rowWhere.push(
+      `uc.is_withheld IN (${filters.isWithhelds.map(() => "?").join(",")})`,
+    );
+    rowParams.push(...filters.isWithhelds);
+  }
+  if (filters.contractingUsages && filters.contractingUsages.length > 0) {
+    rowWhere.push(
+      `uc.development_type IN (${filters.contractingUsages.map(() => "?").join(",")})`,
+    );
+    rowParams.push(...filters.contractingUsages);
+  }
+  // has_pii / has_custom_code are filed as messy free-text (Yes / No / FALSE /
+  // N/A / "Yes - <reason>"). A yes-only boolean matches the canonical "yes"
+  // prefix and the "true" alias, which together cover the agency-affirmed set.
+  if (filters.hasPii === true) {
+    rowWhere.push(
+      "(LOWER(TRIM(uc.has_pii)) LIKE 'yes%' OR LOWER(TRIM(uc.has_pii)) = 'true')",
+    );
+  }
+  if (filters.hasCustomCode === true) {
+    rowWhere.push(
+      "(LOWER(TRIM(uc.has_custom_code)) LIKE 'yes%' OR LOWER(TRIM(uc.has_custom_code)) = 'true')",
+    );
   }
 
   const { tagWhere, tagParams } = buildTagPredicates(filters);

@@ -43,6 +43,12 @@ export interface UseCaseFiltersProps {
     vendor: string | null;
     use_case_count?: number;
   }>;
+  templates: Array<{
+    id: number;
+    short_name: string;
+    use_case_count?: number;
+    agency_count?: number;
+  }>;
   facets: {
     agencyTypes: string[];
     tagEntryTypes: string[];
@@ -53,12 +59,17 @@ export interface UseCaseFiltersProps {
     tagHighImpactDesignations: string[];
     topicAreas: string[];
     productCategories: string[];
+    bureaus: string[];
+    maturityTiers: string[];
+    isWithhelds: string[];
+    contractingUsages: string[];
   };
 }
 
 export function UseCaseFilters({
   agencies,
   products,
+  templates,
   facets,
 }: UseCaseFiltersProps) {
   const router = useRouter();
@@ -70,6 +81,11 @@ export function UseCaseFilters({
   );
   const [agencyQuery, setAgencyQuery] = useState<string>("");
   const [productQuery, setProductQuery] = useState<string>("");
+  const [templateQuery, setTemplateQuery] = useState<string>("");
+  const [bureauQuery, setBureauQuery] = useState<string>("");
+  const [vendorDraft, setVendorDraft] = useState<string>(
+    searchParams.get("vendor") ?? "",
+  );
 
   const currentParams = useMemo(
     () => new URLSearchParams(searchParams.toString()),
@@ -136,6 +152,11 @@ export function UseCaseFilters({
   const selectedEntryTypes = parseCsv(currentParams.get("entry_type"));
   const selectedSophistication = parseCsv(currentParams.get("sophistication"));
   const selectedProductIds = parseCsv(currentParams.get("product_ids"));
+  const selectedTemplateIds = parseCsv(currentParams.get("template_ids"));
+  const selectedBureaus = parseCsv(currentParams.get("bureau"));
+  const selectedMaturityTiers = parseCsv(currentParams.get("tier"));
+  const selectedIsWithhelds = parseCsv(currentParams.get("withheld"));
+  const selectedContractingUsages = parseCsv(currentParams.get("contracting"));
   const selectedScopes = parseCsv(currentParams.get("scope"));
   const selectedArchitectures = parseCsv(currentParams.get("architecture"));
   const selectedUseTypes = parseCsv(currentParams.get("use_type"));
@@ -179,6 +200,34 @@ export function UseCaseFilters({
   const topProductPicks = useMemo(
     () => products.filter((p) => (p.use_case_count ?? 0) > 0).slice(0, 6),
     [products],
+  );
+
+  const filteredTemplates = useMemo(() => {
+    const q = templateQuery.trim().toLowerCase();
+    const base = q
+      ? templates.filter((t) => t.short_name.toLowerCase().includes(q))
+      : templates;
+    const selected = new Set(selectedTemplateIds);
+    return [...base].sort((a, b) => {
+      const aSel = selected.has(String(a.id)) ? 1 : 0;
+      const bSel = selected.has(String(b.id)) ? 1 : 0;
+      if (aSel !== bSel) return bSel - aSel;
+      return (b.use_case_count ?? 0) - (a.use_case_count ?? 0);
+    });
+  }, [templates, templateQuery, selectedTemplateIds]);
+
+  const filteredBureaus = useMemo(() => {
+    const q = bureauQuery.trim().toLowerCase();
+    if (!q) return facets.bureaus;
+    return facets.bureaus.filter((b) => b.toLowerCase().includes(q));
+  }, [facets.bureaus, bureauQuery]);
+
+  const submitVendor = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      setSingle("vendor", vendorDraft.trim() || null);
+    },
+    [vendorDraft, setSingle],
   );
 
   return (
@@ -313,6 +362,62 @@ export function UseCaseFilters({
         </div>
       </FilterGroup>
 
+      {/* Bureau / sub-agency — OMB-filed `bureau_component`, count-ranked. */}
+      <FilterGroup
+        title={
+          selectedBureaus.length > 0
+            ? `Bureau · ${selectedBureaus.length} selected`
+            : "Bureau"
+        }
+        defaultOpen={selectedBureaus.length > 0}
+        source="omb"
+      >
+        <div className="mb-2">
+          <Input
+            value={bureauQuery}
+            onChange={(e) => setBureauQuery(e.currentTarget.value)}
+            placeholder="Find bureau…"
+            className="h-7 border-border bg-transparent font-mono text-[11px]"
+          />
+        </div>
+        <div className="max-h-56 overflow-y-auto pr-1">
+          {filteredBureaus.map((b) => (
+            <CheckRow
+              key={b}
+              checked={selectedBureaus.includes(b)}
+              onToggle={() => toggleMulti("bureau", b)}
+              label={b}
+            />
+          ))}
+          {filteredBureaus.length === 0 && (
+            <p className="py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              No matches
+            </p>
+          )}
+        </div>
+      </FilterGroup>
+
+      {/* Agency maturity tier — IFP rubric, applied to the row's agency. */}
+      <FilterGroup
+        title="Maturity tier (agency)"
+        defaultOpen={false}
+        source="derived"
+      >
+        {facets.maturityTiers.map((v) => (
+          <CheckRow
+            key={v}
+            checked={selectedMaturityTiers.includes(v)}
+            onToggle={() => toggleMulti("tier", v)}
+            label={labelFor(v)}
+          />
+        ))}
+        {facets.maturityTiers.length === 0 && (
+          <p className="py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            No tiers computed
+          </p>
+        )}
+      </FilterGroup>
+
       {/* Entry type */}
       <FilterGroup title="Entry type" defaultOpen={false} source="derived">
         {facets.tagEntryTypes.map((v) => (
@@ -425,6 +530,73 @@ export function UseCaseFilters({
         </div>
       </FilterGroup>
 
+      {/* Template — IFP-curated OMB Appendix B "common use case" pattern.
+          Mirrors the Product picker (same searchable + count-ranked shape). */}
+      <FilterGroup
+        title={
+          selectedTemplateIds.length > 0
+            ? `Template · ${selectedTemplateIds.length} selected`
+            : "Template"
+        }
+        defaultOpen={selectedTemplateIds.length > 0}
+        source="derived"
+      >
+        <div className="mb-2">
+          <Input
+            value={templateQuery}
+            onChange={(e) => setTemplateQuery(e.currentTarget.value)}
+            placeholder="Search template…"
+            className="h-7 border-border bg-transparent font-mono text-[11px]"
+          />
+        </div>
+        <div className="max-h-56 overflow-y-auto pr-1">
+          {filteredTemplates.map((t) => (
+            <CheckRow
+              key={t.id}
+              checked={selectedTemplateIds.includes(String(t.id))}
+              onToggle={() => toggleMulti("template_ids", String(t.id))}
+              label={
+                <span className="flex w-full items-start gap-2">
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">
+                    {t.short_name}
+                  </span>
+                  {t.use_case_count != null && t.use_case_count > 0 && (
+                    <span className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                      {t.use_case_count}
+                    </span>
+                  )}
+                </span>
+              }
+            />
+          ))}
+          {filteredTemplates.length === 0 && (
+            <p className="py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              No matches
+            </p>
+          )}
+        </div>
+      </FilterGroup>
+
+      {/* Vendor (substring) — OMB-filed `vendor_name` with a LIKE %v% match.
+          Was previously drill-through-only from the LLM-vendor donut. */}
+      <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+        <div className="flex items-center gap-2">
+          <MonoLabel>Vendor (contains)</MonoLabel>
+          <SourceChip source="omb" />
+        </div>
+        <form onSubmit={submitVendor}>
+          <Input
+            value={vendorDraft}
+            onChange={(e) => setVendorDraft(e.currentTarget.value)}
+            placeholder="e.g. Microsoft, Palantir…"
+            className="h-7 border-border bg-transparent font-mono text-[11px]"
+          />
+        </form>
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          ↵ Enter to query
+        </p>
+      </div>
+
       {/* Deployment scope */}
       <FilterGroup title="Deployment scope" defaultOpen={false} source="omb-derived">
         {facets.tagDeploymentScopes.map((v) => (
@@ -509,6 +681,31 @@ export function UseCaseFilters({
         </div>
       </FilterGroup>
 
+      {/* Contracting usage — OMB-filed `contracting_usage` (DB:
+          `development_type`). Build-vs-buy signal. */}
+      <FilterGroup title="Contracting" defaultOpen={false} source="omb">
+        {facets.contractingUsages.map((v) => (
+          <CheckRow
+            key={v}
+            checked={selectedContractingUsages.includes(v)}
+            onToggle={() => toggleMulti("contracting", v)}
+            label={v}
+          />
+        ))}
+      </FilterGroup>
+
+      {/* Is withheld — OMB-filed `is_withheld`. */}
+      <FilterGroup title="Withheld" defaultOpen={false} source="omb">
+        {facets.isWithhelds.map((v) => (
+          <CheckRow
+            key={v}
+            checked={selectedIsWithhelds.includes(v)}
+            onToggle={() => toggleMulti("withheld", v)}
+            label={v}
+          />
+        ))}
+      </FilterGroup>
+
       {/* High impact designation */}
       <FilterGroup title="High-impact" defaultOpen={false} source="omb-derived">
         {facets.tagHighImpactDesignations.map((v) => (
@@ -552,6 +749,16 @@ export function UseCaseFilters({
           checked={currentParams.get("risk_docs") === "1"}
           onToggle={() => toggleBool("risk_docs")}
           label="Meaningful risk docs"
+        />
+        <CheckRow
+          checked={currentParams.get("has_pii") === "1"}
+          onToggle={() => toggleBool("has_pii")}
+          label="Involves PII"
+        />
+        <CheckRow
+          checked={currentParams.get("has_custom_code") === "1"}
+          onToggle={() => toggleBool("has_custom_code")}
+          label="Custom code"
         />
       </FilterGroup>
     </aside>

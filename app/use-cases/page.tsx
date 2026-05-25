@@ -104,9 +104,16 @@ function buildFilters(sp: Search): UseCasesFilters {
   if (productCategories.length > 0) filters.productCategories = productCategories;
 
   // Vendor is a single-value substring filter (filters.vendor on the
-  // DB side does LIKE %v%). Surfaced via /browse/vendor heatmap cells.
+  // DB side does LIKE %v%). Now surfaced as a text input in the filter rail
+  // in addition to /browse/vendor heatmap drill-throughs.
   const vendor = first(sp.vendor);
   if (vendor) filters.vendor = vendor;
+
+  const isWithhelds = parseCsv(sp.withheld);
+  if (isWithhelds.length > 0) filters.isWithhelds = isWithhelds;
+
+  const contractingUsages = parseCsv(sp.contracting);
+  if (contractingUsages.length > 0) filters.contractingUsages = contractingUsages;
 
   if (first(sp.coding_tool) === "1") filters.isCodingTool = true;
   if (first(sp.coding_tool) === "0") filters.isCodingTool = false;
@@ -116,6 +123,8 @@ function buildFilters(sp: Search): UseCasesFilters {
   if (first(sp.public_facing) === "1") filters.isPublicFacing = true;
   if (first(sp.has_ato) === "1") filters.hasATOorFedRAMP = true;
   if (first(sp.risk_docs) === "1") filters.hasMeaningfulRiskDocs = true;
+  if (first(sp.has_pii) === "1") filters.hasPii = true;
+  if (first(sp.has_custom_code) === "1") filters.hasCustomCode = true;
   // Drill-through-only (Insight Card G): no filter-rail control, like `vendor`.
   if (first(sp.vendor_unspecified) === "1") filters.vendorUnspecified = true;
 
@@ -184,6 +193,7 @@ export default async function UseCasesPage({
     lastRow,
     agencies,
     products,
+    templates,
     facets,
     stats,
   } = await buildUseCasesViewModel(filters);
@@ -258,6 +268,7 @@ export default async function UseCasesPage({
               <UseCaseFilters
                 agencies={agencies}
                 products={products}
+                templates={templates.filter((t): t is typeof t & { short_name: string } => t.short_name !== null)}
                 facets={{
                   agencyTypes: facets.agencyTypes,
                   tagEntryTypes: facets.tagEntryTypes,
@@ -268,6 +279,10 @@ export default async function UseCasesPage({
                   tagHighImpactDesignations: facets.tagHighImpactDesignations,
                   topicAreas: facets.topicAreas,
                   productCategories: facets.productCategories,
+                  bureaus: facets.bureaus,
+                  maturityTiers: facets.maturityTiers,
+                  isWithhelds: facets.isWithhelds,
+                  contractingUsages: facets.contractingUsages,
                 }}
               />
             </MobileFiltersSheet>

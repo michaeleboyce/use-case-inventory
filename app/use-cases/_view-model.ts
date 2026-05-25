@@ -13,6 +13,7 @@
  */
 import {
   getAgencyOptions,
+  getAllTemplates,
   getProductOptions,
   getUseCaseFacets,
   getUseCasesFiltered,
@@ -27,6 +28,7 @@ export type UseCasesFilters = UseCaseFilterInput & { page: number };
 type FilteredResult = ReturnType<typeof getUseCasesFiltered>;
 type AgencyOption = ReturnType<typeof getAgencyOptions>[number];
 type ProductOption = ReturnType<typeof getProductOptions>[number];
+type TemplateOption = ReturnType<typeof getAllTemplates>[number];
 type FacetBucket = ReturnType<typeof getUseCaseFacets>;
 type GlobalStats = ReturnType<typeof getGlobalStats>;
 
@@ -40,6 +42,7 @@ export interface UseCasesViewModel {
   lastRow: number;
   agencies: AgencyOption[];
   products: ProductOption[];
+  templates: TemplateOption[];
   facets: FacetBucket;
   stats: GlobalStats;
 }
@@ -48,13 +51,15 @@ export async function buildUseCasesViewModel(
   filters: UseCasesFilters,
 ): Promise<UseCasesViewModel> {
   const page = filters.page;
-  const [{ rows, total }, agencies, products, facets, stats] = await Promise.all([
-    Promise.resolve(getUseCasesFiltered(filters)),
-    Promise.resolve(getAgencyOptions()),
-    Promise.resolve(getProductOptions()),
-    Promise.resolve(getUseCaseFacets()),
-    Promise.resolve(getGlobalStats()),
-  ]);
+  const [{ rows, total }, agencies, products, templates, facets, stats] =
+    await Promise.all([
+      Promise.resolve(getUseCasesFiltered(filters)),
+      Promise.resolve(getAgencyOptions()),
+      Promise.resolve(getProductOptions()),
+      Promise.resolve(getAllTemplates()),
+      Promise.resolve(getUseCaseFacets()),
+      Promise.resolve(getGlobalStats()),
+    ]);
 
   const totalPages = Math.max(1, Math.ceil(total / USE_CASES_PAGE_SIZE));
   const firstRow = total === 0 ? 0 : (page - 1) * USE_CASES_PAGE_SIZE + 1;
@@ -71,6 +76,7 @@ export async function buildUseCasesViewModel(
     lastRow,
     agencies,
     products,
+    templates,
     facets,
     stats,
   };
