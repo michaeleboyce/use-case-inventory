@@ -19,7 +19,8 @@ interface Props {
 
 const ch = createColumnHelper<PolicyDocument>();
 
-const columns: ColumnDef<PolicyDocument, unknown>[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const columns: ColumnDef<PolicyDocument, any>[] = [
   ch.accessor("agency_abbr", {
     header: "Agency",
     cell: (info) => (
