@@ -72,6 +72,24 @@ export default async function PolicyPage() {
       </section>
 
       <GoverningDocsBlock governing={vm.governing} />
+
+      <section id="methodology" className="mb-12 max-w-[68ch] text-sm text-foreground/70">
+        <h2 className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
+          Methodology
+        </h2>
+        <p>
+          Coverage is the {vm.stats.total_agencies} agencies that filed a 2025
+          AI use case inventory, plus the Department of Defense (inventory-exempt
+          but a major AI-strategy publisher). For each agency, parallel research
+          sweeps located the AI landing page, identified every formal AI
+          strategy or policy document published since 2023, and recorded the
+          publication year, source URL, and mapping to the M-24-10 / M-25-21
+          required-artifact set. PDF page counts are exact; web-page documents
+          are estimated at ~500 words per page. The full source tracker (CSVs,
+          per-agency research notes, and the downloaded originals) lives in the
+          ETL workspace under <code>audit/research/ai_strategies/</code>.
+        </p>
+      </section>
     </main>
   );
 }
