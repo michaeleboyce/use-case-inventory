@@ -22,11 +22,42 @@ export default async function PolicyPage() {
         </p>
       </header>
 
-      <p className="text-sm text-foreground/60">
-        {vm.stats.total_documents} agency documents · {vm.stats.total_pages.toLocaleString()} pages of policy ·
-        {" "}{vm.stats.strategies_published}/{vm.stats.total_agencies} M-25-21 strategies ·
-        {" "}{vm.stats.plans_published}/{vm.stats.total_agencies} compliance plans
-      </p>
+      <section className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard
+          label="Pages of policy"
+          value={vm.stats.total_pages.toLocaleString()}
+          hint="agency-issued only"
+        />
+        <StatCard
+          label="Documents"
+          value={vm.stats.total_documents.toString()}
+          hint="agency-issued only"
+        />
+        <StatCard
+          label="M-25-21 Strategies"
+          value={`${vm.stats.strategies_published} / ${vm.stats.total_agencies}`}
+          hint="public agency strategy"
+        />
+        <StatCard
+          label="M-25-21 Compliance Plans"
+          value={`${vm.stats.plans_published} / ${vm.stats.total_agencies}`}
+          hint="public agency plan"
+        />
+      </section>
     </main>
+  );
+}
+
+function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <div className="rounded-sm border border-border bg-card/40 p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/60">
+        {label}
+      </p>
+      <p className="mt-1 font-display text-3xl leading-none text-foreground">
+        {value}
+      </p>
+      <p className="mt-1 text-[11px] text-foreground/50">{hint}</p>
+    </div>
   );
 }
