@@ -113,3 +113,51 @@ INSERT INTO agency_ai_maturity (
 -- --------------------------------------------------------------------
 INSERT INTO use_case_products (use_case_id, product_id) VALUES
   (1, 1), (3, 4), (4, 5), (7, 2), (8, 3), (10, 1), (11, 6), (12, 1);
+
+-- --------------------------------------------------------------------
+-- Federal AI policy tracker — minimal seed for /policy query tests.
+-- Three agency rows (Cabinet x2, Independent x1) + the two governing-document
+-- groups (EOP, OMB). Years span 2024–2026 to exercise filtering.
+-- --------------------------------------------------------------------
+INSERT INTO agency_ai_policy_compliance
+  (agency_abbr, agency_name, agency_type, searched, date_searched,
+   ai_landing_page_url, ai_strategy_year, compliance_plan_year,
+   genai_policy_year, caio_status, other_policy_count, total_documents,
+   gaps, notes)
+VALUES
+  ('DHS','Department of Homeland Security','Cabinet',1,'2026-05-21',
+    'https://www.dhs.gov/ai',2025,2025,NULL,'Designated',2,4,NULL,NULL),
+  ('DOJ','Department of Justice','Cabinet',1,'2026-05-21',
+    'https://www.justice.gov/ai',NULL,2024,NULL,'Designated',1,2,
+    'No public M-25-21 strategy',NULL),
+  ('NSF','National Science Foundation','Independent',1,'2026-05-21',
+    'https://www.nsf.gov/policies/ai',2025,2025,NULL,'Named: Thu Williams',0,2,NULL,NULL);
+
+INSERT INTO agency_ai_policy_documents
+  (agency_abbr, agency_name, agency_type, issuing_office, document_type,
+   document_title, publication_year, publication_date, pages, issuing_memo,
+   superseded, is_public, url, local_path, access_status, date_accessed, notes)
+VALUES
+  ('DHS','Department of Homeland Security','Cabinet','DHS OCIO',
+    'M-25-21 AI Strategy','DHS AI Strategy',2025,'2025-09-26',10,'M-25-21',
+    0,1,'https://example.gov/dhs-strategy.pdf',NULL,'Downloaded','2026-05-21',NULL),
+  ('DHS','Department of Homeland Security','Cabinet','DHS OCIO',
+    'M-25-21 Compliance Plan','DHS Compliance Plan',2025,'2025-09-26',12,'M-25-21',
+    0,1,'https://example.gov/dhs-plan.pdf',NULL,'Downloaded','2026-05-21',NULL),
+  ('DOJ','Department of Justice','Cabinet','DOJ',
+    'M-24-10 Compliance Plan','DOJ M-24-10 Compliance Plan',2024,'2024-10-01',11,'M-24-10',
+    1,1,'https://justice.gov/plan.pdf',NULL,'Downloaded','2026-05-21',NULL),
+  ('NSF','National Science Foundation','Independent','NSF',
+    'M-25-21 AI Strategy','NSF AI Strategy',2025,'2025-09-30',22,'M-25-21',
+    0,1,'https://nsf.gov/strategy.pdf',NULL,'Downloaded','2026-05-21',NULL),
+  ('NSF','National Science Foundation','Independent','NSF',
+    'M-25-21 Compliance Plan','NSF Compliance Plan',2025,'2025-09-30',7,'M-25-21',
+    0,1,'https://nsf.gov/plan.pdf',NULL,'Downloaded','2026-05-21',NULL),
+  ('EOP','Executive Office of the President','White House / OMB','The White House',
+    'Executive Order','EO 14179: Removing Barriers to American Leadership in AI',
+    2025,'2025-01-23',2,NULL,0,1,'https://www.govinfo.gov/eo14179.pdf',NULL,
+    'Downloaded','2026-05-21',NULL),
+  ('OMB','Office of Management and Budget','White House / OMB','OMB',
+    'OMB Memorandum','OMB M-25-21: Accelerating Federal Use of AI',
+    2025,'2025-04-03',25,NULL,0,1,'https://www.whitehouse.gov/M-25-21.pdf',NULL,
+    'Downloaded','2026-05-21',NULL);

@@ -683,3 +683,169 @@ CREATE TABLE agency_readiness (
             computed_at TEXT NOT NULL
         );
 CREATE INDEX idx_agency_readiness_rank ON agency_readiness(rank);
+CREATE TABLE agency_ai_access_evidence (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agency_id INTEGER REFERENCES agencies(id),
+                agency_abbreviation TEXT NOT NULL,
+                tool_name TEXT,
+                finding TEXT NOT NULL,
+                estimated_users TEXT,
+                coverage_assessment TEXT,   -- all | most | partial | pilot | unknown | none
+                exact_quote TEXT,           -- verbatim; NULL when no source
+                source_url TEXT,            -- NULL when no source
+                source_title TEXT,
+                source_date TEXT,
+                source_type TEXT,           -- official | press | inventory_field | none
+                confidence TEXT,            -- high | medium | low
+                status TEXT NOT NULL,       -- corroborated | searched_no_source
+                notes TEXT,
+                captured_at TEXT NOT NULL,
+                captured_by TEXT
+            );
+CREATE INDEX idx_ai_access_evidence_agency ON agency_ai_access_evidence(agency_abbreviation);
+CREATE TABLE use_cases_2024 (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agency_id INTEGER NOT NULL REFERENCES agencies(id),
+                source_file TEXT NOT NULL,
+                slug TEXT UNIQUE,
+                use_case_name TEXT,
+                agency TEXT,
+                agency_abbreviation TEXT,
+                bureau TEXT,
+                topic_area TEXT,
+                topic_area_other TEXT,
+                commercial_ai TEXT,
+                purpose_benefits TEXT,
+                outputs TEXT,
+                dev_stage TEXT,
+                impact_type TEXT,
+                date_initiated TEXT,
+                date_acq_dev_began TEXT,
+                date_implemented TEXT,
+                date_retired TEXT,
+                dev_method TEXT,
+                contract_piids TEXT,
+                hisp_support TEXT,
+                hisp_name TEXT,
+                public_service TEXT,
+                public_info TEXT,
+                iqa_compliance TEXT,
+                contains_pii TEXT,
+                saop_review TEXT,
+                data_catalog TEXT,
+                data_catalog_other TEXT,
+                agency_data TEXT,
+                data_docs TEXT,
+                demo_features TEXT,
+                demo_features_other TEXT,
+                custom_code TEXT,
+                code_access TEXT,
+                code_link TEXT,
+                has_ato TEXT,
+                system_name TEXT,
+                dev_tools_wait TEXT,
+                infra_provisioned TEXT,
+                infra_provisioned_other TEXT,
+                compute_request TEXT,
+                compute_request_other TEXT,
+                timely_resources TEXT,
+                timely_resources_other TEXT,
+                existing_reuse TEXT,
+                internal_review TEXT,
+                extension_request TEXT,
+                impact_assessment TEXT,
+                real_world_testing TEXT,
+                key_risks TEXT,
+                independent_eval TEXT,
+                monitor_postdeploy TEXT,
+                autonomous_impact TEXT,
+                autonomous_impact_other TEXT,
+                ai_notice TEXT,
+                ai_notice_other TEXT,
+                adverse_impact TEXT,
+                disparity_mitigation TEXT,
+                stakeholder_consult TEXT,
+                stakeholder_consult_other TEXT,
+                appeal_process TEXT,
+                no_appeal_reason TEXT,
+                opt_out TEXT,
+                opt_out_other TEXT,
+                raw_json TEXT,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+CREATE INDEX idx_use_cases_2024_agency ON use_cases_2024(agency_id);
+CREATE TABLE year_comparison (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                dimension     TEXT NOT NULL,
+                bucket        TEXT,
+                agency_id     INTEGER REFERENCES agencies(id),
+                count_2024    INTEGER NOT NULL DEFAULT 0,
+                count_2025    INTEGER NOT NULL DEFAULT 0,
+                delta         INTEGER NOT NULL DEFAULT 0,
+                pct_change    REAL,
+                comparability TEXT NOT NULL,
+                notes         TEXT,
+                computed_at   TEXT DEFAULT (datetime('now'))
+            );
+CREATE INDEX idx_year_comparison_dimension ON year_comparison(dimension);
+CREATE TABLE use_case_year_links (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_at              TEXT NOT NULL,
+                uc_2024_id          INTEGER REFERENCES use_cases_2024(id),
+                uc_2025_id          INTEGER REFERENCES use_cases(id),
+                agency_id           INTEGER REFERENCES agencies(id),
+                agency_abbreviation TEXT,
+                match_method        TEXT,
+                match_score         REAL,
+                lineage_status      TEXT NOT NULL,
+                drift_fields_json   TEXT,
+                llm_reasoning       TEXT,
+                first_seen          TEXT NOT NULL,
+                last_seen           TEXT NOT NULL,
+                resolved_at         TEXT,
+                resolution_note     TEXT
+            );
+CREATE INDEX idx_ucyl_2024 ON use_case_year_links(uc_2024_id);
+CREATE INDEX idx_ucyl_2025 ON use_case_year_links(uc_2025_id);
+CREATE INDEX idx_ucyl_agency ON use_case_year_links(agency_id);
+CREATE INDEX idx_ucyl_status ON use_case_year_links(lineage_status);
+CREATE TABLE agency_ai_policy_documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agency_abbr TEXT NOT NULL,
+                agency_name TEXT NOT NULL,
+                agency_type TEXT NOT NULL,
+                issuing_office TEXT,
+                document_type TEXT NOT NULL,
+                document_title TEXT NOT NULL,
+                publication_year INTEGER NOT NULL,
+                publication_date TEXT,
+                pages INTEGER,
+                issuing_memo TEXT,
+                superseded INTEGER NOT NULL DEFAULT 0,
+                is_public INTEGER NOT NULL DEFAULT 1,
+                url TEXT NOT NULL,
+                local_path TEXT,
+                access_status TEXT NOT NULL,
+                date_accessed TEXT NOT NULL,
+                notes TEXT
+            );
+CREATE INDEX idx_agency_ai_policy_documents_agency_abbr ON agency_ai_policy_documents (agency_abbr);
+CREATE INDEX idx_agency_ai_policy_documents_agency_type ON agency_ai_policy_documents (agency_type);
+CREATE INDEX idx_agency_ai_policy_documents_document_type ON agency_ai_policy_documents (document_type);
+CREATE INDEX idx_agency_ai_policy_documents_publication_year ON agency_ai_policy_documents (publication_year);
+CREATE TABLE agency_ai_policy_compliance (
+                agency_abbr TEXT PRIMARY KEY,
+                agency_name TEXT NOT NULL,
+                agency_type TEXT NOT NULL,
+                searched INTEGER NOT NULL DEFAULT 1,
+                date_searched TEXT NOT NULL,
+                ai_landing_page_url TEXT,
+                ai_strategy_year INTEGER,
+                compliance_plan_year INTEGER,
+                genai_policy_year INTEGER,
+                caio_status TEXT,
+                other_policy_count INTEGER NOT NULL DEFAULT 0,
+                total_documents INTEGER NOT NULL DEFAULT 0,
+                gaps TEXT,
+                notes TEXT
+            );
