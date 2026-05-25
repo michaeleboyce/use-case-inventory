@@ -26,14 +26,14 @@ import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
  */
 export type SectionSource = "omb" | "derived" | "omb-derived" | "mixed";
 
-const SOURCE_CHIP: Record<SectionSource, { label: string; tone: "muted" | "stamp" }> = {
+export const SOURCE_CHIP: Record<SectionSource, { label: string; tone: "muted" | "stamp" }> = {
   omb: { label: "OMB", tone: "muted" },
   derived: { label: "IFP", tone: "stamp" },
   "omb-derived": { label: "OMB → IFP", tone: "stamp" },
   mixed: { label: "OMB + IFP", tone: "stamp" },
 };
 
-const SOURCE_TITLE: Record<SectionSource, string> = {
+export const SOURCE_TITLE: Record<SectionSource, string> = {
   omb: "Filed by the agency in its OMB M-25-21 inventory.",
   derived: "Computed or added by IFP — not in the original OMB filing.",
   "omb-derived":

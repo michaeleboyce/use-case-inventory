@@ -17,6 +17,12 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  MonoChip,
+  SOURCE_CHIP,
+  SOURCE_TITLE,
+  type SectionSource,
+} from "@/components/editorial";
 
 export function MonoLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -26,14 +32,25 @@ export function MonoLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+export function SourceChip({ source }: { source: SectionSource }) {
+  const chip = SOURCE_CHIP[source];
+  return (
+    <MonoChip tone={chip.tone} size="xs" title={SOURCE_TITLE[source]}>
+      {chip.label}
+    </MonoChip>
+  );
+}
+
 export function FilterGroup({
   title,
   children,
   defaultOpen = true,
+  source,
 }: {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  source?: SectionSource;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -44,10 +61,13 @@ export function FilterGroup({
         className="flex items-center justify-between gap-2 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
         aria-expanded={open}
       >
-        {title}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate">{title}</span>
+          {source ? <SourceChip source={source} /> : null}
+        </span>
         <ChevronDown
           className={cn(
-            "size-3 transition-transform",
+            "size-3 shrink-0 transition-transform",
             open ? "rotate-180" : "rotate-0",
           )}
           aria-hidden

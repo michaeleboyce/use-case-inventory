@@ -25,6 +25,7 @@ import {
   CheckRow,
   FilterGroup,
   MonoLabel,
+  SourceChip,
 } from "@/components/ui/filter-primitives";
 import { EntryKindToggle } from "./controls";
 import { labelFor, parseCsv, toggleInCsv } from "./filter-utils";
@@ -244,7 +245,10 @@ export function UseCaseFilters({
           both (4,449). Drill-throughs from product/agency pages arrive with
           entry_kind=all so the page count matches the link's count. */}
       <div className="flex flex-col gap-1.5 pt-4">
-        <MonoLabel>Entry kind</MonoLabel>
+        <div className="flex items-center gap-2">
+          <MonoLabel>Entry kind</MonoLabel>
+          <SourceChip source="omb" />
+        </div>
         <EntryKindToggle
           value={
             currentParams.get("entry_kind") === "consolidated"
@@ -262,7 +266,7 @@ export function UseCaseFilters({
       </div>
 
       {/* Agency Type */}
-      <FilterGroup title="Agency type">
+      <FilterGroup title="Agency type" source="derived">
         {facets.agencyTypes.map((v) => (
           <CheckRow
             key={v}
@@ -274,7 +278,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Agency (searchable) */}
-      <FilterGroup title="Agency" defaultOpen={false}>
+      <FilterGroup title="Agency" defaultOpen={false} source="omb">
         <div className="mb-2">
           <Input
             value={agencyQuery}
@@ -310,7 +314,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Entry type */}
-      <FilterGroup title="Entry type" defaultOpen={false}>
+      <FilterGroup title="Entry type" defaultOpen={false} source="derived">
         {facets.tagEntryTypes.map((v) => (
           <CheckRow
             key={v}
@@ -322,7 +326,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* AI sophistication */}
-      <FilterGroup title="AI sophistication">
+      <FilterGroup title="AI sophistication" source="omb-derived">
         {facets.tagAISophistications.map((v) => (
           <CheckRow
             key={v}
@@ -341,6 +345,7 @@ export function UseCaseFilters({
             : "Product"
         }
         defaultOpen={selectedProductIds.length > 0}
+        source="derived"
       >
         {/* Popular picks — one click to filter by a widely-deployed product. */}
         {topProductPicks.length > 0 && productQuery.trim() === "" && (
@@ -421,7 +426,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Deployment scope */}
-      <FilterGroup title="Deployment scope" defaultOpen={false}>
+      <FilterGroup title="Deployment scope" defaultOpen={false} source="omb-derived">
         {facets.tagDeploymentScopes.map((v) => (
           <CheckRow
             key={v}
@@ -433,7 +438,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Architecture type */}
-      <FilterGroup title="Architecture" defaultOpen={false}>
+      <FilterGroup title="Architecture" defaultOpen={false} source="derived">
         {facets.tagArchitectureTypes.map((v) => (
           <CheckRow
             key={v}
@@ -445,7 +450,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Use type */}
-      <FilterGroup title="Use type" defaultOpen={false}>
+      <FilterGroup title="Use type" defaultOpen={false} source="derived">
         {facets.tagUseTypes.map((v) => (
           <CheckRow
             key={v}
@@ -465,6 +470,7 @@ export function UseCaseFilters({
             : "Topic area"
         }
         defaultOpen={selectedTopicAreas.length > 0}
+        source="omb"
       >
         <div className="max-h-56 overflow-y-auto pr-1">
           {facets.topicAreas.map((v) => (
@@ -489,6 +495,7 @@ export function UseCaseFilters({
             : "Product category"
         }
         defaultOpen={selectedProductCategories.length > 0}
+        source="derived"
       >
         <div className="max-h-56 overflow-y-auto pr-1">
           {facets.productCategories.map((v) => (
@@ -503,7 +510,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* High impact designation */}
-      <FilterGroup title="High-impact" defaultOpen={false}>
+      <FilterGroup title="High-impact" defaultOpen={false} source="omb-derived">
         {facets.tagHighImpactDesignations.map((v) => (
           <CheckRow
             key={v}
@@ -515,7 +522,7 @@ export function UseCaseFilters({
       </FilterGroup>
 
       {/* Boolean toggles */}
-      <FilterGroup title="Attributes" defaultOpen={false}>
+      <FilterGroup title="Attributes" defaultOpen={false} source="mixed">
         <CheckRow
           checked={currentParams.get("coding_tool") === "1"}
           onToggle={() => toggleBool("coding_tool")}
