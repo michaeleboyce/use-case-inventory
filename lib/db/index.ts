@@ -148,6 +148,10 @@ export {
   getPerAgencyLineage,
   getRetiredBreakdown,
   getLineageSamples,
+  getSilentlyDroppedSummary,
+  getSilentlyDroppedByStage,
+  getSilentlyDroppedByAgency,
+  getSilentlyDroppedRows,
 } from "./year-comparison";
 
 // Most query implementations live under ./db/<domain>/ or ./db/<domain>.ts and

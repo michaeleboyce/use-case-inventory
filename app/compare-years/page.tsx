@@ -165,6 +165,7 @@ export default async function CompareYearsPage() {
             kicker="D · The drop"
             value={`~${formatNumber(roundTo(retired.active, 10))}`}
             accent="stamp"
+            href="/compare-years/silently-dropped"
             headline={
               <>
                 Use cases that were{" "}
@@ -172,7 +173,7 @@ export default async function CompareYearsPage() {
                 the 2025 inventory.
               </>
             }
-            subtext={`Of ${formatNumber(retired.total)} use cases present only in 2024, ${formatNumber(retired.alreadyRetired)} had already been filed as Retired. The other ${formatNumber(retired.active)} were in Pre-deployment, Pilot, or Deployed status — and were dropped, not retired. An agency-compliance gap, not a data artifact.`}
+            subtext={`Of ${formatNumber(retired.total)} use cases present only in 2024, ${formatNumber(retired.alreadyRetired)} had already been filed as Retired. The other ${formatNumber(retired.active)} were in Pre-deployment, Pilot, or Deployed status — and were dropped, not retired. An agency-compliance gap, not a data artifact. Open the deep dive →`}
           />
         </div>
         <SourceLegend />

@@ -77,3 +77,5 @@ data/*.bak
 # It is the data payload of the dashboard. Override any broader rule that
 # might drop it.
 !data/federal_ai_inventory_2025.db
+
+.superpowers/

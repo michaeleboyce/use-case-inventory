@@ -75,3 +75,67 @@ export interface LineageSample {
   match_method: string | null;
   llm_reasoning: string | null;
 }
+
+/**
+ * Headline bucketing of the `retired_2024` lineage population, for the
+ * "silently-dropped" page. Computed live from `use_case_year_links` joined
+ * to `use_cases_2024.dev_stage`.
+ */
+export interface SilentlyDroppedSummary {
+  /** All `retired_2024` lineage links — use cases present in 2024 absent in 2025. */
+  total: number;
+  /** Of those, the count whose 2024 dev_stage was already "Retired". */
+  alreadyRetired: number;
+  /** The rest: active in 2024 (Pre-deployment, Pilot, Deployed) and dropped silently. */
+  activeDropped: number;
+  /** Subset of activeDropped attributable to USAID (agency dissolved in 2025). */
+  usaidActiveDropped: number;
+  /** activeDropped minus USAID — the compliance gap among agencies that did file in 2025. */
+  nonUsaidActiveDropped: number;
+}
+
+/**
+ * Recode of the 2024 deployment-stage taxonomy onto a four-bucket scale used
+ * on the silently-dropped page. `already_retired` is excluded from this row
+ * set — the breakdown is over *active* 2024 use cases only.
+ */
+export type SilentlyDroppedStageBucket =
+  | "deployed"
+  | "pilot"
+  | "pre_deployment"
+  | "other";
+
+/** One bucket of the by-stage table on the silently-dropped page. */
+export interface SilentlyDroppedStageRow {
+  bucket: SilentlyDroppedStageBucket;
+  count: number;
+}
+
+/** One agency-level row of the silently-dropped page's per-agency ledger. */
+export interface SilentlyDroppedAgencyRow {
+  agency_id: number | null;
+  abbreviation: string;
+  name: string;
+  /** Use cases this agency filed in 2024. */
+  filed_2024: number;
+  /** Of those, how many silently dropped (active in 2024, absent in 2025). */
+  dropped: number;
+  /** dropped / filed_2024 — null when filed_2024 is 0. */
+  pct_dropped: number | null;
+  /** True for USAID, dissolved in 2025 and shown out-of-band. */
+  is_dissolved: boolean;
+}
+
+/** One row of the full silently-dropped list (and the §IV example pool). */
+export interface SilentlyDroppedRow {
+  uc_2024_id: number;
+  agency_abbreviation: string | null;
+  agency_name: string | null;
+  use_case_name: string | null;
+  dev_stage: string | null;
+  bureau: string | null;
+  purpose_benefits: string | null;
+  outputs: string | null;
+  /** True for USAID rows — caller can render with a marker or filter out. */
+  is_dissolved: boolean;
+}

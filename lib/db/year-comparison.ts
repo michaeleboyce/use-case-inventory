@@ -16,8 +16,49 @@ import type {
   LineageStatusCount,
   PerAgencyLineageRow,
   RetiredBreakdown,
+  SilentlyDroppedAgencyRow,
+  SilentlyDroppedRow,
+  SilentlyDroppedStageBucket,
+  SilentlyDroppedStageRow,
+  SilentlyDroppedSummary,
   YearComparisonRow,
 } from "../types";
+
+/** The 2024-side filter every silently-dropped query uses. */
+const SILENT_DROP_FILTER = `
+  l.lineage_status = 'retired_2024'
+  AND LOWER(COALESCE(u.dev_stage, '')) NOT LIKE '%retired%'
+`;
+
+/**
+ * Recode the 2024 `dev_stage` free text onto the four buckets used by the
+ * silently-dropped page. Anything that contains "retired" is *excluded* by
+ * the calling queries, so this expression never produces a "retired" bucket.
+ *
+ *   deployed         → "Operation and Maintenance", "In production", "In mission"
+ *   pilot            → "Implementation and Assessment"
+ *   pre_deployment   → "Acquisition and/or Development", "Planned",
+ *                      "Initiated", "Ideation", "Research or … Action Complete"
+ *   other            → null / blank / unmapped
+ *
+ * The mapping mirrors `column_maps_2024.DEV_STAGE_RECODE_2024`.
+ */
+const STAGE_BUCKET_2024_SQL = `
+  CASE
+    WHEN u.dev_stage IN ('Operation and Maintenance', 'In production', 'In mission')
+      THEN 'deployed'
+    WHEN u.dev_stage = 'Implementation and Assessment'
+      THEN 'pilot'
+    WHEN u.dev_stage IN (
+        'Acquisition and/or Development', 'Planned', 'Initiated',
+        'Ideation', 'Research or  Administrative Action Complete'
+      )
+      THEN 'pre_deployment'
+    ELSE 'other'
+  END
+`;
+
+const DISSOLVED_AGENCY_ABBR = "USAID";
 
 /**
  * Every row of `year_comparison` — the `total`, per-`agency`, `stage`, and
@@ -120,6 +161,196 @@ export function getRetiredBreakdown(): RetiredBreakdown {
     alreadyRetired: row?.already_retired ?? 0,
     active: row?.active ?? 0,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Silently-dropped — /compare-years/silently-dropped                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Headline counts for the silently-dropped page:
+ *   total            — all `retired_2024` lineage rows
+ *   alreadyRetired   — already filed as Retired in 2024 (legitimately aged off)
+ *   activeDropped    — active in 2024 and absent from 2025 (the gap)
+ *   usaidActiveDropped     — subset attributable to dissolved USAID
+ *   nonUsaidActiveDropped  — the compliance gap among 2025 filers
+ *
+ * Computed live; numbers will drift slightly with re-runs of the lineage
+ * adjudication pass. The page rounds the headline values for display.
+ */
+export function getSilentlyDroppedSummary(): SilentlyDroppedSummary {
+  const row = getDb()
+    .prepare<
+      [],
+      {
+        total: number;
+        already_retired: number;
+        active_dropped: number;
+        usaid_active_dropped: number;
+      }
+    >(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE
+              WHEN LOWER(COALESCE(u.dev_stage, '')) LIKE '%retired%'
+              THEN 1 ELSE 0 END) AS already_retired,
+        SUM(CASE
+              WHEN LOWER(COALESCE(u.dev_stage, '')) NOT LIKE '%retired%'
+              THEN 1 ELSE 0 END) AS active_dropped,
+        SUM(CASE
+              WHEN LOWER(COALESCE(u.dev_stage, '')) NOT LIKE '%retired%'
+                AND l.agency_abbreviation = '${DISSOLVED_AGENCY_ABBR}'
+              THEN 1 ELSE 0 END) AS usaid_active_dropped
+      FROM use_case_year_links l
+      JOIN use_cases_2024 u ON u.id = l.uc_2024_id
+     WHERE l.lineage_status = 'retired_2024'
+    `)
+    .get();
+  const total = row?.total ?? 0;
+  const alreadyRetired = row?.already_retired ?? 0;
+  const activeDropped = row?.active_dropped ?? 0;
+  const usaidActiveDropped = row?.usaid_active_dropped ?? 0;
+  return {
+    total,
+    alreadyRetired,
+    activeDropped,
+    usaidActiveDropped,
+    nonUsaidActiveDropped: activeDropped - usaidActiveDropped,
+  };
+}
+
+/**
+ * Silently-dropped use cases bucketed by their 2024 deployment stage.
+ * Excludes the dissolved-agency rows so the bars represent the compliance
+ * gap, not the agency dissolution. Bucket order is fixed: deployed, pilot,
+ * pre-deployment, other.
+ */
+export function getSilentlyDroppedByStage(): SilentlyDroppedStageRow[] {
+  const rows = getDb()
+    .prepare<[], { bucket: SilentlyDroppedStageBucket; count: number }>(`
+      SELECT ${STAGE_BUCKET_2024_SQL} AS bucket, COUNT(*) AS count
+        FROM use_case_year_links l
+        JOIN use_cases_2024 u ON u.id = l.uc_2024_id
+       WHERE ${SILENT_DROP_FILTER}
+         AND l.agency_abbreviation != '${DISSOLVED_AGENCY_ABBR}'
+       GROUP BY bucket
+    `)
+    .all();
+  const ORDER: SilentlyDroppedStageBucket[] = [
+    "deployed",
+    "pilot",
+    "pre_deployment",
+    "other",
+  ];
+  const byBucket = new Map(rows.map((r) => [r.bucket, r.count]));
+  return ORDER.map((b) => ({ bucket: b, count: byBucket.get(b) ?? 0 }));
+}
+
+/**
+ * Per-agency silently-dropped ledger. `filed_2024` is the agency's total
+ * 2024-filed use-case count, looked up via the `agencies` PK rather than
+ * abbreviation (the 2024 source data uses some legacy codes — e.g. TREAS
+ * for Treasury — that don't match the lineage rows).
+ *
+ * Includes USAID, flagged via `is_dissolved`, so the caller can render it
+ * with a marker or filter it out for the headline ledger.
+ */
+export function getSilentlyDroppedByAgency(): SilentlyDroppedAgencyRow[] {
+  const rows = getDb()
+    .prepare<
+      [],
+      {
+        agency_id: number | null;
+        abbreviation: string;
+        name: string;
+        filed_2024: number;
+        dropped: number;
+      }
+    >(`
+      WITH dropped AS (
+        SELECT l.agency_id, l.agency_abbreviation, COUNT(*) AS dropped
+          FROM use_case_year_links l
+          JOIN use_cases_2024 u ON u.id = l.uc_2024_id
+         WHERE ${SILENT_DROP_FILTER}
+         GROUP BY l.agency_id, l.agency_abbreviation
+      ),
+      filed_2024 AS (
+        SELECT agency_id, COUNT(*) AS filed_2024
+          FROM use_cases_2024
+         GROUP BY agency_id
+      )
+      SELECT d.agency_id                AS agency_id,
+             d.agency_abbreviation      AS abbreviation,
+             COALESCE(a.name, d.agency_abbreviation) AS name,
+             COALESCE(filed_2024.filed_2024, 0) AS filed_2024,
+             d.dropped                  AS dropped
+        FROM dropped d
+        LEFT JOIN agencies a   ON a.id = d.agency_id
+        LEFT JOIN filed_2024   ON filed_2024.agency_id = d.agency_id
+       ORDER BY d.dropped DESC, d.agency_abbreviation ASC
+    `)
+    .all();
+  return rows.map((r) => ({
+    agency_id: r.agency_id,
+    abbreviation: r.abbreviation,
+    name: r.name,
+    filed_2024: r.filed_2024,
+    dropped: r.dropped,
+    pct_dropped:
+      r.filed_2024 > 0 ? r.dropped / r.filed_2024 : null,
+    is_dissolved: r.abbreviation === DISSOLVED_AGENCY_ABBR,
+  }));
+}
+
+/**
+ * The full silently-dropped roster. By default excludes the dissolved-agency
+ * rows so the table represents the compliance gap; pass `includeDissolved`
+ * to fold USAID back in (flagged via `is_dissolved`).
+ *
+ * `purpose_benefits` and `outputs` are the original 2024 narrative columns
+ * from `use_cases_2024`. They're returned verbatim — the caller can truncate
+ * for the table view and render full text for §IV case studies.
+ */
+export function getSilentlyDroppedRows(opts?: {
+  includeDissolved?: boolean;
+}): SilentlyDroppedRow[] {
+  const includeDissolved = opts?.includeDissolved ?? false;
+  const where = includeDissolved
+    ? SILENT_DROP_FILTER
+    : `${SILENT_DROP_FILTER} AND l.agency_abbreviation != '${DISSOLVED_AGENCY_ABBR}'`;
+  const rows = getDb()
+    .prepare<
+      [],
+      {
+        uc_2024_id: number;
+        agency_abbreviation: string | null;
+        agency_name: string | null;
+        use_case_name: string | null;
+        dev_stage: string | null;
+        bureau: string | null;
+        purpose_benefits: string | null;
+        outputs: string | null;
+      }
+    >(`
+      SELECT u.id                          AS uc_2024_id,
+             l.agency_abbreviation         AS agency_abbreviation,
+             COALESCE(a.name, u.agency)    AS agency_name,
+             u.use_case_name               AS use_case_name,
+             u.dev_stage                   AS dev_stage,
+             u.bureau                      AS bureau,
+             u.purpose_benefits            AS purpose_benefits,
+             u.outputs                     AS outputs
+        FROM use_case_year_links l
+        JOIN use_cases_2024 u ON u.id = l.uc_2024_id
+        LEFT JOIN agencies a  ON a.id = l.agency_id
+       WHERE ${where}
+       ORDER BY l.agency_abbreviation ASC, u.use_case_name COLLATE NOCASE ASC
+    `)
+    .all();
+  return rows.map((r) => ({
+    ...r,
+    is_dissolved: r.agency_abbreviation === DISSOLVED_AGENCY_ABBR,
+  }));
 }
 
 /**
