@@ -39,6 +39,7 @@ import {
 } from "@/lib/formatting";
 
 import { AgencyHeader } from "@/components/agency/agency-header";
+import { AgencyPolicyDocuments } from "@/components/agency/agency-policy-documents";
 import { CapabilityFlags } from "@/components/capability-flags";
 import { ProductGrid } from "@/components/product/product-grid";
 import { BureauBreakdown } from "@/components/bureau-breakdown";
@@ -366,6 +367,9 @@ function TopLevelOrgPage({
           <BureauBreakdown rows={bureaus} agencyId={agency.id} />
         </Section>
       ) : null}
+
+      {/* Policy & strategy documents subsection */}
+      <AgencyPolicyDocuments agencyAbbr={agency.abbreviation} />
 
       {/* § V · Use cases */}
       <Section
