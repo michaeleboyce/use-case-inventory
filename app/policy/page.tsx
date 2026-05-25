@@ -4,6 +4,7 @@ import { buildPolicyViewModel } from "./_view-model";
 import { ComplianceScorecard } from "./_sections/compliance-scorecard";
 import { PagesByAgencyChart } from "./_sections/pages-by-agency-chart";
 import { DocumentDirectory } from "./_sections/document-directory";
+import { GoverningDocsBlock } from "./_sections/governing-docs-block";
 
 export const metadata = { title: "Federal AI Policy" };
 
@@ -69,6 +70,8 @@ export default async function PolicyPage() {
         </h2>
         <DocumentDirectory documents={vm.documents} />
       </section>
+
+      <GoverningDocsBlock governing={vm.governing} />
     </main>
   );
 }
