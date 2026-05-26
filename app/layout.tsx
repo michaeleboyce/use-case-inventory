@@ -6,10 +6,29 @@ import { CommandPalette } from "@/components/command-palette";
 import { Dateline } from "@/components/dateline";
 import { getCommandPaletteIndex, getLastUpdatedDate } from "@/lib/db";
 
+const SITE_URL = "https://use-case-inventory.vercel.app";
+const SITE_DESCRIPTION =
+  "Dashboard for the 2025 Federal AI Use Case Inventory — agencies, use cases, products, and templates mandated by OMB M-25-21.";
+
 export const metadata: Metadata = {
-  title: "Federal AI Use Case Inventory 2025",
-  description:
-    "Dashboard for the 2025 Federal AI Use Case Inventory — agencies, use cases, products, and templates mandated by OMB M-25-21.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Federal AI Use Case Inventory 2025",
+    template: "%s · Federal AI Inventory",
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Federal AI Use Case Inventory 2025",
+    title: "Federal AI Use Case Inventory 2025",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Federal AI Use Case Inventory 2025",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
