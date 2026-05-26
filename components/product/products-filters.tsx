@@ -18,6 +18,19 @@ import type { ProductWithCounts } from "@/lib/types";
 
 type SortKey = "agency_count" | "use_case_count" | "name";
 
+// Min-entries threshold options. The catalog includes ~10 products with zero
+// use-case rows (seeded but never linked) and a long tail with exactly one
+// reporting entry — both produce noisy / un-informative cards. The default
+// (>= 2 entries) drops both. "All" surfaces the full catalog for audit.
+const MIN_ENTRIES_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: "All" },
+  { value: 1, label: "1+ entry" },
+  { value: 2, label: "2+ entries (default)" },
+  { value: 5, label: "5+ entries" },
+  { value: 10, label: "10+ entries" },
+];
+const DEFAULT_MIN_ENTRIES = 2;
+
 type Props = {
   products: ProductWithCounts[];
   /** id → canonical_name, used so cards can show "Part of: <parent>". */
@@ -64,6 +77,7 @@ export function ProductsFilters({ products, parentNames }: Props) {
   const [frontierOnly, setFrontierOnly] = useState(false);
   const [genaiOnly, setGenaiOnly] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("agency_count");
+  const [minEntries, setMinEntries] = useState<number>(DEFAULT_MIN_ENTRIES);
 
   // Keep the URL in sync with the productType filter so users can copy/share
   // the URL or hit back/forward. Other filters are intentionally NOT URL-
@@ -105,6 +119,7 @@ export function ProductsFilters({ products, parentNames }: Props) {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const rows = products.filter((p) => {
+      if (p.use_case_count < minEntries) return false;
       if (q && !p.canonical_name.toLowerCase().includes(q)) return false;
       if (vendor !== ALL && p.vendor !== vendor) return false;
       if (productType === UNCLASSIFIED) {
@@ -124,7 +139,16 @@ export function ProductsFilters({ products, parentNames }: Props) {
       return b.agency_count - a.agency_count;
     });
     return rows;
-  }, [products, search, vendor, productType, frontierOnly, genaiOnly, sortKey]);
+  }, [
+    products,
+    search,
+    vendor,
+    productType,
+    frontierOnly,
+    genaiOnly,
+    sortKey,
+    minEntries,
+  ]);
 
   const hasActiveFilters =
     search.trim() !== "" ||
@@ -132,7 +156,8 @@ export function ProductsFilters({ products, parentNames }: Props) {
     productType !== ALL ||
     frontierOnly ||
     genaiOnly ||
-    sortKey !== "agency_count";
+    sortKey !== "agency_count" ||
+    minEntries !== DEFAULT_MIN_ENTRIES;
 
   const resetFilters = () => {
     setSearch("");
@@ -141,6 +166,7 @@ export function ProductsFilters({ products, parentNames }: Props) {
     setFrontierOnly(false);
     setGenaiOnly(false);
     setSortKey("agency_count");
+    setMinEntries(DEFAULT_MIN_ENTRIES);
   };
 
   return (
@@ -200,6 +226,24 @@ export function ProductsFilters({ products, parentNames }: Props) {
               <option value="agency_count">Agencies, desc</option>
               <option value="use_case_count">Entries, desc</option>
               <option value="name">Name, A-Z</option>
+            </select>
+          </FilterField>
+
+          <FilterField
+            label="Min entries"
+            hint="Hide tail"
+            title="Hide products with fewer than N reporting entries. Defaults to 2+ to drop the long tail of seed-only products and singletons that often reflect filer typos or near-duplicates. Set to All to see the full catalog."
+          >
+            <select
+              value={String(minEntries)}
+              onChange={(e) => setMinEntries(Number(e.target.value))}
+              className={fieldClass + " w-full"}
+            >
+              {MIN_ENTRIES_OPTIONS.map((o) => (
+                <option key={o.value} value={String(o.value)}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </FilterField>
         </div>

@@ -9,19 +9,11 @@ import { getDb } from "./shared/init";
 import type { Product, ProductDetail, ProductWithCounts } from "../types";
 
 /**
- * Catalog of products with rolled-up use-case + agency counts.
- *
- * By default hides products that have zero rows in `entry_product_edges` —
- * those are catalog seeds whose intended use-case links never landed (see
- * the May 2026 linkage-pass repair work). Pass `{ includeOrphans: true }`
- * to surface them, e.g. for the orphan-audit drill-through.
+ * Catalog of products with rolled-up use-case + agency counts. Returns
+ * every product (including the catalog tail with zero links); the client
+ * filters in /products via a "Min entries" select that defaults to ≥ 2.
  */
-export function getAllProducts(
-  opts: { includeOrphans?: boolean } = {},
-): ProductWithCounts[] {
-  const where = opts.includeOrphans
-    ? ""
-    : "WHERE COALESCE(uc_counts.use_case_count, 0) > 0";
+export function getAllProducts(): ProductWithCounts[] {
   const stmt = getDb().prepare<[], ProductWithCounts>(`
     SELECT p.*,
            COALESCE(uc_counts.use_case_count, 0) AS use_case_count,
@@ -34,25 +26,9 @@ export function getAllProducts(
           FROM entry_product_edges
          GROUP BY product_id
       ) uc_counts ON uc_counts.product_id = p.id
-     ${where}
      ORDER BY use_case_count DESC, p.canonical_name COLLATE NOCASE ASC
   `);
   return stmt.all();
-}
-
-/** Count of products with zero rows in `entry_product_edges` — i.e., the
- *  unlinked-orphan tail hidden from `getAllProducts()` by default. Used by
- *  the /products page header chip. */
-export function getOrphanProductCount(): number {
-  const row = getDb()
-    .prepare<[], { n: number }>(
-      `SELECT COUNT(*) AS n FROM products p
-        WHERE NOT EXISTS (
-          SELECT 1 FROM entry_product_edges e WHERE e.product_id = p.id
-        )`,
-    )
-    .get();
-  return row?.n ?? 0;
 }
 
 /** Product detail with aliases + list of agencies that have deployed it. */

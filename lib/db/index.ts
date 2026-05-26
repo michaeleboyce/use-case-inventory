@@ -53,7 +53,6 @@ export {
 } from "./agency-ai-access";
 export {
   getAllProducts,
-  getOrphanProductCount,
   getProductById,
   getTopProducts,
   getProductsForAgency,
