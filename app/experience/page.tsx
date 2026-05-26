@@ -21,6 +21,8 @@ import { GenAiTimelineChart } from "@/components/experience/genai-timeline-chart
 import { AgencyToolMatrix } from "@/components/experience/agency-tool-matrix";
 import { SeatsByAgencyChart } from "@/components/experience/seats-by-agency-chart";
 import { SeatsHeadcountChart } from "@/components/experience/seats-headcount-chart";
+import { SeatsAgencyDetails } from "@/components/experience/seats-agency-details";
+import { PageNav } from "@/components/experience/page-nav";
 import { buildExperienceViewModel } from "./_view-model";
 
 export const metadata: Metadata = {
@@ -134,7 +136,11 @@ export default async function ExperiencePage() {
         </p>
       </aside>
 
+      {/* In-page section navigation. Sticky just below the masthead. */}
+      <PageNav />
+
       {/* § 01 — Headline counts and disagreement */}
+      <div id="section-01" className="scroll-mt-24" />
       <Section
         number="01"
         title="How much Generative AI?"
@@ -239,6 +245,7 @@ export default async function ExperiencePage() {
       </Section>
 
       {/* § 02 — Timeline */}
+      <div id="section-02" className="scroll-mt-24" />
       <Section
         number="02"
         title="When did the wave land?"
@@ -249,6 +256,7 @@ export default async function ExperiencePage() {
       </Section>
 
       {/* § 03 — Tool matrix */}
+      <div id="section-03" className="scroll-mt-24" />
       <Section
         number="03"
         title="Who has what?"
@@ -259,6 +267,7 @@ export default async function ExperiencePage() {
       </Section>
 
       {/* § 04 — Seat extrapolation: two parallel estimates */}
+      <div id="section-04" className="scroll-mt-24" />
       <Section
         number="04"
         title="Estimated seats, top agencies"
@@ -289,9 +298,12 @@ export default async function ExperiencePage() {
           covered employee has 1–2 tool entitlements; the upper bound implies
           considerable overlap (Copilot + ChatGPT + Gemini, etc.).
         </p>
+
+        <SeatsAgencyDetails rows={matrix} />
       </Section>
 
       {/* § 05 — What the inventory can't tell you */}
+      <div id="section-05" className="scroll-mt-24" />
       <Section
         number="05"
         title="What the inventory still won't tell you"
