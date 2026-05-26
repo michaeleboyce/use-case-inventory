@@ -95,11 +95,31 @@ export interface SeatExtrapolationRow {
 }
 
 export interface MatrixCellEntry {
-  consolidated_use_case_id: number;
+  /**
+   * Which OMB form produced this entry. `consolidated` rows come from the
+   * consolidated Appendix B inventory (license bands available);
+   * `use_case` rows come from each agency's individual M-25-21 filing.
+   */
+  source: "consolidated" | "use_case";
+  /**
+   * `use_case` rows are marked subsumed when the same (agency, product)
+   * already has a consolidated entry in this cell — the consolidated row
+   * is the authoritative artifact in that case; the use_case row is shown
+   * for completeness, ranked below.
+   */
+  subsumed: boolean;
+  /** id of the underlying row in either consolidated_use_cases or use_cases */
+  row_id: number;
   slug: string | null;
-  ai_use_case: string;
+  /** ai_use_case (consolidated) or use_case_name (individual filing) */
+  title: string;
+  /** commercial_product (consolidated) or vendor/tool_product_name (use_case) */
   commercial_product: string;
-  band_label: string;
+  /**
+   * License band label for consolidated rows. NULL for use_case rows since
+   * individual filings don't carry a band; the UI renders a sentinel.
+   */
+  band_label: string | null;
 }
 
 export interface MatrixCell {
@@ -107,9 +127,10 @@ export interface MatrixCell {
   highest_band_label: string;
   rows: number;
   /**
-   * Underlying consolidated_use_cases rows that contributed to this cell,
-   * ordered largest band first then shortest description first. Up to 8 to
-   * keep the hover panel scannable.
+   * Underlying entries (consolidated + use_case mixed) that contributed
+   * to this cell, ordered largest band first (consolidated first within
+   * a band tier), then unsubsumed use_case rows, then subsumed use_case
+   * rows last. Up to 8 to keep the hover panel scannable.
    */
   entries: MatrixCellEntry[];
 }
@@ -119,7 +140,32 @@ export interface AgencyToolMatrixRow {
   abbreviation: string;
   name: string;
   cells: Partial<Record<MatrixProductKey, MatrixCell>>;
-  estimated_seats: number;
+  /**
+   * Estimate A — "Filed bands". Sum of license-band midpoints across cells
+   * with at least one consolidated_use_cases entry. The estimate that has
+   * shipped since the page launched; never replaced.
+   */
+  estimated_seats_filed: number;
+  /**
+   * Estimate B — "Headcount-derived". For each cell, multiplies the
+   * agency's AI-eligible workforce by the share-of-eligible for that tool
+   * (from agency_ai_access_evidence + the coverage-tier priors). Null when
+   * agency_workforce_profile has no row for this agency yet.
+   */
+  estimated_seats_headcount: number | null;
+  /**
+   * One-line provenance summary for the headcount estimate's inputs.
+   * E.g., "470,000 staff × 0.30 eligible × Σ tool shares".
+   */
+  headcount_breakdown: string | null;
+}
+
+/** Empirical priors from Wave 0 keyed by coverage_assessment tier. */
+export interface CoveragePriors {
+  /** Median observed share-of-eligible per tier; null when no observations. */
+  defaults: Partial<Record<string, number>>;
+  /** Total number of (agency, tool) extractions Wave-0 made. */
+  extraction_count: number;
 }
 
 export interface YearCompareGenAi {

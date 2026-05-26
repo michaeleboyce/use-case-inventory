@@ -13,22 +13,21 @@ import { cn } from "@/lib/utils";
 /**
  * Per-agency LLM-tool availability matrix.
  *
- * Rows: agencies that reported at least one license band on a row matching
- *       one of the matrix products.
- * Cols: 7 LLM product families (MS Copilot, GitHub Copilot, ChatGPT, Claude,
- *       Gemini, Amazon Q, Agency-built).
- * Cells: the largest license band an agency has on a row mentioning that
- *        product family. Hovering a cell exposes the underlying entries
- *        (up to 8); clicking an entry navigates to its use-case detail.
+ * Two seat estimates per row, neither replacing the other:
+ *   - "Filed bands"      — sum of license-band midpoints from
+ *                          `consolidated_use_cases.estimated_licenses_users`.
+ *   - "Headcount-derived" — workforce × AI-eligible share × Σ per-tool
+ *                          share-of-eligible. NULL until the multi-agent
+ *                          backfill populates `agency_workforce_profile`
+ *                          for that agency.
  *
- * Source: `consolidated_use_cases.estimated_licenses_users`. The bands are
- * agency self-reported and bucketed coarsely on purpose; treat the cells as
- * "at-least-this-many seats" rather than precise counts.
+ * Each cell exposes the underlying entries on hover. Entries are tagged
+ * `Appendix B` (consolidated) or `Filing` (individual use_case row).
  */
 export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
   const sorted = [...rows]
     .filter((r) => Object.keys(r.cells).length > 0)
-    .sort((a, b) => b.estimated_seats - a.estimated_seats);
+    .sort((a, b) => b.estimated_seats_filed - a.estimated_seats_filed);
 
   if (sorted.length === 0) {
     return (
@@ -54,8 +53,17 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
                 {b.label}
               </th>
             ))}
-            <th className="px-3 py-2 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Est. seats
+            <th
+              className="px-3 py-2 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
+              title="Sum of license-band midpoints from the consolidated inventory."
+            >
+              Filed bands
+            </th>
+            <th
+              className="px-3 py-2 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
+              title="Workforce × AI-eligible share × Σ per-tool share-of-eligible. NULL until backfill data lands for that agency."
+            >
+              Headcount-derived
             </th>
           </tr>
         </thead>
@@ -82,8 +90,16 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
                 );
               })}
               <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
-                {row.estimated_seats > 0
-                  ? row.estimated_seats.toLocaleString()
+                {row.estimated_seats_filed > 0
+                  ? row.estimated_seats_filed.toLocaleString()
+                  : "—"}
+              </td>
+              <td
+                className="px-3 py-2 text-right font-mono text-xs tabular-nums"
+                title={row.headcount_breakdown ?? "Workforce data not yet researched for this agency."}
+              >
+                {row.estimated_seats_headcount != null
+                  ? row.estimated_seats_headcount.toLocaleString()
                   : "—"}
               </td>
             </tr>
@@ -91,10 +107,14 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
         </tbody>
       </table>
       <p className="mt-3 text-xs text-muted-foreground">
-        Cells show the largest license band the agency has filed on any
-        consolidated-inventory row mentioning that product family. Hover any
-        cell to see the underlying entries; click an entry to open the
-        use-case detail.
+        <strong>Filed bands</strong> = sum of OMB-filed license-band midpoints
+        (the seat count agencies self-report).{" "}
+        <strong>Headcount-derived</strong> = total workforce × IFP-researched
+        AI-eligible share × Σ per-tool share-of-eligible. Cells show the
+        largest license band on file; hover any cell for the underlying
+        entries. <span className="font-mono">Appendix B</span> entries come
+        from the consolidated form; <span className="font-mono">Filing</span>{" "}
+        entries come from an individual M-25-21 use-case filing.
       </p>
     </div>
   );
@@ -109,17 +129,14 @@ const BAND_TONE: Record<string, string> = {
   "50,000+": "bg-rose-500 text-white",
 };
 
-/**
- * A pill in a cell, plus a CSS-only popover that opens on hover/focus
- * listing the underlying consolidated_use_cases rows. Each row in the
- * popover is a link to /use-cases/[slug].
- *
- * Uses `group/cell` so the popover only opens for this cell's pill, not
- * a parent or sibling.
- */
 function CellHover({ cell }: { cell: MatrixCell }) {
-  const tone =
-    BAND_TONE[cell.highest_band_label] ?? "bg-stone-100 text-stone-700";
+  const hasBand = cell.highest_band_upper > 0;
+  const pillLabel = hasBand
+    ? cell.highest_band_label
+    : `${cell.entries.length} filing${cell.entries.length === 1 ? "" : "s"}`;
+  const tone = hasBand
+    ? BAND_TONE[cell.highest_band_label] ?? "bg-stone-100 text-stone-700"
+    : "bg-stone-50 text-stone-600 border border-stone-200";
   const extra = Math.max(0, cell.rows - cell.entries.length);
 
   return (
@@ -130,22 +147,25 @@ function CellHover({ cell }: { cell: MatrixCell }) {
           "inline-block cursor-pointer rounded px-1.5 py-0.5 font-mono text-[10px] tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-[var(--stamp)]",
           tone,
         )}
-        title={`${cell.rows} row${cell.rows === 1 ? "" : "s"} filed; largest band ${cell.highest_band_label}`}
+        title={
+          hasBand
+            ? `${cell.rows} row${cell.rows === 1 ? "" : "s"} filed; largest band ${cell.highest_band_label}`
+            : `${cell.rows} individual filing${cell.rows === 1 ? "" : "s"}; no license band reported`
+        }
       >
-        {cell.highest_band_label}
+        {pillLabel}
       </button>
-      {/* Popover. CSS-only: hover/focus on the wrapping span exposes it. */}
       <span
         role="dialog"
         aria-label="Underlying use cases"
-        className="invisible absolute left-1/2 top-full z-50 mt-1 w-[22rem] -translate-x-1/2 border border-border bg-background p-3 text-left opacity-0 shadow-lg transition-opacity duration-100 group-hover/cell:visible group-hover/cell:opacity-100 group-focus-within/cell:visible group-focus-within/cell:opacity-100"
+        className="invisible absolute left-1/2 top-full z-50 mt-1 w-[24rem] -translate-x-1/2 border border-border bg-background p-3 text-left opacity-0 shadow-lg transition-opacity duration-100 group-hover/cell:visible group-hover/cell:opacity-100 group-focus-within/cell:visible group-focus-within/cell:opacity-100"
       >
         <span className="block font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           Underlying entries · top {cell.entries.length} of {cell.rows}
         </span>
         <span className="mt-2 block divide-y divide-border/50">
           {cell.entries.map((e) => (
-            <EntryRow key={e.consolidated_use_case_id} entry={e} />
+            <EntryRow key={`${e.source}-${e.row_id}`} entry={e} />
           ))}
         </span>
         {extra > 0 ? (
@@ -159,17 +179,38 @@ function CellHover({ cell }: { cell: MatrixCell }) {
 }
 
 function EntryRow({ entry }: { entry: MatrixCellEntry }) {
+  const sourceChipTone =
+    entry.source === "consolidated"
+      ? "bg-stone-100 text-stone-700"
+      : "bg-amber-50 text-amber-800 border border-amber-200";
+  const sourceLabel = entry.source === "consolidated" ? "Appendix B" : "Filing";
+
   const content = (
     <>
-      <span className="block text-xs font-medium leading-snug text-foreground">
-        {truncate(entry.ai_use_case, 110)}
+      <span className="flex items-baseline gap-2">
+        <span
+          className={cn(
+            "inline-block rounded px-1 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em]",
+            sourceChipTone,
+          )}
+        >
+          {sourceLabel}
+        </span>
+        <span
+          className={cn(
+            "block flex-1 text-xs font-medium leading-snug",
+            entry.subsumed ? "text-muted-foreground" : "text-foreground",
+          )}
+        >
+          {truncate(entry.title, 110)}
+        </span>
       </span>
-      <span className="mt-0.5 flex items-baseline justify-between gap-2">
+      <span className="mt-0.5 flex items-baseline justify-between gap-2 pl-[3.5rem]">
         <span className="block truncate text-[11px] text-muted-foreground">
           {entry.commercial_product || "—"}
         </span>
         <span className="block whitespace-nowrap font-mono text-[10px] text-muted-foreground">
-          {entry.band_label}
+          {entry.band_label ?? "no band"}
         </span>
       </span>
     </>

@@ -20,6 +20,7 @@ import { GenAiByStageChart } from "@/components/experience/genai-by-stage-chart"
 import { GenAiTimelineChart } from "@/components/experience/genai-timeline-chart";
 import { AgencyToolMatrix } from "@/components/experience/agency-tool-matrix";
 import { SeatsByAgencyChart } from "@/components/experience/seats-by-agency-chart";
+import { SeatsHeadcountChart } from "@/components/experience/seats-headcount-chart";
 import { buildExperienceViewModel } from "./_view-model";
 
 export const metadata: Metadata = {
@@ -101,19 +102,35 @@ export default async function ExperiencePage() {
       {/* Methodology aside */}
       <aside className="mt-8 max-w-3xl border-l-4 border-[var(--stamp)] bg-stone-50 px-5 py-4">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          How to read &ldquo;Generative AI&rdquo; on this page
+          How to read this page
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">
-          OMB&apos;s M-25-21 inventory asks agencies to self-classify each use
-          case&apos;s AI type. Agencies disagree wildly about what counts as
-          Generative AI — a chatbot routing call-center traffic shows up
-          tagged as &ldquo;NLP,&rdquo; while a classical-ML risk-scoring
-          model gets filed as &ldquo;GenAI.&rdquo; The IFP team independently
-          re-tagged every 2025 use case from its narrative columns. Where the
-          two disagree, we surface both. Every chart on this page accepts a{" "}
-          <strong>definition toggle</strong> letting you flip between OMB&apos;s
-          filed classification and IFP&apos;s three derived definitions (any
-          GenAI, broader LLM-access, enterprise-wide LLM).
+          <strong>&ldquo;Generative AI&rdquo;</strong> is contested. OMB&apos;s
+          M-25-21 inventory asks agencies to self-classify each use case&apos;s
+          AI type, but agencies disagree wildly — a chatbot routing call-center
+          traffic shows up tagged as &ldquo;NLP,&rdquo; a classical-ML
+          risk-scoring model gets filed as &ldquo;GenAI.&rdquo; IFP
+          independently re-tagged every 2025 use case from its narrative
+          columns. Every chart accepts a <strong>definition toggle</strong>{" "}
+          letting you flip between OMB&apos;s filed classification and IFP&apos;s
+          three derived definitions.
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-foreground">
+          <strong>&ldquo;Estimated seats&rdquo;</strong> comes in two
+          flavors, displayed side-by-side. <strong>Filed bands</strong> sums
+          the license-band midpoints agencies self-reported in the
+          consolidated inventory. <strong>Headcount-derived</strong>{" "}
+          multiplies each agency&apos;s workforce by an IFP-researched
+          AI-eligible share (excluding e.g. VHA clinical staff, USPS letter
+          carriers, TSA screeners) and the share-of-eligible per tool from
+          the{" "}
+          <Link
+            href="/readiness/access"
+            className="underline-offset-2 hover:underline"
+          >
+            AI Access &amp; Scale
+          </Link>{" "}
+          evidence. Neither replaces the other.
         </p>
       </aside>
 
@@ -241,14 +258,27 @@ export default async function ExperiencePage() {
         <AgencyToolMatrix rows={matrix} />
       </Section>
 
-      {/* § 04 — Seat extrapolation */}
+      {/* § 04 — Seat extrapolation: two parallel estimates */}
       <Section
         number="04"
         title="Estimated seats, top agencies"
         source="omb-derived"
-        lede="Sum of license-band midpoints from the consolidated use cases. A seat is one tool entitlement; an employee with multiple tools is counted multiple times."
+        lede="Two estimates, neither replacing the other. Filed bands come from the consolidated inventory's self-reported license bands. Headcount-derived multiplies each agency's workforce by an IFP-researched eligible share and the share-of-eligible per tool."
       >
-        <SeatsByAgencyChart rows={seats} />
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+          <div>
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Filed bands · OMB-self-reported
+            </p>
+            <SeatsByAgencyChart rows={seats} />
+          </div>
+          <div>
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
+              Headcount-derived · IFP-researched
+            </p>
+            <SeatsHeadcountChart rows={matrix} />
+          </div>
+        </div>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           Across all {seats.length} agencies with at least one license band on
           file, the midpoint sum is{" "}
