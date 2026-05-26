@@ -8,6 +8,7 @@ import {
   getFedrampLinksForInventoryProduct,
   getProductById,
   getProductsByVendor,
+  getUseCasesForCoverageAgencyProduct,
   getUseCasesForProduct,
 } from "@/lib/db";
 import { ProductCard } from "@/components/product/product-card";
@@ -16,12 +17,9 @@ import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial
 import { Badge } from "@/components/ui/badge";
 import { FedrampCoverageBadge } from "@/components/fedramp/coverage-badge";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
-import {
-  agencyUseCasesUrl,
-  buildUseCasesUrl,
-  productUseCasesUrl,
-} from "@/lib/urls";
+import { buildUseCasesUrl, productUseCasesUrl } from "@/lib/urls";
 import { StatCell } from "./_sections/stat-cell";
+import { AgenciesRunnersList } from "./_sections/agencies-runners-list";
 
 type ProductPageProps = { params: Promise<{ id: string }> };
 
@@ -58,6 +56,16 @@ export default async function ProductDetailPage(props: ProductPageProps) {
   const related = product.vendor
     ? getProductsByVendor(product.vendor, product.id).slice(0, 8)
     : [];
+
+  const agenciesWithUseCases = product.agencies.map((a) => ({
+    id: a.id,
+    abbreviation: a.abbreviation,
+    name: a.name,
+    count: a.count,
+    useCases: getUseCasesForCoverageAgencyProduct(a.id, product.id, {
+      limit: 10,
+    }),
+  }));
 
   const fedrampLinks = getFedrampLinksForInventoryProduct(product.id);
   // Batched lookup avoids the N+1 (one query for all linked FedRAMP products
@@ -254,36 +262,10 @@ export default async function ProductDetailPage(props: ProductPageProps) {
             — No agencies reported this product —
           </p>
         ) : (
-          <ul className="divide-y divide-border border-y-2 border-foreground">
-            {product.agencies.map((a, i) => (
-              <li
-                key={a.id}
-                className="group grid grid-cols-[2.25rem_4.5rem_1fr_auto] items-baseline gap-x-3 py-3 md:grid-cols-[2.75rem_5rem_1fr_auto] md:gap-x-5"
-              >
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <Link
-                  href={`/agencies/${a.abbreviation}`}
-                  className="font-mono text-sm font-semibold tracking-[0.04em] text-foreground hover:text-[var(--stamp)]"
-                >
-                  {a.abbreviation}
-                </Link>
-                <Link
-                  href={`/agencies/${a.abbreviation}`}
-                  className="truncate font-display text-[1.05rem] italic text-foreground transition-[letter-spacing] group-hover:tracking-[-0.01em]"
-                >
-                  {a.name}
-                </Link>
-                <Link
-                  href={agencyUseCasesUrl(a.id, { productIds: [product.id] })}
-                  className="font-mono text-[11px] uppercase tracking-[0.1em] tabular-nums text-muted-foreground transition-colors hover:text-[var(--stamp)]"
-                >
-                  {formatNumber(a.count)} entries
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <AgenciesRunnersList
+            productId={product.id}
+            agencies={agenciesWithUseCases}
+          />
         )}
       </Section>
 

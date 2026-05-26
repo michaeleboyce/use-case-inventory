@@ -513,19 +513,21 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
               return (
               <li key={p.id} className="py-4 first:pt-4">
                 <div className="flex items-start justify-between gap-3">
-                  <Link
-                    href={`/products/${p.id}`}
-                    className="group flex-1 hover:text-[var(--stamp)]"
-                  >
-                    <p className="font-display italic text-[1.4rem] leading-tight tracking-[-0.01em] text-foreground group-hover:text-[var(--stamp)]">
-                      {p.canonical_name}
-                    </p>
-                    {p.vendor && (
-                      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {p.vendor}
-                        {p.confidence ? ` · ${p.confidence} evidence` : ""}
+                  <div className="flex-1">
+                    <Link
+                      href={`/products/${p.id}`}
+                      className="group block hover:text-[var(--stamp)]"
+                    >
+                      <p className="font-display italic text-[1.4rem] leading-tight tracking-[-0.01em] text-foreground group-hover:text-[var(--stamp)]">
+                        {p.canonical_name}
                       </p>
-                    )}
+                      {p.vendor && (
+                        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                          {p.vendor}
+                          {p.confidence ? ` · ${p.confidence} evidence` : ""}
+                        </p>
+                      )}
+                    </Link>
                     {showCategory && (
                       <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                         Category ·{" "}
@@ -539,11 +541,14 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
                       </p>
                     )}
                     {p.description && (
-                      <p className="mt-2 line-clamp-3 max-w-[62ch] text-[13px] leading-snug text-muted-foreground">
+                      <Link
+                        href={`/products/${p.id}`}
+                        className="mt-2 block line-clamp-3 max-w-[62ch] text-[13px] leading-snug text-muted-foreground hover:text-[var(--stamp)]"
+                      >
                         {p.description}
-                      </p>
+                      </Link>
                     )}
-                  </Link>
+                  </div>
                   <ExternalLink
                     className="size-4 shrink-0 text-muted-foreground"
                     aria-hidden
