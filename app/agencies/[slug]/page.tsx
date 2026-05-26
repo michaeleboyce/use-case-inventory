@@ -32,7 +32,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   formatNumber,
   formatPercent,
-  formatYoY,
   formatDate,
   agencyTypeLabel,
   maturityTierLabel,
@@ -50,6 +49,7 @@ import {
 import { DonutChart } from "@/components/charts/donut-chart";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
 import { MetricTile } from "@/components/metric-tile";
+import { UseCaseDrillDownLedger } from "./_sections/use-case-drilldown-ledger";
 
 import {
   Section,
@@ -182,44 +182,36 @@ function TopLevelOrgPage({
         </div>
       ) : null}
 
-      {/* Ledger row */}
-      <section className="ink-in mt-10 grid grid-cols-2 gap-4 md:mt-14 md:grid-cols-4 lg:grid-cols-7">
-        <MetricTile
-          label="Individual use cases"
-          value={individual.length}
-          href={agencyUseCasesUrl(agency.id)}
-        />
-        <MetricTile
-          label="Consolidated entries"
-          value={consolidated.length}
-          href={agencyUseCasesUrl(agency.id)}
-        />
-        <MetricTile
-          label="Distinct products"
-          value={maturity?.distinct_products_deployed ?? 0}
-          href={agencyUseCasesUrl(agency.id)}
-        />
-        <MetricTile
-          label="General LLM"
-          value={maturity?.general_llm_count ?? 0}
-          href={agencyUseCasesUrl(agency.id, { isGeneralLLMAccess: true })}
-        />
-        <MetricTile
-          label="Coding tools"
-          value={maturity?.coding_tool_count ?? 0}
-          href={agencyUseCasesUrl(agency.id, { isCodingTool: true })}
-        />
-        <MetricTile
-          label="Agentic AI"
-          value={maturity?.agentic_ai_count ?? 0}
-          href={agencyUseCasesUrl(agency.id, { aiSophistications: ["agentic"] })}
-        />
-        <MetricTile
-          label="YoY growth"
-          value={maturity?.year_over_year_growth ?? 0}
-          sublabel={formatYoY(maturity?.year_over_year_growth ?? null)}
-        />
-      </section>
+      {/* Ledger row — 4 of 7 tiles expand in place to show their matching use
+          cases via the same idiom as /fedramp/coverage/* expanded rows. */}
+      <UseCaseDrillDownLedger
+        individual={individual}
+        generalLlm={individual.filter(
+          (uc) => uc.tags?.is_general_llm_access === 1,
+        )}
+        coding={individual.filter((uc) => uc.tags?.is_coding_tool === 1)}
+        agentic={individual.filter(
+          (uc) => uc.tags?.ai_sophistication === "agentic",
+        )}
+        counts={{
+          individual: individual.length,
+          consolidated: consolidated.length,
+          distinctProducts: maturity?.distinct_products_deployed ?? 0,
+          generalLlm: maturity?.general_llm_count ?? 0,
+          coding: maturity?.coding_tool_count ?? 0,
+          agentic: maturity?.agentic_ai_count ?? 0,
+          yoyGrowth: maturity?.year_over_year_growth ?? 0,
+        }}
+        hrefs={{
+          individual: agencyUseCasesUrl(agency.id),
+          consolidated: agencyUseCasesUrl(agency.id),
+          distinctProducts: agencyUseCasesUrl(agency.id),
+          generalLlm: agencyUseCasesUrl(agency.id, { isGeneralLLMAccess: true }),
+          coding: agencyUseCasesUrl(agency.id, { isCodingTool: true }),
+          agentic: agencyUseCasesUrl(agency.id, { aiSophistications: ["agentic"] }),
+        }}
+      />
+
 
       {/* § I · Portfolio */}
       <Section
