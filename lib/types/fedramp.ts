@@ -194,6 +194,12 @@ export interface CoverageUseCaseRow {
  */
 export interface ProductAgencyEntryRow extends CoverageUseCaseRow {
   kind: "use_case" | "consolidated";
+  /** `'strong'` = source explicitly named this product. `'inferred'` =
+   *  source named only the vendor (e.g. "Microsoft" with no specific
+   *  product), so the edge is preserved as a vendor signal but
+   *  rendered with a "Vendor-only mention" affordance on the
+   *  dashboard. See the 2026-05 generic-vendor-links retag pass. */
+  link_confidence: "strong" | "inferred" | null;
 }
 
 /**

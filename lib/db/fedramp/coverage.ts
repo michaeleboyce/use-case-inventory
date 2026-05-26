@@ -929,7 +929,8 @@ export function getUseCasesForCoverageAgencyProduct(
                uc.stage_of_development AS stage_of_development,
                SUBSTR(COALESCE(uc.problem_statement, ''), 1, 200) AS problem_snippet,
                uc.agency_id AS agency_id,
-               epe.product_id AS product_id
+               epe.product_id AS product_id,
+               epe.confidence AS link_confidence
           FROM use_cases uc
           JOIN entry_product_edges epe
             ON epe.entry_kind = 'use_case'
@@ -944,7 +945,8 @@ export function getUseCasesForCoverageAgencyProduct(
                NULL AS stage_of_development,
                NULL AS problem_snippet,
                cuc.agency_id AS agency_id,
-               epe.product_id AS product_id
+               epe.product_id AS product_id,
+               epe.confidence AS link_confidence
           FROM consolidated_use_cases cuc
           JOIN entry_product_edges epe
             ON epe.entry_kind = 'consolidated'
@@ -958,7 +960,8 @@ export function getUseCasesForCoverageAgencyProduct(
              a.abbreviation AS agency_abbreviation,
              s.use_case_name,
              s.stage_of_development,
-             s.problem_snippet
+             s.problem_snippet,
+             s.link_confidence
         FROM src s
         JOIN agencies a ON a.id = s.agency_id
        ORDER BY

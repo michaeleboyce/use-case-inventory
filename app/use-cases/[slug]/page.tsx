@@ -524,10 +524,20 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
                       {p.vendor && (
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                           {p.vendor}
-                          {p.confidence ? ` · ${p.confidence} evidence` : ""}
                         </p>
                       )}
                     </Link>
+                    {p.confidence === "inferred" ? (
+                      <p className="mt-2">
+                        <MonoChip
+                          tone="muted"
+                          size="xs"
+                          title={`The agency's filing named "${p.vendor ?? p.canonical_name}" without naming a specific product. The vendor signal is preserved but the product link is inferred, not stated.`}
+                        >
+                          Vendor-only mention
+                        </MonoChip>
+                      </p>
+                    ) : null}
                     {showCategory && (
                       <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                         Category ·{" "}

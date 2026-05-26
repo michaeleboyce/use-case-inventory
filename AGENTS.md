@@ -53,3 +53,31 @@ nobody using normal navigation will find it.
 Dynamic `[slug]` pages are exempt — they're parameterized and don't fit a
 static nav. Per-page in-page sub-navs and breadcrumbs do not replace the top
 nav; they complement it.
+
+## Multi-agent safety: DB and deploy
+
+Multiple agents often work this branch in parallel. The dashboard reads
+`data/federal_ai_inventory_2025.db`, which is a synced copy of the ETL
+repo's DB. Two failure modes to guard against:
+
+1. **Stale DB references in code.** Hard-coded numeric ids in URLs,
+   route params, or test fixtures (`/products/17547`, `productId =
+   18253`, etc.) WILL break across DB rebuilds — see the ETL repo's
+   `CLAUDE.md` "Multi-agent safety" section for why. Prefer linking
+   by `slug` or `canonical_name`; treat any numeric id in source code
+   as a one-shot debugging convenience, not a durable contract.
+
+2. **Before every `git commit` and `git push`:**
+   - Re-run `npx tsc --noEmit` (must be clean for the area you
+     touched).
+   - Verify `data/federal_ai_inventory_2025.db` matches the ETL
+     repo's current DB (`shasum data/federal_ai_inventory_2025.db
+     ../data/federal_ai_inventory_2025.db`). If they diverge, sync
+     before pushing — a stale DB shipped to Vercel breaks pages until
+     the next deploy.
+   - If you wrote a new query helper, smoke-test the affected route
+     against the dev server (curl or Playwright). The Next build
+     succeeds with broken SQL; only runtime catches it.
+   - If a sibling agent committed to `main` while you were working,
+     `git pull --rebase` and re-verify your changes still apply
+     cleanly. Never `git push --force` to `main`.

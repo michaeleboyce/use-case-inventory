@@ -154,6 +154,15 @@ export function AgenciesRunnersList({
                               <MonoChip tone={tone} size="xs">
                                 {bucket}
                               </MonoChip>
+                              {uc.link_confidence === "inferred" ? (
+                                <MonoChip
+                                  tone="muted"
+                                  size="xs"
+                                  title="The agency's filing named the vendor (e.g. 'Microsoft') without naming a specific product. The vendor signal is preserved but the product link is inferred, not stated."
+                                >
+                                  Vendor-only
+                                </MonoChip>
+                              ) : null}
                               {href ? (
                                 <Link
                                   href={href}
