@@ -31,3 +31,25 @@ A route-specific component that's *only* JSX composition goes in `_sections/`.
 A route-specific async function that hits the DB and returns a payload goes in
 `_view-model.ts`. If a piece becomes generic enough to be reused by a sibling
 route, promote it to `components/<feature>/` or `lib/`.
+
+## Navigation discoverability
+
+**When you add a new static page under an existing nav parent** (e.g. a new
+file under `app/fedramp/coverage/`, `app/fedramp/marketplace/`, `app/readiness/`,
+or `app/compare-years/`), you MUST do two things — otherwise the page is
+reachable only by deep link or a stat-card click on the parent hub, and
+nobody using normal navigation will find it.
+
+1. **Add an entry to the relevant array in `components/navigation.tsx`**
+   (`FEDRAMP_SECTIONS`, `READINESS_SECTIONS`, `MORE`, etc.). Mark
+   `indent: true` if the item sits under a parent hub; the dropdown render
+   honors the flag with a left padding so the hierarchy is visually clear.
+2. **Add it to the parent hub page's in-page sub-nav**. For
+   `app/fedramp/coverage/page.tsx` that's the `COVERAGE_PANELS` array driving
+   the `<nav aria-label="Coverage panels">` strip below the page header. For
+   `app/fedramp/marketplace/page.tsx` that's the `NAV_CARDS` array of link
+   tiles. Apply the same pattern when introducing a new hub.
+
+Dynamic `[slug]` pages are exempt — they're parameterized and don't fit a
+static nav. Per-page in-page sub-navs and breadcrumbs do not replace the top
+nav; they complement it.

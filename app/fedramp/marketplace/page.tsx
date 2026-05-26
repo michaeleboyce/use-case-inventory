@@ -59,6 +59,12 @@ const NAV_CARDS: Array<{
     title: "Compare",
     body: "Line up two FedRAMP offerings side by side.",
   },
+  {
+    href: "/fedramp/marketplace/about",
+    kicker: "VII",
+    title: "About",
+    body: "Methodology, refresh cadence, and what this ledger is (and isn't).",
+  },
 ];
 
 export default function MarketplaceLandingPage() {

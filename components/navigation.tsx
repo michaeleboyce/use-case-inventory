@@ -30,20 +30,33 @@ const READINESS_SECTIONS: Array<{ href: string; label: string }> = [
   { href: "/readiness/methodology", label: "Methodology" },
 ];
 
-// FedRAMP is its own sub-area with an overview + three named surfaces;
-// expose them as a hover/focus dropdown so the section rail doesn't have
-// to swallow a dedicated link for each one.
-const FEDRAMP_SECTIONS: Array<{ href: string; label: string }> = [
+// FedRAMP is its own sub-area with an overview + three named surfaces. Each
+// of Marketplace and Coverage has its own static drill-downs, so the dropdown
+// lists them inline (marked `indent: true`) instead of leaving them only
+// reachable via in-page cards. See AGENTS.md "Navigation discoverability".
+const FEDRAMP_SECTIONS: Array<{ href: string; label: string; indent?: boolean }> = [
   { href: "/fedramp", label: "Overview" },
   { href: "/fedramp/marketplace", label: "Marketplace" },
+  { href: "/fedramp/marketplace/products", label: "Products", indent: true },
+  { href: "/fedramp/marketplace/csps", label: "Providers", indent: true },
+  { href: "/fedramp/marketplace/agencies", label: "Agencies", indent: true },
+  { href: "/fedramp/marketplace/assessors", label: "3PAOs", indent: true },
+  { href: "/fedramp/marketplace/analytics", label: "Analytics", indent: true },
+  { href: "/fedramp/marketplace/compare", label: "Compare", indent: true },
+  { href: "/fedramp/marketplace/about", label: "About", indent: true },
   { href: "/fedramp/coverage", label: "Coverage" },
+  { href: "/fedramp/coverage/vendors", label: "Vendor coverage", indent: true },
+  { href: "/fedramp/coverage/products", label: "Unused authorizations", indent: true },
+  { href: "/fedramp/coverage/fit", label: "Authorization fit", indent: true },
+  { href: "/fedramp/coverage/agencies", label: "Agency gaps", indent: true },
   { href: "/fedramp/curate", label: "Curate" },
 ];
 
 // Lower-frequency surfaces, collapsed into a "More" dropdown.
-const MORE: Array<{ href: string; label: string }> = [
+const MORE: Array<{ href: string; label: string; indent?: boolean }> = [
   { href: "/compare", label: "Compare" },
   { href: "/compare-years", label: "Compare Years" },
+  { href: "/compare-years/silently-dropped", label: "Silently dropped", indent: true },
   { href: "/templates", label: "Templates" },
   { href: "/discrepancies", label: "Discrepancies" },
   { href: "/about", label: "Colophon" },
@@ -205,14 +218,18 @@ function MoreMenu() {
       </button>
       <div
         role="menu"
-        className="absolute right-0 top-full z-50 mt-0 hidden min-w-[12rem] border border-border bg-background py-1 shadow-md group-hover/more:block group-focus-within/more:block"
+        className="absolute right-0 top-full z-50 mt-0 hidden min-w-[14rem] border border-border bg-background py-1 shadow-md group-hover/more:block group-focus-within/more:block"
       >
         {MORE.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             role="menuitem"
-            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className={
+              link.indent
+                ? "block whitespace-nowrap pl-7 pr-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/85 transition-colors hover:bg-accent hover:text-foreground"
+                : "block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            }
           >
             {link.label}
           </Link>
@@ -292,14 +309,18 @@ function FedrampMenu() {
       </NavLink>
       <div
         role="menu"
-        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[12rem] border border-border bg-background py-1 shadow-md group-hover/fedramp:block group-focus-within/fedramp:block"
+        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[17rem] border border-border bg-background py-1 shadow-md group-hover/fedramp:block group-focus-within/fedramp:block"
       >
         {FEDRAMP_SECTIONS.map((s) => (
           <Link
             key={s.href}
             href={s.href}
             role="menuitem"
-            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className={
+              s.indent
+                ? "block whitespace-nowrap pl-7 pr-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/85 transition-colors hover:bg-accent hover:text-foreground"
+                : "block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            }
           >
             {s.label}
           </Link>

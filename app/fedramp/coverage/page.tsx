@@ -57,6 +57,20 @@ const PANEL_LABEL_OVERRIDE: Record<string, string> = {
   agencies_with_gaps: "Agencies with a FedRAMP × inventory delta",
 };
 
+// The four drill-down panels reachable from this hub. Mirrored in the
+// FedRAMP top-nav dropdown so users can jump to a panel from anywhere; the
+// strip below the page header keeps them visible the moment you land here
+// (without relying on a stat-card click). When a new panel is added under
+// `app/fedramp/coverage/`, add it to both this list and the FEDRAMP_SECTIONS
+// array in components/navigation.tsx — see AGENTS.md "Navigation
+// discoverability".
+const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
+  { href: "/fedramp/coverage/vendors", label: "Vendor coverage" },
+  { href: "/fedramp/coverage/products", label: "Unused authorizations" },
+  { href: "/fedramp/coverage/fit", label: "Authorization fit" },
+  { href: "/fedramp/coverage/agencies", label: "Agency gaps" },
+];
+
 export default function FedrampCoverageHubPage() {
   const { stats, error } = safeStats();
   const snapshot = safeSnapshot();
@@ -117,6 +131,24 @@ export default function FedrampCoverageHubPage() {
           </p>
         </div>
       </header>
+
+      <nav
+        aria-label="Coverage panels"
+        className="mt-8 flex flex-wrap items-baseline gap-x-5 gap-y-1 border-b border-border pb-3 text-[11px]"
+      >
+        <span className="font-mono uppercase tracking-[0.14em] text-muted-foreground/70">
+          Panels ·
+        </span>
+        {COVERAGE_PANELS.map((p) => (
+          <Link
+            key={p.href}
+            href={p.href}
+            className="font-mono uppercase tracking-[0.12em] text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          >
+            {p.label}
+          </Link>
+        ))}
+      </nav>
 
       {error ? (
         <Section
