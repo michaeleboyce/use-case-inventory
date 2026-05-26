@@ -9,6 +9,7 @@
 import {
   getAllProducts,
   getCategoryDistribution,
+  getOrphanProductCount,
   getProductCatalogStats,
   getProductNamesById,
   getVendorMarketShare,
@@ -28,14 +29,20 @@ export interface ProductsViewModel {
   categoryDistribution: CategoryDistribution;
   totalAgencyMentions: number;
   frontierCount: number;
+  orphanCount: number;
+  includeOrphans: boolean;
 }
 
-export async function buildProductsViewModel(): Promise<ProductsViewModel> {
-  const products = getAllProducts();
+export async function buildProductsViewModel(
+  opts: { includeOrphans?: boolean } = {},
+): Promise<ProductsViewModel> {
+  const includeOrphans = opts.includeOrphans ?? false;
+  const products = getAllProducts({ includeOrphans });
   const catalogStats = getProductCatalogStats();
   const parentNames = getProductNamesById();
   const vendorShare = getVendorMarketShare();
   const categoryDistribution = getCategoryDistribution();
+  const orphanCount = getOrphanProductCount();
 
   const totalAgencyMentions = products.reduce(
     (acc, p) => acc + (p.agency_count ?? 0),
@@ -51,5 +58,7 @@ export async function buildProductsViewModel(): Promise<ProductsViewModel> {
     categoryDistribution,
     totalAgencyMentions,
     frontierCount,
+    orphanCount,
+    includeOrphans,
   };
 }

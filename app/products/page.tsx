@@ -15,7 +15,20 @@ export const metadata = {
     "Browse the commercial AI products reported by federal agencies, with vendor market share and per-product adoption.",
 };
 
-export default async function ProductsPage() {
+type Search = Record<string, string | string[] | undefined>;
+
+function first(v: string | string[] | undefined): string | undefined {
+  if (Array.isArray(v)) return v[0];
+  return v;
+}
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}) {
+  const sp = await searchParams;
+  const includeOrphans = first(sp.include_orphans) === "1";
   const {
     products,
     catalogStats,
@@ -24,7 +37,8 @@ export default async function ProductsPage() {
     categoryDistribution,
     totalAgencyMentions,
     frontierCount,
-  } = await buildProductsViewModel();
+    orphanCount,
+  } = await buildProductsViewModel({ includeOrphans });
 
   return (
     <>
@@ -261,7 +275,40 @@ export default async function ProductsPage() {
         number="III"
         title="The catalogue"
         lede="Every canonical product, searchable by name, vendor, type, and capability."
+        source="mixed"
       >
+        {/* The orphan-products chip surfaces the catalog tail of products
+            that no use case currently links to. By default these are hidden
+            (they're seeded entries whose intended links never landed during
+            the May 2026 linkage-pass repairs). `?include_orphans=1` shows
+            them so the auditor can drill in. */}
+        {orphanCount > 0 && (
+          <div className="mb-6 flex items-center gap-3 border border-border bg-[color-mix(in_srgb,var(--background)_92%,var(--stamp)_8%)] px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            {includeOrphans ? (
+              <>
+                <span className="text-foreground">{formatNumber(orphanCount)}</span>
+                <span>unlinked products shown</span>
+                <Link
+                  href="/products"
+                  className="ml-auto underline-offset-2 hover:text-[var(--stamp)] hover:underline"
+                >
+                  hide
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className="text-foreground">{formatNumber(orphanCount)}</span>
+                <span>products with no linked use case · hidden by default</span>
+                <Link
+                  href="/products?include_orphans=1#catalogue"
+                  className="ml-auto underline-offset-2 hover:text-[var(--stamp)] hover:underline"
+                >
+                  show
+                </Link>
+              </>
+            )}
+          </div>
+        )}
         {/* Suspense boundary required because ProductsFilters reads
             useSearchParams() (for `?category=X` deep linking) and this
             page is statically prerendered. Without it, Next bails on
