@@ -45,7 +45,8 @@ export function hasUseCaseOnlyFilter(filters: UseCaseFilterInput): boolean {
     (filters.isWithhelds != null && filters.isWithhelds.length > 0) ||
     (filters.contractingUsages != null && filters.contractingUsages.length > 0) ||
     filters.hasPii != null ||
-    filters.hasCustomCode != null
+    filters.hasCustomCode != null ||
+    (filters.lineageStatuses != null && filters.lineageStatuses.length > 0)
   );
 }
 
@@ -316,6 +317,20 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
     rowWhere.push(
       "(LOWER(TRIM(uc.has_custom_code)) LIKE 'yes%' OR LOWER(TRIM(uc.has_custom_code)) = 'true')",
     );
+  }
+  if (filters.lineageStatuses && filters.lineageStatuses.length > 0) {
+    // 2024↔2025 lineage adjudicated by scripts/match_inventories_yoy.py and
+    // the LLM follow-up. A 2025 use case can have multiple link rows (e.g.
+    // a split), so use EXISTS rather than a join to avoid row multiplication.
+    const placeholders = filters.lineageStatuses.map(() => "?").join(",");
+    rowWhere.push(
+      `EXISTS (
+        SELECT 1 FROM use_case_year_links l
+         WHERE l.uc_2025_id = uc.id
+           AND l.lineage_status IN (${placeholders})
+      )`,
+    );
+    rowParams.push(...filters.lineageStatuses);
   }
 
   const { tagWhere, tagParams } = buildTagPredicates(filters);

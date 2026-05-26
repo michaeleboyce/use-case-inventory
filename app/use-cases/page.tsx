@@ -115,6 +115,9 @@ function buildFilters(sp: Search): UseCasesFilters {
   const contractingUsages = parseCsv(sp.contracting);
   if (contractingUsages.length > 0) filters.contractingUsages = contractingUsages;
 
+  const lineageStatuses = parseCsv(sp.lineage);
+  if (lineageStatuses.length > 0) filters.lineageStatuses = lineageStatuses;
+
   if (first(sp.coding_tool) === "1") filters.isCodingTool = true;
   if (first(sp.coding_tool) === "0") filters.isCodingTool = false;
   if (first(sp.general_llm_access) === "1") filters.isGeneralLLMAccess = true;
@@ -283,6 +286,7 @@ export default async function UseCasesPage({
                   maturityTiers: facets.maturityTiers,
                   isWithhelds: facets.isWithhelds,
                   contractingUsages: facets.contractingUsages,
+                  lineageStatuses: facets.lineageStatuses,
                 }}
               />
             </MobileFiltersSheet>

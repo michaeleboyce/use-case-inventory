@@ -63,6 +63,7 @@ export interface UseCaseFiltersProps {
     maturityTiers: string[];
     isWithhelds: string[];
     contractingUsages: string[];
+    lineageStatuses: string[];
   };
 }
 
@@ -157,6 +158,7 @@ export function UseCaseFilters({
   const selectedMaturityTiers = parseCsv(currentParams.get("tier"));
   const selectedIsWithhelds = parseCsv(currentParams.get("withheld"));
   const selectedContractingUsages = parseCsv(currentParams.get("contracting"));
+  const selectedLineageStatuses = parseCsv(currentParams.get("lineage"));
   const selectedScopes = parseCsv(currentParams.get("scope"));
   const selectedArchitectures = parseCsv(currentParams.get("architecture"));
   const selectedUseTypes = parseCsv(currentParams.get("use_type"));
@@ -704,6 +706,33 @@ export function UseCaseFilters({
             label={v}
           />
         ))}
+      </FilterGroup>
+
+      {/* Year-over-year lineage — IFP-adjudicated 2024 ↔ 2025 matcher
+          (scripts/match_inventories_yoy.py + LLM follow-up). Statuses that
+          attach to a 2025 row only: continued, new_2025, renamed, split. */}
+      <FilterGroup
+        title={
+          selectedLineageStatuses.length > 0
+            ? `Lineage · ${selectedLineageStatuses.length} selected`
+            : "Year-over-year lineage"
+        }
+        defaultOpen={selectedLineageStatuses.length > 0}
+        source="derived"
+      >
+        {facets.lineageStatuses.map((v) => (
+          <CheckRow
+            key={v}
+            checked={selectedLineageStatuses.includes(v)}
+            onToggle={() => toggleMulti("lineage", v)}
+            label={labelFor(v)}
+          />
+        ))}
+        {facets.lineageStatuses.length === 0 && (
+          <p className="py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            No lineage data
+          </p>
+        )}
       </FilterGroup>
 
       {/* High impact designation */}

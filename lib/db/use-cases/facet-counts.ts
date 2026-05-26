@@ -26,6 +26,7 @@ export function getUseCaseFacets(): {
   maturityTiers: string[];
   isWithhelds: string[];
   contractingUsages: string[];
+  lineageStatuses: string[];
 } {
   const db = getDb();
   const distinct = (table: string, col: string) =>
@@ -126,6 +127,21 @@ export function getUseCaseFacets(): {
     .all()
     .map((r) => r.v);
 
+  // Year-over-year lineage — only statuses that attach to a 2025 use case
+  // (i.e. have a non-null uc_2025_id). `retired_2024` rows have no 2025
+  // counterpart, so they'd never match a row in the explorer; filter them out
+  // of the facet rather than show a 0-result option.
+  const lineageStatuses = db
+    .prepare<[], { v: string }>(
+      `SELECT lineage_status AS v
+         FROM use_case_year_links
+        WHERE uc_2025_id IS NOT NULL AND lineage_status IS NOT NULL
+        GROUP BY lineage_status
+        ORDER BY COUNT(*) DESC, lineage_status COLLATE NOCASE ASC`,
+    )
+    .all()
+    .map((r) => r.v);
+
   return {
     stages: distinct("use_cases", "stage_of_development"),
     aiClassifications: distinct("use_cases", "ai_classification"),
@@ -143,5 +159,6 @@ export function getUseCaseFacets(): {
     maturityTiers,
     isWithhelds,
     contractingUsages,
+    lineageStatuses,
   };
 }

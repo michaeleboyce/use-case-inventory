@@ -41,6 +41,12 @@ const LABELS: Record<string, string> = {
   high_impact: "High impact",
   presumed_not_high_impact: "Presumed not high impact",
   not_high_impact: "Not high impact",
+
+  // Year-over-year lineage statuses (use_case_year_links.lineage_status)
+  continued: "Continued from 2024",
+  new_2025: "New in 2025",
+  renamed: "Renamed from 2024",
+  split: "Split from 2024 entry",
 };
 
 export function labelFor(value: string): string {

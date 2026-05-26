@@ -378,6 +378,11 @@ export interface UseCaseFilterInput {
   /** OMB-filed `has_custom_code` — when true, restricts to rows where the
    *  agency reported custom code. Use-case arm only. */
   hasCustomCode?: boolean;
+  /** IFP-curated year-over-year lineage status from `use_case_year_links`
+   *  (the 2024↔2025 deterministic + LLM-adjudicated matcher). Multiple
+   *  values = OR. Use-case arm only — consolidated rows are not in the
+   *  lineage table. Valid: continued, new_2025, renamed, split. */
+  lineageStatuses?: string[];
   /** Drill-through-only: individual use cases that name neither a vendor nor a
    *  product (the "Vendor unspecified" bucket on the LLM-vendor donut). Applies
    *  the same vendor/product normalization as `LLM_NORMALIZED_FIELDS`. Like
