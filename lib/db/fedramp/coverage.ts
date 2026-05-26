@@ -8,6 +8,7 @@ import type {
   CoverageStat,
   CoverageUseCaseRow,
   CoverageVendorRow,
+  ProductAgencyEntryRow,
 } from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
 
@@ -637,31 +638,76 @@ export function getUseCasesForFitCell(
   return stmt.all(...params);
 }
 
-/** Top-N use cases at a specific agency that reference a specific product.
- *  Used by `/fedramp/coverage/agencies/[abbr]` per-row expansions. */
+/** Top-N entries at a specific agency that reference a specific product.
+ *  UNIONs the two entry tables (individual `use_cases` and the
+ *  `consolidated_use_cases` batch file) so that products reported only
+ *  through the consolidated channel — which is the case for many
+ *  large vendor products — still surface their backing entries in the
+ *  expand panels on /products/[id] and /fedramp/coverage/agencies/[abbr].
+ *
+ *  `stage_of_development` and `problem_snippet` are null on consolidated
+ *  rows (the consolidated schema doesn't record either). Deployed-first
+ *  ordering still works because the CASE expression falls through to the
+ *  "ELSE 4" bucket for null stages — those sort after all named stages
+ *  but together as a stable group. */
 export function getUseCasesForCoverageAgencyProduct(
   agencyId: number,
   productId: number,
   opts: { limit?: number } = {},
-): CoverageUseCaseRow[] {
+): ProductAgencyEntryRow[] {
   const { limit = 10 } = opts;
   return getDb()
-    .prepare<[number, number, number], CoverageUseCaseRow>(`
-      SELECT uc.id,
-             uc.slug,
+    .prepare<[number, number, number, number, number], ProductAgencyEntryRow>(`
+      WITH src AS (
+        SELECT 'use_case' AS kind,
+               uc.id AS id,
+               uc.slug AS slug,
+               uc.use_case_name AS use_case_name,
+               uc.stage_of_development AS stage_of_development,
+               SUBSTR(COALESCE(uc.problem_statement, ''), 1, 200) AS problem_snippet,
+               uc.agency_id AS agency_id,
+               epe.product_id AS product_id
+          FROM use_cases uc
+          JOIN entry_product_edges epe
+            ON epe.entry_kind = 'use_case'
+           AND epe.entry_id = uc.id
+         WHERE epe.product_id = ?
+           AND uc.agency_id = ?
+        UNION ALL
+        SELECT 'consolidated' AS kind,
+               cuc.id AS id,
+               cuc.slug AS slug,
+               cuc.ai_use_case AS use_case_name,
+               NULL AS stage_of_development,
+               NULL AS problem_snippet,
+               cuc.agency_id AS agency_id,
+               epe.product_id AS product_id
+          FROM consolidated_use_cases cuc
+          JOIN entry_product_edges epe
+            ON epe.entry_kind = 'consolidated'
+           AND epe.entry_id = cuc.id
+         WHERE epe.product_id = ?
+           AND cuc.agency_id = ?
+      )
+      SELECT s.kind,
+             s.id,
+             s.slug,
              a.abbreviation AS agency_abbreviation,
-             uc.use_case_name,
-             uc.stage_of_development,
-             SUBSTR(COALESCE(uc.problem_statement, ''), 1, 200) AS problem_snippet
-        FROM use_cases uc
-        JOIN agencies a ON a.id = uc.agency_id
-        JOIN entry_product_edges epe
-          ON epe.entry_kind = 'use_case'
-         AND epe.entry_id = uc.id
-       WHERE epe.product_id = ?
-         AND uc.agency_id = ?
-       ORDER BY ${STAGE_ORDER_SQL}, uc.use_case_name COLLATE NOCASE ASC
+             s.use_case_name,
+             s.stage_of_development,
+             s.problem_snippet
+        FROM src s
+        JOIN agencies a ON a.id = s.agency_id
+       ORDER BY
+         CASE
+           WHEN s.stage_of_development LIKE '%Deployed%' THEN 0
+           WHEN s.stage_of_development LIKE '%Pilot%'    THEN 1
+           WHEN s.stage_of_development LIKE '%Pre-deployment%' OR s.stage_of_development LIKE '%pre-deployment%' THEN 2
+           WHEN s.stage_of_development LIKE '%Retired%'  THEN 3
+           ELSE 4
+         END,
+         s.use_case_name COLLATE NOCASE ASC
        LIMIT ?
     `)
-    .all(productId, agencyId, limit);
+    .all(productId, agencyId, productId, agencyId, limit);
 }

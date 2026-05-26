@@ -183,6 +183,20 @@ export interface CoverageUseCaseRow {
 }
 
 /**
+ * Same as `CoverageUseCaseRow` but tagged with whether the entry comes
+ * from the individual `use_cases` table or the `consolidated_use_cases`
+ * batch table. Used by the product detail page's "Who runs it" expand,
+ * which surfaces both kinds (some products are reported only via the
+ * consolidated batch file). `kind` is needed both for unique React keys
+ * across UNIONed result sets and to route slugs correctly — both kinds
+ * share `/use-cases/[slug]` so routing is the same, but the field is
+ * still useful for downstream callers.
+ */
+export interface ProductAgencyEntryRow extends CoverageUseCaseRow {
+  kind: "use_case" | "consolidated";
+}
+
+/**
  * One agency that holds a FedRAMP authorization for a product but reports
  * zero AI use cases naming it. Returned by
  * `getAgenciesWithoutUseForFedrampProduct` for the "FedRAMP → AI" inverse

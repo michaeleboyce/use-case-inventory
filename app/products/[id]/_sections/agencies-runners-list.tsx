@@ -17,14 +17,14 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { MonoChip } from "@/components/editorial";
 import { formatNumber, truncate } from "@/lib/formatting";
 import { agencyUseCasesUrl } from "@/lib/urls";
-import type { CoverageUseCaseRow } from "@/lib/types";
+import type { ProductAgencyEntryRow } from "@/lib/types";
 
 export type AgencyRunnerRow = {
   id: number;
   abbreviation: string;
   name: string;
   count: number;
-  useCases: CoverageUseCaseRow[];
+  useCases: ProductAgencyEntryRow[];
 };
 
 function stageBucket(
@@ -147,7 +147,7 @@ export function AgenciesRunnersList({
                           : null;
                         return (
                           <li
-                            key={uc.id}
+                            key={`${uc.kind}-${uc.id}`}
                             className="border-l border-[var(--rule)] pl-3"
                           >
                             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
