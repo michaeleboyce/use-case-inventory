@@ -9,11 +9,14 @@ import type {
   CoverageUseCaseRow,
   CoverageVendorRow,
   LeadUserAgencyRow,
+  LeadUserUseCase,
   ProductAgencyEntryRow,
   SleepingAuthorizationCounts,
   SleepingAuthorizationDetail,
   SleepingAuthorizationRow,
   SleepingAuthorizerRow,
+  SleepingByAgencyRow,
+  SleepingByImpactRow,
 } from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
 
@@ -699,8 +702,17 @@ export function getSleepingAuthorizationDetail(
 ): SleepingAuthorizationDetail {
   const db = getDb();
 
-  const leadUsers = db
-    .prepare<[string], LeadUserAgencyRow>(`
+  // Per-agency aggregate (count + identity).
+  const leadUserAgencies = db
+    .prepare<
+      [string],
+      {
+        inventory_agency_id: number;
+        agency_name: string;
+        agency_abbreviation: string;
+        use_case_count: number;
+      }
+    >(`
       WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
       SELECT
         a.id AS inventory_agency_id,
@@ -715,6 +727,56 @@ export function getSleepingAuthorizationDetail(
       ORDER BY use_case_count DESC, a.name COLLATE NOCASE ASC
     `)
     .all(fedrampId);
+
+  // Per-use-case rows; merged below into each lead user's `use_cases` array.
+  // Unions across individual and consolidated entries (both routed via the
+  // shared /use-cases/[slug] page).
+  const useCaseRows = db
+    .prepare<
+      [string],
+      {
+        inventory_agency_id: number;
+        kind: "use_case" | "consolidated";
+        use_case_id: number;
+        slug: string | null;
+        use_case_name: string;
+        stage_of_development: string | null;
+      }
+    >(`
+      WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
+      SELECT
+        epe.agency_id AS inventory_agency_id,
+        epe.entry_kind AS kind,
+        epe.entry_id AS use_case_id,
+        CASE WHEN epe.entry_kind = 'use_case' THEN uc.slug ELSE cuc.slug END AS slug,
+        CASE WHEN epe.entry_kind = 'use_case' THEN uc.use_case_name ELSE cuc.ai_use_case END AS use_case_name,
+        CASE WHEN epe.entry_kind = 'use_case' THEN uc.stage_of_development ELSE NULL END AS stage_of_development
+      FROM effective_fedramp_links fpl
+      JOIN entry_product_edges epe ON epe.product_id = fpl.inventory_product_id
+      LEFT JOIN use_cases uc ON epe.entry_kind = 'use_case' AND uc.id = epe.entry_id
+      LEFT JOIN consolidated_use_cases cuc ON epe.entry_kind = 'consolidated' AND cuc.id = epe.entry_id
+      WHERE fpl.fedramp_id = ?
+      ORDER BY use_case_name COLLATE NOCASE ASC
+    `)
+    .all(fedrampId);
+
+  const useCasesByAgency = new Map<number, LeadUserUseCase[]>();
+  for (const r of useCaseRows) {
+    const list = useCasesByAgency.get(r.inventory_agency_id) ?? [];
+    list.push({
+      kind: r.kind,
+      use_case_id: r.use_case_id,
+      slug: r.slug,
+      use_case_name: r.use_case_name,
+      stage_of_development: r.stage_of_development,
+    });
+    useCasesByAgency.set(r.inventory_agency_id, list);
+  }
+
+  const leadUsers: LeadUserAgencyRow[] = leadUserAgencies.map((a) => ({
+    ...a,
+    use_cases: useCasesByAgency.get(a.inventory_agency_id) ?? [],
+  }));
 
   const sleepingAuthorizers = db
     .prepare<[string, string], SleepingAuthorizerRow>(`
@@ -745,6 +807,50 @@ export function getSleepingAuthorizationDetail(
     .all(fedrampId, fedrampId);
 
   return { fedramp_id: fedrampId, leadUsers, sleepingAuthorizers };
+}
+
+/** Sleeping (agency × product) pair counts grouped by FedRAMP impact level.
+ *  Drives the "by impact" chart on /fedramp/coverage/sleeping. */
+export function getSleepingByImpactLevel(): SleepingByImpactRow[] {
+  return getDb()
+    .prepare<[], SleepingByImpactRow>(`
+      WITH RECURSIVE ${SLEEPING_CTES}
+      SELECT
+        COALESCE(fp.impact_level, 'Unknown') AS impact_level,
+        COUNT(*) AS sleeping_count
+      FROM sleeping_pairs sp
+      JOIN fedramp_products fp ON fp.fedramp_id = sp.fedramp_id
+      GROUP BY COALESCE(fp.impact_level, 'Unknown')
+      ORDER BY
+        CASE COALESCE(fp.impact_level, '')
+          WHEN 'High' THEN 0
+          WHEN 'Moderate' THEN 1
+          WHEN 'Li-SaaS' THEN 2
+          WHEN 'Low' THEN 3
+          ELSE 4
+        END
+    `)
+    .all();
+}
+
+/** Top sleeping-agencies leaderboard — agencies sitting on the most ATOs
+ *  for AI products their peers are using. Drives the second chart. */
+export function getTopSleepingAgencies(limit = 15): SleepingByAgencyRow[] {
+  return getDb()
+    .prepare<[number], SleepingByAgencyRow>(`
+      WITH RECURSIVE ${SLEEPING_CTES}
+      SELECT
+        a.id AS inventory_agency_id,
+        a.name AS agency_name,
+        a.abbreviation AS agency_abbreviation,
+        COUNT(*) AS sleeping_count
+      FROM sleeping_pairs sp
+      JOIN agencies a ON a.id = sp.inventory_agency_id
+      GROUP BY a.id
+      ORDER BY sleeping_count DESC, a.name COLLATE NOCASE ASC
+      LIMIT ?
+    `)
+    .all(limit);
 }
 
 /** Top-N use cases sitting in a (high_impact_designation, impact_level)

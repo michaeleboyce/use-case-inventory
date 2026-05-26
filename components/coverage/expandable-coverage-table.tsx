@@ -109,14 +109,22 @@ export function ExpandableCoverageTable<TRow>({
               {hg.headers.map((h) => {
                 const isExpander = h.column.id === "expander";
                 const isNum = numericCols.has(h.column.id);
+                const canSort = !isExpander && h.column.getCanSort();
+                const sortDir = h.column.getIsSorted();
+                const sortGlyph =
+                  sortDir === "asc" ? " ↑" : sortDir === "desc" ? " ↓" : "";
                 return (
                   <th
                     key={h.id}
+                    onClick={canSort ? h.column.getToggleSortingHandler() : undefined}
                     className={`py-2 text-left align-bottom font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground ${
                       isExpander ? "w-7 px-1" : "px-3"
-                    } ${isNum ? "text-right" : ""}`}
+                    } ${isNum ? "text-right" : ""} ${
+                      canSort ? "cursor-pointer select-none hover:text-foreground" : ""
+                    }`}
                   >
                     {flexRender(h.column.columnDef.header, h.getContext())}
+                    <span aria-hidden className="text-[var(--stamp)]">{sortGlyph}</span>
                   </th>
                 );
               })}

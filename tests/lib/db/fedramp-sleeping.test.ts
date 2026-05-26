@@ -82,6 +82,18 @@ describe("lib/db/fedramp — sleeping authorizations", () => {
       expect(dhs.authorization_type).toBe("Initial");
     });
 
+    it("populates each lead user's use_cases list with the actual reported entries", () => {
+      const d = getSleepingAuthorizationDetail("FR_TEST");
+      const va = d.leadUsers.find((u) => u.agency_abbreviation === "VA")!;
+      const gsa = d.leadUsers.find((u) => u.agency_abbreviation === "GSA")!;
+      // VA seed: use_case_products(1,1) — one ChatGPT use case (use_case 1)
+      expect(va.use_cases).toHaveLength(1);
+      expect(va.use_cases[0].use_case_name).toContain("Clinical");
+      expect(va.use_cases[0].slug).toBe("va-clinical-summary");
+      // GSA seed: use_case_products(10,1) and (12,1) — two ChatGPT use cases
+      expect(gsa.use_cases).toHaveLength(2);
+    });
+
     it("returns empty lists for an unknown FedRAMP id", () => {
       const d = getSleepingAuthorizationDetail("FR_DOES_NOT_EXIST");
       expect(d.leadUsers).toEqual([]);

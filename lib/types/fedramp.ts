@@ -247,6 +247,17 @@ export interface SleepingAuthorizationRow {
   total_ato_count: number;
 }
 
+/** One use case under a lead-user agency. Slug + name link directly to
+ *  `/use-cases/[slug]`; both entry kinds (individual and consolidated)
+ *  share that routing. */
+export interface LeadUserUseCase {
+  kind: "use_case" | "consolidated";
+  use_case_id: number;
+  slug: string | null;
+  use_case_name: string;
+  stage_of_development: string | null;
+}
+
 /** One lead-user agency for the row-expansion panel. */
 export interface LeadUserAgencyRow {
   inventory_agency_id: number;
@@ -255,6 +266,8 @@ export interface LeadUserAgencyRow {
   /** Count of AI use cases from this agency referencing the product (or any
    *  child product, via the effective_fedramp_links walk). */
   use_case_count: number;
+  /** The actual use cases this agency reports using the product for. */
+  use_cases: LeadUserUseCase[];
 }
 
 /** One sleeping-authorizer agency for the row-expansion panel. */
@@ -277,6 +290,20 @@ export interface SleepingAuthorizationDetail {
   fedramp_id: string;
   leadUsers: LeadUserAgencyRow[];
   sleepingAuthorizers: SleepingAuthorizerRow[];
+}
+
+/** One bar in the "by impact level" chart on /fedramp/coverage/sleeping. */
+export interface SleepingByImpactRow {
+  impact_level: string;
+  sleeping_count: number;
+}
+
+/** One bar in the "top sleeping agencies" chart on /fedramp/coverage/sleeping. */
+export interface SleepingByAgencyRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string;
+  sleeping_count: number;
 }
 
 /**

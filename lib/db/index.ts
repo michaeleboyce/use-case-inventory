@@ -145,6 +145,8 @@ export {
   getSleepingAuthorizationsCounts,
   getSleepingAuthorizationRows,
   getSleepingAuthorizationDetail,
+  getSleepingByImpactLevel,
+  getTopSleepingAgencies,
   getUseCasesForFitCell,
   getUseCasesForCoverageAgencyProduct,
   getLinkQueueGroups,

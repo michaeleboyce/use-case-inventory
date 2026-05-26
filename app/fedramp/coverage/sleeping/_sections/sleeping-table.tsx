@@ -130,7 +130,7 @@ function ExpansionPanel({
             No lead users (shouldn&rsquo;t happen — every row should have ≥1).
           </p>
         ) : (
-          <ul className="space-y-2 pl-4">
+          <ul className="space-y-3 pl-4">
             {detail.leadUsers.map((u) => (
               <li
                 key={u.inventory_agency_id}
@@ -147,11 +147,38 @@ function ExpansionPanel({
                   <span className="font-display text-[0.95rem] italic leading-tight text-foreground">
                     {u.agency_name}
                   </span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                    {formatNumber(u.use_case_count)} use case
+                    {u.use_case_count === 1 ? "" : "s"}
+                  </span>
                 </div>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                  {formatNumber(u.use_case_count)} use case
-                  {u.use_case_count === 1 ? "" : "s"} reported
-                </p>
+                {u.use_cases.length > 0 ? (
+                  <ul className="mt-1.5 space-y-0.5 text-[12px] leading-snug">
+                    {u.use_cases.map((c) => {
+                      const label = c.use_case_name;
+                      const meta = c.stage_of_development
+                        ? ` · ${c.stage_of_development}`
+                        : c.kind === "consolidated"
+                          ? " · consolidated"
+                          : "";
+                      return (
+                        <li key={`${c.kind}-${c.use_case_id}`}>
+                          {c.slug ? (
+                            <a
+                              href={`/use-cases/${c.slug}`}
+                              className="text-foreground underline-offset-2 hover:underline decoration-[var(--stamp)]"
+                            >
+                              {label}
+                            </a>
+                          ) : (
+                            <span className="text-foreground">{label}</span>
+                          )}
+                          <span className="text-muted-foreground">{meta}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>

@@ -4,15 +4,21 @@ import {
   getSleepingAuthorizationDetail,
   getSleepingAuthorizationRows,
   getSleepingAuthorizationsCounts,
+  getSleepingByImpactLevel,
+  getTopSleepingAgencies,
 } from "@/lib/db";
 import type {
   FedrampSnapshot,
   SleepingAuthorizationDetail,
   SleepingAuthorizationRow,
+  SleepingByAgencyRow,
+  SleepingByImpactRow,
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section } from "@/components/editorial";
 import { SleepingTable } from "./_sections/sleeping-table";
+import { SleepingByImpactChart } from "./_sections/by-impact-chart";
+import { TopSleepingAgenciesChart } from "./_sections/top-agencies-chart";
 
 export const metadata = {
   title: "Sleeping authorizations · FedRAMP × AI Inventory",
@@ -39,10 +45,14 @@ export default async function FedrampCoverageSleepingPage({
 
   let rows: SleepingAuthorizationRow[] = [];
   let counts = { sleeping_pairs: 0, products_with_gap: 0, ai_used_products: 0 };
+  let byImpact: SleepingByImpactRow[] = [];
+  let topAgencies: SleepingByAgencyRow[] = [];
   let error: string | null = null;
   try {
     rows = getSleepingAuthorizationRows();
     counts = getSleepingAuthorizationsCounts();
+    byImpact = getSleepingByImpactLevel();
+    topAgencies = getTopSleepingAgencies(15);
   } catch (err) {
     error = err instanceof Error ? err.message : "Unknown error.";
   }
@@ -126,10 +136,34 @@ export default async function FedrampCoverageSleepingPage({
             </p>
           </Section>
         ) : (
+          <>
+            {byImpact.length > 0 || topAgencies.length > 0 ? (
+              <Section
+                number="I"
+                title="Where the slack sits"
+                lede="The gap distribution by FedRAMP impact level (left) and the agencies sitting on the most sleeping ATOs (right)."
+              >
+                <div className="border-t-2 border-foreground pt-4 grid grid-cols-1 gap-8 md:grid-cols-2">
+                  <div>
+                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                      Sleeping pairs by impact level
+                    </p>
+                    <SleepingByImpactChart rows={byImpact} />
+                  </div>
+                  <div>
+                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                      Top {topAgencies.length} agencies by sleeping ATO count
+                    </p>
+                    <TopSleepingAgenciesChart rows={topAgencies} />
+                  </div>
+                </div>
+              </Section>
+            ) : null}
+
           <Section
-            number="I"
+            number={byImpact.length > 0 || topAgencies.length > 0 ? "II" : "I"}
             title="By product"
-            lede="One row per FedRAMP product with at least one lead user and at least one sleeping authorizer. Filter by impact level. Click to expand."
+            lede="One row per FedRAMP product with at least one lead user and at least one sleeping authorizer. Filter by impact level. Click column headers to sort, or any row to expand."
           >
             <div className="border-t-2 border-foreground pt-4 mb-5 flex flex-wrap items-center gap-2">
               <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground mr-1">
@@ -158,6 +192,7 @@ export default async function FedrampCoverageSleepingPage({
               <SleepingTable rows={withDetail} />
             )}
           </Section>
+          </>
         )}
       </div>
 
@@ -186,8 +221,11 @@ function FilterChip({
     "inline-flex items-center border bg-background font-mono font-semibold uppercase tracking-[0.06em] transition-colors px-2 py-0.5 text-[11px]";
   const activeRing = "border-foreground text-foreground";
   const idle = "border-border text-muted-foreground hover:text-foreground";
+  // scroll={false} keeps the user where they were on the page when the
+  // filter changes — without it Next.js scrolls to top on every chip click,
+  // forcing the reader to scroll back down to the table.
   return (
-    <Link href={href} className={`${base} ${active ? activeRing : idle}`}>
+    <Link href={href} scroll={false} className={`${base} ${active ? activeRing : idle}`}>
       {label}
     </Link>
   );
