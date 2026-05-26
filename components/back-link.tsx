@@ -2,11 +2,12 @@
  * Referrer-aware back link.
  *
  * Behavior:
- *  - On mount, reads `document.referrer`. If the referrer is same-origin AND
- *    its pathname matches one of the configured list-page prefixes (e.g.
+ *  - On the client, reads `document.referrer`. If same-origin AND its
+ *    pathname matches one of the configured list-page prefixes (e.g.
  *    `/products`, `/agencies`, `/use-cases`), the link renders as
  *    "← Back to results" pointing at the referrer URL — preserving any
- *    filter / search context the user had when they clicked into the detail.
+ *    filter / search context the user had when they clicked into the
+ *    detail.
  *  - Otherwise (direct navigation, refresh, cross-origin, or referrer is a
  *    detail page), falls back to the static "← All <thing>" form pointing
  *    at the canonical list URL.
@@ -16,17 +17,19 @@
  * sidebar lists). Trade-off: refresh on the detail page loses the back
  * URL. Acceptable — the page still works, just shows the static fallback.
  *
- * SSR note: this is a client component so server-rendered output uses the
- * fallback. The first paint after hydration may briefly flicker the label
- * if the referrer matches; the href change is debounced via useEffect, so
- * the visible-text upgrade happens within ~one frame.
+ * Implementation note: uses `useSyncExternalStore` with a no-op subscribe
+ * because `document.referrer` never changes after first paint. The SSR
+ * snapshot returns an empty string so the server renders the fallback;
+ * the client snapshot returns the actual referrer for the hydration
+ * pass. This avoids the "setState in effect" hydration pattern that
+ * React 19's `react-hooks/set-state-in-effect` lint flags.
  */
 
 "use client";
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Props = {
   /** Where to navigate if there's no usable referrer. */
@@ -41,38 +44,46 @@ type Props = {
 
 const DEFAULT_LIST_PREFIXES = ["/products", "/agencies", "/use-cases"];
 
+// document.referrer is immutable after first paint; subscribe is a no-op.
+const NO_OP_SUBSCRIBE = () => () => {};
+const readReferrer = () =>
+  typeof document === "undefined" ? "" : document.referrer;
+const readReferrerSsr = () => "";
+
+function resolveReferrerHref(
+  referrer: string,
+  listPrefixes: string[],
+): string | null {
+  if (!referrer) return null;
+  let url: URL;
+  try {
+    url = new URL(referrer);
+  } catch {
+    return null;
+  }
+  if (typeof window === "undefined") return null;
+  if (url.origin !== window.location.origin) return null;
+  const matchesListPrefix = listPrefixes.some((prefix) => {
+    if (url.pathname === prefix) return true;
+    if (url.pathname.startsWith(`${prefix}/`)) return false;
+    return false;
+  });
+  if (!matchesListPrefix) return null;
+  return url.pathname + url.search;
+}
+
 export function BackLink({
   fallbackHref,
   fallbackLabel,
   listPrefixes = DEFAULT_LIST_PREFIXES,
   className,
 }: Props) {
-  const [referrerHref, setReferrerHref] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const ref = document.referrer;
-    if (!ref) return;
-    let url: URL;
-    try {
-      url = new URL(ref);
-    } catch {
-      return;
-    }
-    // Same-origin check
-    if (url.origin !== window.location.origin) return;
-    // Must be a list-page prefix, not a detail page
-    const matchesListPrefix = listPrefixes.some((prefix) => {
-      // Match exact list URL or list URL with searchParams (`/products?category=X`)
-      // but NOT detail pages (`/products/123`).
-      if (url.pathname === prefix) return true;
-      if (url.pathname.startsWith(`${prefix}/`)) return false;
-      return false;
-    });
-    if (!matchesListPrefix) return;
-    setReferrerHref(url.pathname + url.search);
-  }, [listPrefixes]);
-
+  const referrer = useSyncExternalStore(
+    NO_OP_SUBSCRIBE,
+    readReferrer,
+    readReferrerSsr,
+  );
+  const referrerHref = resolveReferrerHref(referrer, listPrefixes);
   const href = referrerHref ?? fallbackHref;
   const label = referrerHref ? "Back to results" : fallbackLabel;
 

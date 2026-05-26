@@ -45,8 +45,14 @@ export function useKeyboardShortcuts(
 ): void {
   const { enabled = true } = opts;
   // Keep handlers in a ref so the effect doesn't re-bind on every render.
+  // The ref must be updated in an effect (not during render) to satisfy
+  // React 19's `react-hooks/refs` rule and to avoid tearing under
+  // concurrent rendering. keydown is async from the user's perspective,
+  // so a one-commit delay in the ref is invisible in practice.
   const handlersRef = useRef<ShortcutHandlers>(handlers);
-  handlersRef.current = handlers;
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
 
   useEffect(() => {
     if (!enabled) return;

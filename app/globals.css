@@ -307,6 +307,21 @@
 }
 
 /* --------------------------------------------------------------------- */
+/* Coverage pages — pending-state dimming                                  */
+/* --------------------------------------------------------------------- */
+/* CoverageAgencyFilter sets body[data-coverage-pending="1"] during the    */
+/* server round-trip on agency-dropdown change. Dim coverage-page main     */
+/* content so the user sees the filter is in flight. Body data-attribute  */
+/* lets the filter component skip prop-drilling pending state through      */
+/* every server wrapper.                                                   */
+/* --------------------------------------------------------------------- */
+body[data-coverage-pending="1"] [data-coverage-content="1"] {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 120ms ease-out;
+}
+
+/* --------------------------------------------------------------------- */
 /* Print styles                                                            */
 /* --------------------------------------------------------------------- */
 /* Suppress site chrome (dateline, nav, footer, command palette, paper    */

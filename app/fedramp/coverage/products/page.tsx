@@ -152,6 +152,7 @@ export default async function FedrampCoverageProductsPage({
         />
       </div>
 
+      <div data-coverage-content="1">
       {error ? (
         <Section number="I" title="No data" lede="The FedRAMP tables aren&rsquo;t loaded.">
           <p className="border-t-2 border-foreground pt-4 max-w-prose text-sm text-muted-foreground">
@@ -194,6 +195,7 @@ export default async function FedrampCoverageProductsPage({
           )}
         </Section>
       )}
+      </div>
 
       <SnapshotFooter snapshot={snapshot} />
     </div>
