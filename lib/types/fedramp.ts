@@ -211,6 +211,75 @@ export interface AgencyAtoRow {
 }
 
 /**
+ * Counts behind the "Sleeping authorizations" hub stat — agencies sitting
+ * on a FedRAMP ATO for an AI tool their peers use for AI but they themselves
+ * report no AI use of. Drives the headline value (`sleeping_pairs`) plus the
+ * secondary "N of M AI-used products" line on the hub card.
+ */
+export interface SleepingAuthorizationCounts {
+  /** Raw count of (agency × product) pairs that are sleeping. */
+  sleeping_pairs: number;
+  /** Distinct FedRAMP products with at least one sleeping authorizer. */
+  products_with_gap: number;
+  /**
+   * Distinct FedRAMP products that have at least one AI use case anywhere
+   * in the inventory (the denominator for "of M AI-used products").
+   */
+  ai_used_products: number;
+}
+
+/**
+ * One row of the /fedramp/coverage/sleeping table: a FedRAMP product where
+ * at least one agency uses it for an AI use case and at least one other
+ * agency holds an ATO for it without reporting any AI use.
+ */
+export interface SleepingAuthorizationRow {
+  fedramp_id: string;
+  csp: string;
+  cso: string;
+  impact_level: string | null;
+  /** Distinct inventory agencies that report ≥1 AI use case using this product. */
+  lead_user_count: number;
+  /** Distinct inventory agencies that hold an ATO but report no AI use case
+   *  for this product. The "sleeping" number — the gap. */
+  sleeping_count: number;
+  /** Total distinct inventory agencies that hold an ATO for this product. */
+  total_ato_count: number;
+}
+
+/** One lead-user agency for the row-expansion panel. */
+export interface LeadUserAgencyRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string;
+  /** Count of AI use cases from this agency referencing the product (or any
+   *  child product, via the effective_fedramp_links walk). */
+  use_case_count: number;
+}
+
+/** One sleeping-authorizer agency for the row-expansion panel. */
+export interface SleepingAuthorizerRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string;
+  ato_issuance_date: string | null;
+  authorization_type: string | null;
+  /** Maturity tier from agency_ai_maturity, when available. */
+  maturity_tier: string | null;
+  /** Total AI use cases this agency has in its inventory across all products
+   *  (sanity context — "are they a heavy AI agency that just hasn't used
+   *  this tool, or barely using AI at all"). */
+  total_ai_use_cases: number;
+}
+
+/** Expansion payload for a sleeping-authorizations row. */
+export interface SleepingAuthorizationDetail {
+  fedramp_id: string;
+  leadUsers: LeadUserAgencyRow[];
+  sleepingAuthorizers: SleepingAuthorizerRow[];
+}
+
+/**
  * Per-agency drill (the VA-style story). Three lists of products plus a
  * raw token report for unresolved cases.
  */

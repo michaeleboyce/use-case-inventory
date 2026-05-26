@@ -40,6 +40,7 @@ const BOARD_OF: Record<string, "ai_to_fedramp" | "fedramp_to_ai" | "agencies"> =
   matched: "ai_to_fedramp",
   mismatched: "ai_to_fedramp",
   unused_products: "fedramp_to_ai",
+  sleeping_authorizations: "fedramp_to_ai",
   agencies_with_gaps: "agencies",
 };
 
@@ -48,6 +49,7 @@ const PANEL_HREF: Record<string, string> = {
   mismatched: "/fedramp/coverage/fit",
   agencies_with_gaps: "/fedramp/coverage/agencies",
   unused_products: "/fedramp/coverage/products",
+  sleeping_authorizations: "/fedramp/coverage/sleeping",
 };
 
 const PANEL_LABEL_OVERRIDE: Record<string, string> = {
@@ -67,6 +69,7 @@ const PANEL_LABEL_OVERRIDE: Record<string, string> = {
 const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
   { href: "/fedramp/coverage/vendors", label: "Vendor coverage" },
   { href: "/fedramp/coverage/products", label: "Unused authorizations" },
+  { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations" },
   { href: "/fedramp/coverage/fit", label: "Authorization fit" },
   { href: "/fedramp/coverage/agencies", label: "Agency gaps" },
 ];

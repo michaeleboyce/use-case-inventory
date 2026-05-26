@@ -8,7 +8,12 @@ import type {
   CoverageStat,
   CoverageUseCaseRow,
   CoverageVendorRow,
+  LeadUserAgencyRow,
   ProductAgencyEntryRow,
+  SleepingAuthorizationCounts,
+  SleepingAuthorizationDetail,
+  SleepingAuthorizationRow,
+  SleepingAuthorizerRow,
 } from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
 
@@ -88,6 +93,11 @@ export function getCoverageHubStats(): CoverageStat[] {
       .get() ?? { c: 0 }
   ).c;
 
+  // Sleeping authorizations: (agency × product) pairs where the agency has an
+  // ATO for a FedRAMP product its peers use for AI, but reports no AI use case
+  // using it. Reuses the SLEEPING_CTES building block defined below.
+  const sleeping = getSleepingAuthorizationsCounts();
+
   const snapshot = getFedrampSnapshot();
 
   return [
@@ -116,6 +126,16 @@ export function getCoverageHubStats(): CoverageStat[] {
       label: "Mapped products with zero use cases",
       value: unusedProducts,
       description: "Products linked to FedRAMP but not referenced in any agency inventory.",
+    },
+    {
+      key: "sleeping_authorizations",
+      label: "Sleeping authorizations",
+      value: sleeping.sleeping_pairs,
+      denominator: sleeping.ai_used_products,
+      description:
+        sleeping.products_with_gap > 0
+          ? `Agencies holding an ATO for a FedRAMP product their peers use for AI but reporting no AI use case using it. ${sleeping.products_with_gap} of ${sleeping.ai_used_products} AI-used products have a peer gap.`
+          : "Agencies holding an ATO for a FedRAMP product their peers use for AI but reporting no AI use case using it.",
     },
     {
       key: "snapshot_date",
@@ -588,6 +608,143 @@ export function getAgenciesWithoutUseForFedrampProduct(
        ORDER BY a.name COLLATE NOCASE ASC
     `)
     .all(fedrampId, fedrampId);
+}
+
+/* --------------------------------------------------------------------- */
+/* "Sleeping authorizations" — the FedRAMP → AI gap at the product level. */
+/* For each FedRAMP product where at least one inventory agency reports an */
+/* AI use case using it, surface other agencies that hold an ATO for the   */
+/* same product but report no AI use case using it. Backs the new hub     */
+/* card + /fedramp/coverage/sleeping drill-down.                          */
+/* --------------------------------------------------------------------- */
+
+/** SQL building block: the four CTEs that scope the "sleeping" gap to
+ *  AI-used FedRAMP products. Reused across the three query helpers below
+ *  so one definition stays canonical. */
+const SLEEPING_CTES = `
+  ${EFFECTIVE_FEDRAMP_LINKS_CTE},
+  ai_used AS (
+    SELECT DISTINCT fpl.fedramp_id
+      FROM effective_fedramp_links fpl
+      JOIN entry_product_edges epe ON epe.product_id = fpl.inventory_product_id
+  ),
+  authorized_pairs AS (
+    SELECT DISTINCT auth.fedramp_id, fal.inventory_agency_id
+      FROM fedramp_authorizations auth
+      JOIN fedramp_agency_links fal ON fal.fedramp_agency_id = auth.agency_id
+     WHERE auth.fedramp_id IN (SELECT fedramp_id FROM ai_used)
+  ),
+  using_pairs AS (
+    SELECT DISTINCT fpl.fedramp_id, epe.agency_id AS inventory_agency_id
+      FROM effective_fedramp_links fpl
+      JOIN entry_product_edges epe ON epe.product_id = fpl.inventory_product_id
+     WHERE fpl.fedramp_id IN (SELECT fedramp_id FROM ai_used)
+  ),
+  sleeping_pairs AS (
+    SELECT a.fedramp_id, a.inventory_agency_id
+      FROM authorized_pairs a
+     WHERE NOT EXISTS (
+       SELECT 1 FROM using_pairs u
+        WHERE u.fedramp_id = a.fedramp_id
+          AND u.inventory_agency_id = a.inventory_agency_id
+     )
+  )
+`;
+
+/** Counts behind the "Sleeping authorizations" hub stat card. */
+export function getSleepingAuthorizationsCounts(): SleepingAuthorizationCounts {
+  return (
+    getDb()
+      .prepare<[], SleepingAuthorizationCounts>(`
+        WITH RECURSIVE ${SLEEPING_CTES}
+        SELECT
+          (SELECT COUNT(*) FROM sleeping_pairs) AS sleeping_pairs,
+          (SELECT COUNT(DISTINCT fedramp_id) FROM sleeping_pairs) AS products_with_gap,
+          (SELECT COUNT(*) FROM ai_used) AS ai_used_products
+      `)
+      .get() ?? { sleeping_pairs: 0, products_with_gap: 0, ai_used_products: 0 }
+  );
+}
+
+/** One row per FedRAMP product with at least one sleeping authorizer.
+ *  Sorted by gap size descending so the biggest peer-adoption gaps surface
+ *  first. */
+export function getSleepingAuthorizationRows(): SleepingAuthorizationRow[] {
+  return getDb()
+    .prepare<[], SleepingAuthorizationRow>(`
+      WITH RECURSIVE ${SLEEPING_CTES}
+      SELECT
+        fp.fedramp_id,
+        fp.csp,
+        fp.cso,
+        fp.impact_level,
+        (SELECT COUNT(DISTINCT inventory_agency_id)
+           FROM using_pairs WHERE fedramp_id = fp.fedramp_id) AS lead_user_count,
+        (SELECT COUNT(*)
+           FROM sleeping_pairs WHERE fedramp_id = fp.fedramp_id) AS sleeping_count,
+        (SELECT COUNT(DISTINCT inventory_agency_id)
+           FROM authorized_pairs WHERE fedramp_id = fp.fedramp_id) AS total_ato_count
+      FROM fedramp_products fp
+      WHERE fp.fedramp_id IN (SELECT fedramp_id FROM ai_used)
+        AND EXISTS (SELECT 1 FROM sleeping_pairs WHERE fedramp_id = fp.fedramp_id)
+      ORDER BY sleeping_count DESC, total_ato_count DESC, fp.csp COLLATE NOCASE ASC
+    `)
+    .all();
+}
+
+/** Row-expansion payload for the sleeping table: lead users (left column)
+ *  + sleeping authorizers (right column). */
+export function getSleepingAuthorizationDetail(
+  fedrampId: string,
+): SleepingAuthorizationDetail {
+  const db = getDb();
+
+  const leadUsers = db
+    .prepare<[string], LeadUserAgencyRow>(`
+      WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
+      SELECT
+        a.id AS inventory_agency_id,
+        a.name AS agency_name,
+        a.abbreviation AS agency_abbreviation,
+        COUNT(*) AS use_case_count
+      FROM effective_fedramp_links fpl
+      JOIN entry_product_edges epe ON epe.product_id = fpl.inventory_product_id
+      JOIN agencies a ON a.id = epe.agency_id
+      WHERE fpl.fedramp_id = ?
+      GROUP BY a.id
+      ORDER BY use_case_count DESC, a.name COLLATE NOCASE ASC
+    `)
+    .all(fedrampId);
+
+  const sleepingAuthorizers = db
+    .prepare<[string, string], SleepingAuthorizerRow>(`
+      WITH RECURSIVE ${EFFECTIVE_FEDRAMP_LINKS_CTE}
+      SELECT
+        a.id AS inventory_agency_id,
+        a.name AS agency_name,
+        a.abbreviation AS agency_abbreviation,
+        MAX(auth.ato_issuance_date) AS ato_issuance_date,
+        MIN(auth.ato_type) AS authorization_type,
+        am.maturity_tier AS maturity_tier,
+        (SELECT COUNT(*) FROM use_cases uc WHERE uc.agency_id = a.id) AS total_ai_use_cases
+      FROM fedramp_authorizations auth
+      JOIN fedramp_agency_links fal ON fal.fedramp_agency_id = auth.agency_id
+      JOIN agencies a ON a.id = fal.inventory_agency_id
+      LEFT JOIN agency_ai_maturity am ON am.agency_id = a.id
+      WHERE auth.fedramp_id = ?
+        AND NOT EXISTS (
+          SELECT 1
+            FROM effective_fedramp_links fpl
+            JOIN entry_product_edges epe ON epe.product_id = fpl.inventory_product_id
+           WHERE fpl.fedramp_id = ?
+             AND epe.agency_id = a.id
+        )
+      GROUP BY a.id
+      ORDER BY a.name COLLATE NOCASE ASC
+    `)
+    .all(fedrampId, fedrampId);
+
+  return { fedramp_id: fedrampId, leadUsers, sleepingAuthorizers };
 }
 
 /** Top-N use cases sitting in a (high_impact_designation, impact_level)

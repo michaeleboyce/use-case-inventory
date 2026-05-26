@@ -47,6 +47,7 @@ const FEDRAMP_SECTIONS: Array<{ href: string; label: string; indent?: boolean }>
   { href: "/fedramp/coverage", label: "Coverage" },
   { href: "/fedramp/coverage/vendors", label: "Vendor coverage", indent: true },
   { href: "/fedramp/coverage/products", label: "Unused authorizations", indent: true },
+  { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations", indent: true },
   { href: "/fedramp/coverage/fit", label: "Authorization fit", indent: true },
   { href: "/fedramp/coverage/agencies", label: "Agency gaps", indent: true },
   { href: "/fedramp/curate", label: "Curate" },
