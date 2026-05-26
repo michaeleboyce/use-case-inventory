@@ -121,6 +121,12 @@ export function UseCaseFilters({
       const updated = toggleInCsv(next.get(key), value);
       if (updated.length > 0) next.set(key, updated);
       else next.delete(key);
+      // Template links live on consolidated_use_cases only — bumping
+      // entry_kind to "all" so a template selection actually narrows
+      // something (matches the drill-through behavior in lib/urls.ts).
+      if (key === "template_ids" && updated.length > 0 && !next.get("entry_kind")) {
+        next.set("entry_kind", "all");
+      }
       pushParams(next);
     },
     [currentParams, pushParams],
