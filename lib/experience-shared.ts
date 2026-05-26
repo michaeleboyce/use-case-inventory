@@ -94,10 +94,24 @@ export interface SeatExtrapolationRow {
   upper_bound: number;
 }
 
+export interface MatrixCellEntry {
+  consolidated_use_case_id: number;
+  slug: string | null;
+  ai_use_case: string;
+  commercial_product: string;
+  band_label: string;
+}
+
 export interface MatrixCell {
   highest_band_upper: number;
   highest_band_label: string;
   rows: number;
+  /**
+   * Underlying consolidated_use_cases rows that contributed to this cell,
+   * ordered largest band first then shortest description first. Up to 8 to
+   * keep the hover panel scannable.
+   */
+  entries: MatrixCellEntry[];
 }
 
 export interface AgencyToolMatrixRow {

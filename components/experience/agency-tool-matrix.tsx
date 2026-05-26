@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   MATRIX_PRODUCT_BUCKETS,
   type AgencyToolMatrixRow,
   type MatrixCell,
+  type MatrixCellEntry,
 } from "@/lib/experience-shared";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +18,8 @@ import { cn } from "@/lib/utils";
  * Cols: 7 LLM product families (MS Copilot, GitHub Copilot, ChatGPT, Claude,
  *       Gemini, Amazon Q, Agency-built).
  * Cells: the largest license band an agency has on a row mentioning that
- *        product family. Empty = no such row in the consolidated inventory.
+ *        product family. Hovering a cell exposes the underlying entries
+ *        (up to 8); clicking an entry navigates to its use-case detail.
  *
  * Source: `consolidated_use_cases.estimated_licenses_users`. The bands are
  * agency self-reported and bucketed coarsely on purpose; treat the cells as
@@ -70,8 +73,11 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
               {MATRIX_PRODUCT_BUCKETS.map((b) => {
                 const cell = row.cells[b.key];
                 return (
-                  <td key={b.key} className="px-2 py-1 text-center align-middle">
-                    {cell ? <BandPill cell={cell} /> : <Dash />}
+                  <td
+                    key={b.key}
+                    className="px-2 py-1 text-center align-middle"
+                  >
+                    {cell ? <CellHover cell={cell} /> : <Dash />}
                   </td>
                 );
               })}
@@ -86,9 +92,9 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
       </table>
       <p className="mt-3 text-xs text-muted-foreground">
         Cells show the largest license band the agency has filed on any
-        consolidated-inventory row mentioning that product family. Seats are
-        a midpoint extrapolation; an employee with multiple tools is counted
-        per tool.
+        consolidated-inventory row mentioning that product family. Hover any
+        cell to see the underlying entries; click an entry to open the
+        use-case detail.
       </p>
     </div>
   );
@@ -103,19 +109,89 @@ const BAND_TONE: Record<string, string> = {
   "50,000+": "bg-rose-500 text-white",
 };
 
-function BandPill({ cell }: { cell: MatrixCell }) {
-  const tone = BAND_TONE[cell.highest_band_label] ?? "bg-stone-100 text-stone-700";
+/**
+ * A pill in a cell, plus a CSS-only popover that opens on hover/focus
+ * listing the underlying consolidated_use_cases rows. Each row in the
+ * popover is a link to /use-cases/[slug].
+ *
+ * Uses `group/cell` so the popover only opens for this cell's pill, not
+ * a parent or sibling.
+ */
+function CellHover({ cell }: { cell: MatrixCell }) {
+  const tone =
+    BAND_TONE[cell.highest_band_label] ?? "bg-stone-100 text-stone-700";
+  const extra = Math.max(0, cell.rows - cell.entries.length);
+
   return (
-    <span
-      className={cn(
-        "inline-block rounded px-1.5 py-0.5 font-mono text-[10px] tabular-nums",
-        tone,
-      )}
-      title={`${cell.rows} row${cell.rows === 1 ? "" : "s"} filed; largest band ${cell.highest_band_label}`}
-    >
-      {cell.highest_band_label}
+    <span className="group/cell relative inline-block">
+      <button
+        type="button"
+        className={cn(
+          "inline-block cursor-pointer rounded px-1.5 py-0.5 font-mono text-[10px] tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-[var(--stamp)]",
+          tone,
+        )}
+        title={`${cell.rows} row${cell.rows === 1 ? "" : "s"} filed; largest band ${cell.highest_band_label}`}
+      >
+        {cell.highest_band_label}
+      </button>
+      {/* Popover. CSS-only: hover/focus on the wrapping span exposes it. */}
+      <span
+        role="dialog"
+        aria-label="Underlying use cases"
+        className="invisible absolute left-1/2 top-full z-50 mt-1 w-[22rem] -translate-x-1/2 border border-border bg-background p-3 text-left opacity-0 shadow-lg transition-opacity duration-100 group-hover/cell:visible group-hover/cell:opacity-100 group-focus-within/cell:visible group-focus-within/cell:opacity-100"
+      >
+        <span className="block font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          Underlying entries · top {cell.entries.length} of {cell.rows}
+        </span>
+        <span className="mt-2 block divide-y divide-border/50">
+          {cell.entries.map((e) => (
+            <EntryRow key={e.consolidated_use_case_id} entry={e} />
+          ))}
+        </span>
+        {extra > 0 ? (
+          <span className="mt-2 block text-[11px] text-muted-foreground">
+            …{extra} more not shown.
+          </span>
+        ) : null}
+      </span>
     </span>
   );
+}
+
+function EntryRow({ entry }: { entry: MatrixCellEntry }) {
+  const content = (
+    <>
+      <span className="block text-xs font-medium leading-snug text-foreground">
+        {truncate(entry.ai_use_case, 110)}
+      </span>
+      <span className="mt-0.5 flex items-baseline justify-between gap-2">
+        <span className="block truncate text-[11px] text-muted-foreground">
+          {entry.commercial_product || "—"}
+        </span>
+        <span className="block whitespace-nowrap font-mono text-[10px] text-muted-foreground">
+          {entry.band_label}
+        </span>
+      </span>
+    </>
+  );
+
+  if (entry.slug) {
+    return (
+      <Link
+        href={`/use-cases/${entry.slug}`}
+        className="block py-1.5 hover:bg-accent focus:bg-accent focus:outline-none"
+      >
+        {content}
+      </Link>
+    );
+  }
+  return <span className="block py-1.5">{content}</span>;
+}
+
+function truncate(s: string, n: number): string {
+  if (!s) return "";
+  if (s.length <= n) return s;
+  return s.slice(0, n - 1).trimEnd() + "…";
 }
 
 function Dash() {

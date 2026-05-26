@@ -281,6 +281,26 @@ const BAND_LOWER_SQL = `
   END
 `;
 
+/** TS mirror of BAND_UPPER_SQL — used to re-sort entries inside a cell. */
+function bandUpper(band: string): number {
+  switch (band) {
+    case "1-100":
+      return 100;
+    case "101-1000":
+      return 1000;
+    case "1001-5000":
+      return 5000;
+    case "5001-10,000":
+      return 10000;
+    case "10,000-50,000":
+      return 50000;
+    case "50,000+":
+      return 100000;
+    default:
+      return 0;
+  }
+}
+
 const BAND_UPPER_SQL = `
   CASE c.estimated_licenses_users
     WHEN '1-100'         THEN 100
@@ -348,7 +368,11 @@ export function getAgencyToolMatrix(): AgencyToolMatrixRow[] {
         agency_id: number;
         abbreviation: string;
         name: string;
-        commercial_product: string | null;
+        consolidated_use_case_id: number;
+        slug: string | null;
+        ai_use_case: string;
+        raw_product: string;
+        commercial_product: string;
         band: string;
         upper: number;
         midpoint: number;
@@ -357,6 +381,10 @@ export function getAgencyToolMatrix(): AgencyToolMatrixRow[] {
       SELECT a.id AS agency_id,
              a.abbreviation,
              a.name,
+             c.id   AS consolidated_use_case_id,
+             c.slug AS slug,
+             COALESCE(c.ai_use_case, '')        AS ai_use_case,
+             COALESCE(c.commercial_product, '') AS raw_product,
              ${productBucketsSql()} AS commercial_product,
              c.estimated_licenses_users AS band,
              ${BAND_UPPER_SQL}    AS upper,
@@ -403,6 +431,7 @@ export function getAgencyToolMatrix(): AgencyToolMatrixRow[] {
   }
 
   const byAgency = new Map<number, AgencyToolMatrixRow>();
+  const MAX_ENTRIES_PER_CELL = 8;
   for (const r of rows) {
     if (!byAgency.has(r.agency_id)) {
       byAgency.set(r.agency_id, {
@@ -415,20 +444,47 @@ export function getAgencyToolMatrix(): AgencyToolMatrixRow[] {
     }
     const agencyRow = byAgency.get(r.agency_id)!;
     const buckets = bucketsForProduct(r.commercial_product ?? "");
+    const entry = {
+      consolidated_use_case_id: r.consolidated_use_case_id,
+      slug: r.slug,
+      ai_use_case: r.ai_use_case,
+      commercial_product: r.raw_product,
+      band_label: r.band,
+    };
     for (const k of buckets) {
       const existing = agencyRow.cells[k];
-      if (!existing || r.upper > existing.highest_band_upper) {
+      if (!existing) {
         agencyRow.cells[k] = {
           highest_band_upper: r.upper,
           highest_band_label: r.band,
-          rows: (existing?.rows ?? 0) + 1,
+          rows: 1,
+          entries: [entry],
         };
       } else {
         existing.rows += 1;
+        if (r.upper > existing.highest_band_upper) {
+          existing.highest_band_upper = r.upper;
+          existing.highest_band_label = r.band;
+        }
+        existing.entries.push(entry);
       }
-      // Count midpoint once per (agency, product); midpoint is the maximum
-      // band so the matrix totals don't double-count agencies who file the
-      // same tool in multiple rows.
+    }
+  }
+
+  // Sort and trim entries per cell: largest band first, then shortest
+  // description first so the prominent rows surface in the hover panel.
+  for (const agencyRow of byAgency.values()) {
+    for (const cell of Object.values(agencyRow.cells)) {
+      if (!cell) continue;
+      cell.entries.sort((a, b) => {
+        const ba = bandUpper(a.band_label);
+        const bb = bandUpper(b.band_label);
+        if (bb !== ba) return bb - ba;
+        return a.ai_use_case.length - b.ai_use_case.length;
+      });
+      if (cell.entries.length > MAX_ENTRIES_PER_CELL) {
+        cell.entries = cell.entries.slice(0, MAX_ENTRIES_PER_CELL);
+      }
     }
   }
 
