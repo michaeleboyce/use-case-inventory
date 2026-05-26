@@ -26,6 +26,7 @@ const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
 const READINESS_SECTIONS: Array<{ href: string; label: string }> = [
   { href: "/readiness", label: "Overview" },
   { href: "/readiness/access", label: "AI Access & Scale" },
+  { href: "/experience", label: "AI Experience" },
   { href: "/readiness/methodology", label: "Methodology" },
 ];
 

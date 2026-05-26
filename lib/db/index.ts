@@ -147,6 +147,32 @@ export {
   getLinkQueueRows,
 } from "./fedramp";
 export {
+  getGenAiHeadlines,
+  getOmbIfpCrosstab,
+  getGenAiTimeline,
+  getAgencyGenAiCounts,
+  getSeatExtrapolationByAgency,
+  getAgencyToolMatrix,
+  getYearCompareGenAi,
+  GENAI_DEFINITIONS,
+  GENAI_DEFINITION_LABELS,
+  GENAI_DEFINITION_SHORT,
+  GENAI_DEFINITION_SOURCE,
+  MATRIX_PRODUCT_BUCKETS,
+} from "./experience";
+export type {
+  GenAiDefinition,
+  GenAiHeadline,
+  OmbIfpCrosstab,
+  GenAiTimelinePoint,
+  AgencyGenAiRow,
+  SeatExtrapolationRow,
+  AgencyToolMatrixRow,
+  MatrixCell,
+  MatrixProductKey,
+  YearCompareGenAi,
+} from "./experience";
+export {
   getYearComparisonAggregates,
   getLineageBreakdown,
   getPerAgencyLineage,
