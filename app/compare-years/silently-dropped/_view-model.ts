@@ -54,6 +54,90 @@ export interface SilentlyDroppedViewModel {
   /** Live (production/implementation) GenAI use cases silently dropped — the
    *  sharpest subset of the finding. Excludes the dissolved agency. */
   liveGenAi: SilentlyDroppedGenAiRow[];
+  /** `liveGenAi` collapsed by (agency, use_case_name). Several agencies —
+   *  Education most of all — filed many distinct task-level entries under a
+   *  single repeated name ("Generative AI Usage"). Grouping keeps the table
+   *  honest: one row per named capability, with a count of how many filings
+   *  share that name, instead of 49 identical-looking ED rows drowning the
+   *  ~80 distinct systems. */
+  liveGenAiGroups: SilentlyDroppedGenAiGroup[];
+}
+
+/** A run of `SilentlyDroppedGenAiRow`s sharing the same (agency, name). */
+export interface SilentlyDroppedGenAiGroup {
+  /** Stable group key, `${agency}|${name}` — used for the React key. */
+  key: string;
+  /** Representative 2024 id (first row in the group). */
+  uc_2024_id: number;
+  agency_abbreviation: string | null;
+  agency_name: string | null;
+  use_case_name: string | null;
+  /** Number of filings collapsed into this group (1 for most). */
+  count: number;
+  /** Distinct bureaus the filings span, sorted. */
+  bureaus: string[];
+  /** Shared 2024 dev stage, or null if the group mixes stages. */
+  dev_stage: string | null;
+  /** Single named tool if the group agrees, else null (mixed / unnamed). */
+  tool_product_name: string | null;
+  ai_sophistication: string | null;
+}
+
+/** Collapse live-GenAI rows by (agency, use_case_name). Single-row groups
+ *  pass through unchanged (count 1); multi-row clusters fold into one entry
+ *  carrying the count and the union of their bureaus. */
+function groupLiveGenAi(
+  rows: SilentlyDroppedGenAiRow[],
+): SilentlyDroppedGenAiGroup[] {
+  type Acc = SilentlyDroppedGenAiGroup & {
+    _stages: Set<string>;
+    _tools: Set<string>;
+  };
+  const map = new Map<string, Acc>();
+  for (const r of rows) {
+    const key = `${r.agency_abbreviation ?? "?"}|${r.use_case_name ?? "?"}`;
+    let g = map.get(key);
+    if (!g) {
+      g = {
+        key,
+        uc_2024_id: r.uc_2024_id,
+        agency_abbreviation: r.agency_abbreviation,
+        agency_name: r.agency_name,
+        use_case_name: r.use_case_name,
+        count: 0,
+        bureaus: [],
+        dev_stage: null,
+        tool_product_name: null,
+        ai_sophistication: r.ai_sophistication,
+        _stages: new Set<string>(),
+        _tools: new Set<string>(),
+      };
+      map.set(key, g);
+    }
+    g.count += 1;
+    if (r.bureau && !g.bureaus.includes(r.bureau)) g.bureaus.push(r.bureau);
+    if (r.dev_stage) g._stages.add(r.dev_stage);
+    if (r.tool_product_name) g._tools.add(r.tool_product_name);
+  }
+
+  const out: SilentlyDroppedGenAiGroup[] = [];
+  for (const g of map.values()) {
+    g.bureaus.sort((a, b) => a.localeCompare(b));
+    g.dev_stage = g._stages.size === 1 ? [...g._stages][0] : null;
+    g.tool_product_name = g._tools.size === 1 ? [...g._tools][0] : null;
+    const { _stages: _s, _tools: _t, ...clean } = g;
+    void _s;
+    void _t;
+    out.push(clean);
+  }
+  // Agency asc, then biggest clusters first within an agency, then name.
+  out.sort(
+    (a, b) =>
+      (a.agency_abbreviation ?? "").localeCompare(b.agency_abbreviation ?? "") ||
+      b.count - a.count ||
+      (a.use_case_name ?? "").localeCompare(b.use_case_name ?? ""),
+  );
+  return out;
 }
 
 /** Use cases whose name appears in this set are skipped when curating
@@ -164,5 +248,6 @@ export async function buildSilentlyDroppedViewModel(): Promise<SilentlyDroppedVi
     allRows,
     examples,
     liveGenAi,
+    liveGenAiGroups: groupLiveGenAi(liveGenAi),
   };
 }

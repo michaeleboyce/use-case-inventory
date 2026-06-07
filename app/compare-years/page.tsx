@@ -36,6 +36,7 @@ export default async function CompareYearsPage() {
     tags2024,
     genaiByAgency,
     silentlyDroppedGenAiCount,
+    silentlyDroppedGenAiDistinct,
   } = vm;
 
   const genai2025Total = genaiByAgency.reduce((a, r) => a + r.genai_2025, 0);
@@ -331,19 +332,23 @@ export default async function CompareYearsPage() {
           <GenAiByAgencyTable rows={genaiByAgency} />
         </div>
 
-        {silentlyDroppedGenAiCount > 0 ? (
+        {silentlyDroppedGenAiDistinct > 0 ? (
           <div className="mt-10 border-l-4 border-[var(--stamp)] bg-stone-50 px-5 py-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
               The sharp edge
             </p>
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-foreground">
               <span className="font-semibold text-[var(--stamp)]">
-                {formatNumber(silentlyDroppedGenAiCount)}
+                {formatNumber(silentlyDroppedGenAiDistinct)}
               </span>{" "}
-              of the dropped use cases were{" "}
+              distinct{" "}
               <em className="italic">live generative-AI capabilities</em> — in
               production or implementation in 2024, IFP-tagged as GenAI, and gone
-              from the 2025 inventory without being filed as Retired.{" "}
+              from the 2025 inventory without being filed as Retired
+              {silentlyDroppedGenAiCount > silentlyDroppedGenAiDistinct
+                ? ` (${formatNumber(silentlyDroppedGenAiCount)} filings in all)`
+                : ""}
+              .{" "}
               <Link
                 href="/compare-years/silently-dropped#live-genai"
                 className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"

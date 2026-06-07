@@ -122,11 +122,21 @@ export default async function SilentlyDroppedPage() {
     allRows,
     examples,
     liveGenAi,
+    liveGenAiGroups,
   } = vm;
 
   // Display-rounded headline counts.
   const headlineDrop = roundTo(summary.nonUsaidActiveDropped, 10);
   const headlineActive = roundTo(summary.activeDropped, 10);
+
+  // Live-GenAI: total filings vs. distinct named capabilities. Several
+  // agencies (Education most of all) filed many task-level entries under one
+  // repeated name, so the raw row count overstates the number of systems.
+  const liveGenAiFilings = liveGenAi.length;
+  const liveGenAiDistinct = liveGenAiGroups.length;
+  const liveGenAiLargestCluster = liveGenAiGroups.reduce<
+    (typeof liveGenAiGroups)[number] | null
+  >((best, g) => (best === null || g.count > best.count ? g : best), null);
 
   // Stage breakdown rendering helpers.
   const maxStageCount = Math.max(...byStage.map((b) => b.count), 1);
@@ -403,17 +413,41 @@ export default async function SilentlyDroppedPage() {
         <p className="max-w-prose text-[0.95rem] leading-[1.6] text-foreground/85">
           Of the silently-dropped population,{" "}
           <span className="font-medium text-[var(--stamp)]">
-            {formatNumber(liveGenAi.length)}
+            {formatNumber(liveGenAiDistinct)}
           </span>{" "}
-          were <em className="italic">live generative-AI capabilities</em> — IFP
-          tagged them as GenAI from their 2024 narrative, and their reported 2024
-          stage was production or implementation, not planning or research. These
-          are not abandoned experiments; they are the working chatbots,
-          assistants, and document tools an agency described as operational one
-          year and omitted the next, with no Retired marker.
+          distinct <em className="italic">live generative-AI capabilities</em>{" "}
+          — IFP tagged them as GenAI from their 2024 narrative, and their
+          reported 2024 stage was production or implementation, not planning or
+          research. These are not abandoned experiments; they are the working
+          chatbots, assistants, and document tools an agency described as
+          operational one year and omitted the next, with no Retired marker.
         </p>
+        {liveGenAiFilings > liveGenAiDistinct && liveGenAiLargestCluster ? (
+          <p className="mt-3 max-w-prose text-[0.85rem] leading-[1.55] text-muted-foreground">
+            That is {formatNumber(liveGenAiDistinct)} distinct capabilities
+            across {formatNumber(liveGenAiFilings)} individual filings: a few
+            agencies filed many task-level entries under one repeated name. The{" "}
+            {liveGenAiLargestCluster.agency_name ??
+              liveGenAiLargestCluster.agency_abbreviation}{" "}
+            alone filed{" "}
+            <span className="font-medium text-foreground">
+              {formatNumber(liveGenAiLargestCluster.count)}
+            </span>{" "}
+            of them under a single label,{" "}
+            <em className="italic">
+              &ldquo;{liveGenAiLargestCluster.use_case_name}&rdquo;
+            </em>
+            {liveGenAiLargestCluster.bureaus.length > 1
+              ? ` — one per bureau, across ${formatNumber(
+                  liveGenAiLargestCluster.bureaus.length,
+                )} offices`
+              : ""}
+            . The table collapses each repeated name into one row with a filing
+            count, so distinct systems aren&apos;t drowned out.
+          </p>
+        ) : null}
 
-        {liveGenAi.length > 0 ? (
+        {liveGenAiGroups.length > 0 ? (
           <Figure
             className="mt-8"
             eyebrow="Fig. 1a · Dropped live GenAI use cases"
@@ -422,8 +456,10 @@ export default async function SilentlyDroppedPage() {
                 Non-USAID only. Each row was IFP-tagged{" "}
                 <code>is_generative_ai = 1</code> in{" "}
                 <code>use_case_tags_2024_canonical</code> and filed in a live
-                2024 deployment stage. Tool and sophistication come from the
-                same IFP tag.
+                2024 deployment stage. One row per named capability; a{" "}
+                <span className="text-[var(--stamp)]">×N</span> badge marks
+                names an agency filed more than once (one per bureau or task).
+                Tool and sophistication come from the same IFP tag.
               </>
             }
           >
@@ -446,29 +482,37 @@ export default async function SilentlyDroppedPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {liveGenAi.map((r) => (
+                  {liveGenAiGroups.map((g) => (
                     <tr
-                      key={r.uc_2024_id}
+                      key={g.key}
                       className="border-b border-border align-top"
                     >
                       <td className="px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--stamp)]">
-                        {r.agency_abbreviation ?? "—"}
+                        {g.agency_abbreviation ?? "—"}
                       </td>
                       <td className="px-3 py-3">
                         <span className="font-display text-[1rem] italic leading-tight text-foreground">
-                          {r.use_case_name ?? "Untitled"}
+                          {g.use_case_name ?? "Untitled"}
                         </span>
-                        {r.bureau ? (
-                          <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-                            {r.bureau}
+                        {g.count > 1 ? (
+                          <span className="ml-2 inline-block rounded-sm bg-[var(--stamp)]/[0.12] px-1.5 py-0.5 align-middle font-mono text-[10px] font-medium not-italic tracking-[0.04em] text-[var(--stamp)]">
+                            ×{g.count}
                           </span>
                         ) : null}
+                        <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                          {g.count > 1
+                            ? `${formatNumber(g.bureaus.length)} ${
+                                g.bureaus.length === 1 ? "bureau" : "bureaus"
+                              }`
+                            : (g.bureaus[0] ?? "")}
+                        </span>
                       </td>
                       <td className="px-3 py-3 font-mono text-[11px] text-muted-foreground">
-                        {r.dev_stage ?? "—"}
+                        {g.dev_stage ?? (g.count > 1 ? "various" : "—")}
                       </td>
                       <td className="px-3 py-3 font-mono text-[11px] text-muted-foreground">
-                        {r.tool_product_name ?? "—"}
+                        {g.tool_product_name ??
+                          (g.count > 1 ? "various / unnamed" : "—")}
                       </td>
                     </tr>
                   ))}

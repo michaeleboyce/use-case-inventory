@@ -60,8 +60,13 @@ export interface CompareYearsViewModel {
   tags2024: Tags2024Headlines;
   /** Per-agency 2024-vs-2025 IFP-tagged GenAI counts + delta. */
   genaiByAgency: AgencyYearCompareGenAiRow[];
-  /** Count of live GenAI use cases silently dropped from the 2025 cycle. */
+  /** Count of live GenAI *filings* silently dropped from the 2025 cycle.
+   *  Includes repeated-name entries (e.g. ED's 49 "Generative AI Usage"). */
   silentlyDroppedGenAiCount: number;
+  /** Distinct live-GenAI *capabilities* — filings collapsed by (agency,
+   *  name). The honest headline count; `silentlyDroppedGenAiCount` overstates
+   *  it because a few agencies filed many entries under one repeated name. */
+  silentlyDroppedGenAiDistinct: number;
 }
 
 /** A fallback total row, used only if the table is unexpectedly empty. */
@@ -84,7 +89,15 @@ export async function buildCompareYearsViewModel(): Promise<CompareYearsViewMode
   const retired = getRetiredBreakdown();
   const tags2024 = getTags2024Headlines();
   const genaiByAgency = getYearCompareGenAiByAgency();
-  const silentlyDroppedGenAiCount = getSilentlyDroppedGenAiRows().length;
+  const liveGenAiRows = getSilentlyDroppedGenAiRows();
+  const silentlyDroppedGenAiCount = liveGenAiRows.length;
+  // Distinct named capabilities: collapse by (agency, use_case_name). Same
+  // key the silently-dropped roster table groups on, kept in sync by format.
+  const silentlyDroppedGenAiDistinct = new Set(
+    liveGenAiRows.map(
+      (r) => `${r.agency_abbreviation ?? "?"}|${r.use_case_name ?? "?"}`,
+    ),
+  ).size;
 
   const total =
     aggregates.find((r) => r.dimension === "total") ?? EMPTY_TOTAL;
@@ -110,5 +123,6 @@ export async function buildCompareYearsViewModel(): Promise<CompareYearsViewMode
     tags2024,
     genaiByAgency,
     silentlyDroppedGenAiCount,
+    silentlyDroppedGenAiDistinct,
   };
 }
