@@ -19,8 +19,10 @@ import {
   getMaturityTierSummary,
   getRecentlyModifiedAgencies,
   getTopProducts,
+  getTags2024Headlines,
 } from "@/lib/db";
 import { getHeadlineStats } from "@/lib/readiness";
+import type { Tags2024Headlines } from "@/lib/types";
 
 type Maturity = ReturnType<typeof getAgencyMaturity>;
 type Tiers = ReturnType<typeof getMaturityTierSummary>;
@@ -42,6 +44,7 @@ export interface HomeViewModel {
   codingEntries: number;
   agenticEntries: number;
   genAIEntries: number;
+  tags2024: Tags2024Headlines;
   reportingAgencies: number;
   totalEntries: number;
   agenciesWithEnterpriseLLM: number;
@@ -69,6 +72,7 @@ export async function buildHomeViewModel(): Promise<HomeViewModel> {
   const recent = getRecentlyModifiedAgencies(5);
   const readinessHeadline = getHeadlineStats();
   const categories = getCategoryDistribution();
+  const tags2024 = getTags2024Headlines();
 
   const reportingAgencies = maturity.length;
   const totalEntries = stats.total_use_cases + stats.total_consolidated;
@@ -123,6 +127,7 @@ export async function buildHomeViewModel(): Promise<HomeViewModel> {
       0,
     ),
     genAIEntries: stats.total_genai_entries,
+    tags2024,
     topCategories: categories.slice(0, 6),
     topProductsData: topProducts.map((product) => ({
       id: product.id,

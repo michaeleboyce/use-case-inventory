@@ -114,8 +114,15 @@ function StageBar({ value, max }: { value: number; max: number }) {
 
 export default async function SilentlyDroppedPage() {
   const vm = await buildSilentlyDroppedViewModel();
-  const { summary, byStage, byAgency, byAgencyExpanded, allRows, examples } =
-    vm;
+  const {
+    summary,
+    byStage,
+    byAgency,
+    byAgencyExpanded,
+    allRows,
+    examples,
+    liveGenAi,
+  } = vm;
 
   // Display-rounded headline counts.
   const headlineDrop = roundTo(summary.nonUsaidActiveDropped, 10);
@@ -381,6 +388,95 @@ export default async function SilentlyDroppedPage() {
             })}
           </div>
         </Figure>
+      </Section>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § IIa — LIVE GENERATIVE AI THAT VANISHED                      */}
+      {/* ------------------------------------------------------------ */}
+      <div id="live-genai" className="scroll-mt-24" />
+      <Section
+        number="IIa"
+        title="Live generative AI that vanished"
+        source="derived"
+        lede="The sharpest subset: use cases IFP tagged as generative AI that were in production or implementation in 2024 — and then simply weren't in the 2025 filing."
+      >
+        <p className="max-w-prose text-[0.95rem] leading-[1.6] text-foreground/85">
+          Of the silently-dropped population,{" "}
+          <span className="font-medium text-[var(--stamp)]">
+            {formatNumber(liveGenAi.length)}
+          </span>{" "}
+          were <em className="italic">live generative-AI capabilities</em> — IFP
+          tagged them as GenAI from their 2024 narrative, and their reported 2024
+          stage was production or implementation, not planning or research. These
+          are not abandoned experiments; they are the working chatbots,
+          assistants, and document tools an agency described as operational one
+          year and omitted the next, with no Retired marker.
+        </p>
+
+        {liveGenAi.length > 0 ? (
+          <Figure
+            className="mt-8"
+            eyebrow="Fig. 1a · Dropped live GenAI use cases"
+            caption={
+              <>
+                Non-USAID only. Each row was IFP-tagged{" "}
+                <code>is_generative_ai = 1</code> in{" "}
+                <code>use_case_tags_2024_canonical</code> and filed in a live
+                2024 deployment stage. Tool and sophistication come from the
+                same IFP tag.
+              </>
+            }
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-foreground">
+                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                      Agency
+                    </th>
+                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                      Use case
+                    </th>
+                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                      2024 stage
+                    </th>
+                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                      Tool
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {liveGenAi.map((r) => (
+                    <tr
+                      key={r.uc_2024_id}
+                      className="border-b border-border align-top"
+                    >
+                      <td className="px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--stamp)]">
+                        {r.agency_abbreviation ?? "—"}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="font-display text-[1rem] italic leading-tight text-foreground">
+                          {r.use_case_name ?? "Untitled"}
+                        </span>
+                        {r.bureau ? (
+                          <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                            {r.bureau}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-3 font-mono text-[11px] text-muted-foreground">
+                        {r.dev_stage ?? "—"}
+                      </td>
+                      <td className="px-3 py-3 font-mono text-[11px] text-muted-foreground">
+                        {r.tool_product_name ?? "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Figure>
+        ) : null}
       </Section>
 
       {/* ------------------------------------------------------------ */}

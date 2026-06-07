@@ -37,6 +37,7 @@ import {
   type OmbIfpCrosstab,
   type SeatExtrapolationRow,
   type YearCompareGenAi,
+  type AgencyYearCompareGenAiRow,
 } from "../experience-shared";
 
 // Re-export for callers importing from @/lib/db.
@@ -56,6 +57,7 @@ export {
   type MatrixCell,
   type MatrixProductKey,
   type YearCompareGenAi,
+  type AgencyYearCompareGenAiRow,
 } from "../experience-shared";
 
 /**
@@ -762,15 +764,15 @@ function formatPct(x: number): string {
 }
 
 /* ------------------------------------------------------------------ */
-/* 2024 vs 2025 GenAI counts (heuristic for 2024)                       */
+/* 2024 vs 2025 GenAI counts                                            */
 /* ------------------------------------------------------------------ */
 
 /**
- * 2024 has no IFP tag layer yet (see docs/plans/2024-tagging/PLAN.md). For now
- * we approximate GenAI in 2024 via a name/narrative LIKE-match — the same
- * heuristic the auto_tag.py seed uses on 2024 rows. This is intentionally a
- * single number, not a per-definition slice, because the four IFP definitions
- * only exist as derived columns on 2025.
+ * 2024 now has an IFP tag layer (`use_case_tags_2024_canonical`, the
+ * highest-wave tag per 2024 use case). `count_2024_tagged` is the
+ * `is_generative_ai = 1` count there — directly comparable to the 2025
+ * `ifp_genai` definition, since both are IFP narrative re-tags rather than
+ * OMB self-classification.
  */
 export function getYearCompareGenAi(): YearCompareGenAi {
   const headlines = getGenAiHeadlines();
@@ -781,21 +783,11 @@ export function getYearCompareGenAi(): YearCompareGenAi {
     getDb()
       .prepare<[], { n: number }>(`SELECT COUNT(*) AS n FROM use_cases_2024`)
       .get()?.n ?? 0;
-  const heuristic = getDb()
+  const count_2024_tagged = getDb()
     .prepare<[], { n: number }>(`
-      SELECT COUNT(*) AS n FROM use_cases_2024
-       WHERE LOWER(COALESCE(commercial_ai,''))     LIKE '%generative%'
-          OR LOWER(COALESCE(purpose_benefits,''))  LIKE '%generative ai%'
-          OR LOWER(COALESCE(outputs,''))           LIKE '%generative ai%'
-          OR LOWER(COALESCE(outputs,''))           LIKE '%llm%'
-          OR LOWER(COALESCE(outputs,''))           LIKE '%language model%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%gpt%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%copilot%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%chatgpt%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%llm%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%chatbot%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%claude%'
-          OR LOWER(COALESCE(use_case_name,''))     LIKE '%gemini%'
+      SELECT COUNT(*) AS n
+        FROM use_case_tags_2024_canonical
+       WHERE is_generative_ai = 1
     `)
     .get()?.n ?? 0;
 
@@ -803,9 +795,47 @@ export function getYearCompareGenAi(): YearCompareGenAi {
   for (const h of headlines) counts_2025_by_definition[h.definition] = h.total;
 
   return {
-    count_2024_heuristic: heuristic,
+    count_2024_tagged,
     total_2024,
     total_2025,
     counts_2025_by_definition,
   };
+}
+
+/**
+ * Per-agency 2024-vs-2025 IFP-tagged GenAI counts plus net change. Both sides
+ * use the IFP `is_generative_ai` tag (2024 from `use_case_tags_2024_canonical`,
+ * 2025 from `use_case_tags`) so the comparison is like-for-like. Agencies with
+ * at least one GenAI use case in either cycle appear; ordered by 2025 volume.
+ */
+export function getYearCompareGenAiByAgency(): AgencyYearCompareGenAiRow[] {
+  return getDb()
+    .prepare<[], AgencyYearCompareGenAiRow>(`
+      WITH g24 AS (
+        SELECT u.agency_id AS agency_id, COUNT(*) AS n
+          FROM use_case_tags_2024_canonical c
+          JOIN use_cases_2024 u ON u.id = c.use_case_id_2024
+         WHERE c.is_generative_ai = 1
+         GROUP BY u.agency_id
+      ),
+      g25 AS (
+        SELECT uc.agency_id AS agency_id, COUNT(*) AS n
+          FROM use_cases uc
+          JOIN use_case_tags t ON t.use_case_id = uc.id
+         WHERE t.is_generative_ai = 1
+         GROUP BY uc.agency_id
+      )
+      SELECT a.id                       AS agency_id,
+             a.abbreviation             AS abbreviation,
+             a.name                     AS name,
+             COALESCE(g24.n, 0)         AS genai_2024,
+             COALESCE(g25.n, 0)         AS genai_2025,
+             COALESCE(g25.n, 0) - COALESCE(g24.n, 0) AS delta
+        FROM agencies a
+        LEFT JOIN g24 ON g24.agency_id = a.id
+        LEFT JOIN g25 ON g25.agency_id = a.id
+       WHERE COALESCE(g24.n, 0) > 0 OR COALESCE(g25.n, 0) > 0
+       ORDER BY genai_2025 DESC, a.name COLLATE NOCASE ASC
+    `)
+    .all();
 }

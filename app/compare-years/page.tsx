@@ -6,6 +6,7 @@ import { YearComparisonChart } from "@/components/charts/year-comparison-chart";
 import { LineageBreakdownChart } from "@/components/charts/lineage-breakdown-chart";
 import { buildCompareYearsViewModel } from "./_view-model";
 import { PerAgencyTable } from "./_sections/per-agency-table";
+import { GenAiByAgencyTable } from "./_sections/genai-by-agency-table";
 
 export const metadata = {
   title: "2024 ↔ 2025 · Federal AI Use Case Inventory",
@@ -24,8 +25,21 @@ const LINEAGE_LABELS: Record<string, string> = {
 
 export default async function CompareYearsPage() {
   const vm = await buildCompareYearsViewModel();
-  const { total, stageRows, agencyRows, lineage, lineageTotal, perAgency, retired } =
-    vm;
+  const {
+    total,
+    stageRows,
+    agencyRows,
+    lineage,
+    lineageTotal,
+    perAgency,
+    retired,
+    tags2024,
+    genaiByAgency,
+    silentlyDroppedGenAiCount,
+  } = vm;
+
+  const genai2025Total = genaiByAgency.reduce((a, r) => a + r.genai_2025, 0);
+  const genaiDelta = genai2025Total - tags2024.genai;
 
   // Per-agency chart rows from the aggregate `year_comparison` rollup.
   const chartRows = agencyRows
@@ -250,6 +264,95 @@ export default async function CompareYearsPage() {
             </div>
           ))}
         </div>
+      </Section>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § IIa — GENERATIVE AI, YEAR OVER YEAR                         */}
+      {/* ------------------------------------------------------------ */}
+      <Section
+        number="IIa"
+        title="Generative AI, year over year"
+        source="derived"
+        lede="The one AI-type comparison that 2024 and 2025 now share — because IFP re-tagged both cycles with the same definition."
+      >
+        <p className="max-w-prose text-[0.95rem] leading-[1.6] text-foreground/85">
+          The OMB inventory&apos;s AI-type field is not comparable across cycles
+          (see §V). But IFP independently tagged generative AI from the narrative
+          columns in <em className="italic">both</em> years using one definition,
+          so this slice <em className="italic">is</em> like-for-like.{" "}
+          <span className="font-medium text-foreground">
+            {formatNumber(tags2024.genai)}
+          </span>{" "}
+          IFP-tagged GenAI use cases in 2024 rose to{" "}
+          <span className="font-medium text-foreground">
+            {formatNumber(genai2025Total)}
+          </span>{" "}
+          in 2025 —{" "}
+          <span className="font-medium text-[var(--verified)]">
+            {genaiDelta > 0 ? "+" : ""}
+            {formatNumber(genaiDelta)}
+          </span>{" "}
+          net.
+        </p>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <InsightCard
+            kicker="2024 · IFP-tagged"
+            value={formatNumber(tags2024.genai)}
+            accent="ink"
+            headline={<>Generative-AI use cases in the 2024 inventory.</>}
+            subtext={`Of ${formatNumber(tags2024.total)} use cases IFP tagged in the prior cycle.`}
+          />
+          <InsightCard
+            kicker="2025 · IFP-tagged"
+            value={formatNumber(genai2025Total)}
+            accent="ink"
+            headline={<>Generative-AI use cases in the 2025 inventory.</>}
+            subtext="Same is_generative_ai tag, applied to the current cycle."
+          />
+          <InsightCard
+            kicker="Net change"
+            value={`${genaiDelta > 0 ? "+" : ""}${formatNumber(genaiDelta)}`}
+            accent="verified"
+            headline={<>Growth in IFP-tagged GenAI, 2024 → 2025.</>}
+            subtext="A like-for-like comparison — both years tagged by the same IFP narrative definition."
+          />
+        </div>
+
+        <div className="mt-12">
+          <Eyebrow color="stamp">Fig. 1a · Per-agency GenAI ledger</Eyebrow>
+          <p className="mt-2 mb-4 max-w-prose text-xs text-muted-foreground">
+            Sortable. IFP-tagged generative-AI use-case counts per agency in each
+            cycle, and the net change. Both columns use the{" "}
+            <code>is_generative_ai</code> tag (2024 from{" "}
+            <code>use_case_tags_2024_canonical</code>, 2025 from{" "}
+            <code>use_case_tags</code>). Click a row for the agency detail page.
+          </p>
+          <GenAiByAgencyTable rows={genaiByAgency} />
+        </div>
+
+        {silentlyDroppedGenAiCount > 0 ? (
+          <div className="mt-10 border-l-4 border-[var(--stamp)] bg-stone-50 px-5 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              The sharp edge
+            </p>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-foreground">
+              <span className="font-semibold text-[var(--stamp)]">
+                {formatNumber(silentlyDroppedGenAiCount)}
+              </span>{" "}
+              of the dropped use cases were{" "}
+              <em className="italic">live generative-AI capabilities</em> — in
+              production or implementation in 2024, IFP-tagged as GenAI, and gone
+              from the 2025 inventory without being filed as Retired.{" "}
+              <Link
+                href="/compare-years/silently-dropped#live-genai"
+                className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+              >
+                See the roster →
+              </Link>
+            </p>
+          </div>
+        ) : null}
       </Section>
 
       {/* ------------------------------------------------------------ */}
@@ -496,13 +599,17 @@ const CAVEATS: Array<{ title: string; body: React.ReactNode }> = [
     ),
   },
   {
-    title: "AI-type classification did not exist in 2024",
+    title: "AI-type is comparable only for generative AI",
     body: (
       <>
-        The 2025 inventory introduced an AI-type / technique field (generative,
-        predictive, computer vision, and so on). There is no 2024 equivalent,
-        so any view of the AI-type mix is a single-cycle snapshot — it cannot
-        be trended.
+        The 2025 inventory introduced an OMB AI-type / technique field
+        (generative, predictive, computer vision, and so on) with no 2024
+        equivalent, so the <em className="italic">filed</em> AI-type mix cannot
+        be trended. The exception is generative AI: IFP re-tagged both cycles
+        from their narrative columns using one definition (the{" "}
+        <code>is_generative_ai</code> tag), which makes the GenAI count in §IIa a
+        genuine year-over-year comparison. The other AI types remain
+        single-cycle snapshots.
       </>
     ),
   },

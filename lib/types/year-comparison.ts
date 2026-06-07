@@ -139,3 +139,34 @@ export interface SilentlyDroppedRow {
   /** True for USAID rows — caller can render with a marker or filter out. */
   is_dissolved: boolean;
 }
+
+/**
+ * IFP-tagged 2024 headline counts from `use_case_tags_2024_canonical` — the
+ * canonical (highest-wave) tag per 2024 use case. Surfaced alongside the 2025
+ * numbers so readers can see the prior-cycle baseline.
+ */
+export interface Tags2024Headlines {
+  /** All 2024 use cases with a canonical IFP tag. */
+  total: number;
+  /** Of those, tagged is_generative_ai = 1. */
+  genai: number;
+  /** Of those, tagged is_enterprise_wide = 1. */
+  enterprise_wide: number;
+}
+
+/**
+ * One silently-dropped use case that IFP tagged as generative AI and that was
+ * in a live (production/implementation) 2024 deployment stage — i.e. an active
+ * GenAI capability that vanished from the 2025 inventory without being filed as
+ * Retired.
+ */
+export interface SilentlyDroppedGenAiRow {
+  uc_2024_id: number;
+  agency_abbreviation: string | null;
+  agency_name: string | null;
+  use_case_name: string | null;
+  dev_stage: string | null;
+  bureau: string | null;
+  tool_product_name: string | null;
+  ai_sophistication: string | null;
+}

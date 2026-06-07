@@ -21,6 +21,8 @@ import type {
   SilentlyDroppedStageBucket,
   SilentlyDroppedStageRow,
   SilentlyDroppedSummary,
+  SilentlyDroppedGenAiRow,
+  Tags2024Headlines,
   YearComparisonRow,
 } from "../types";
 
@@ -59,6 +61,22 @@ const STAGE_BUCKET_2024_SQL = `
 `;
 
 const DISSOLVED_AGENCY_ABBR = "USAID";
+
+/**
+ * 2024 deployment stages that count as a *live* capability for the
+ * silently-dropped-GenAI callout — production/implementation, not planning or
+ * research. Mirrors the dev_stage set in the feature spec.
+ */
+const LIVE_DEV_STAGES_2024 = [
+  "Operation and Maintenance",
+  "Implementation and Assessment",
+  "In production",
+  "Full operation",
+] as const;
+
+const LIVE_DEV_STAGES_2024_SQL = LIVE_DEV_STAGES_2024.map(
+  (s) => `'${s}'`,
+).join(", ");
 
 /**
  * Every row of `year_comparison` — the `total`, per-`agency`, `stage`, and
@@ -378,4 +396,72 @@ export function getLineageSamples(
        LIMIT ?
     `)
     .all(status, limit);
+}
+
+/* ------------------------------------------------------------------ */
+/* 2024 IFP-tag headlines                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Headline IFP-tagged counts for the 2024 cycle, from
+ * `use_case_tags_2024_canonical`. Computed live so the numbers track any
+ * re-run of the 2024 tagging passes.
+ */
+export function getTags2024Headlines(): Tags2024Headlines {
+  const row = getDb()
+    .prepare<[], { total: number; genai: number; enterprise_wide: number }>(`
+      SELECT
+        COUNT(*)                                AS total,
+        COALESCE(SUM(is_generative_ai), 0)      AS genai,
+        COALESCE(SUM(is_enterprise_wide), 0)    AS enterprise_wide
+      FROM use_case_tags_2024_canonical
+    `)
+    .get();
+  return {
+    total: row?.total ?? 0,
+    genai: row?.genai ?? 0,
+    enterprise_wide: row?.enterprise_wide ?? 0,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Silently-dropped live GenAI                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Use cases IFP tagged as generative AI that were in a live 2024 deployment
+ * stage (production/implementation) yet were dropped from the 2025 inventory
+ * without being filed as Retired. The sharp edge of the silently-dropped
+ * finding: not just any churn, but active GenAI capability that vanished.
+ *
+ * Joins `use_case_year_links` (lineage) → `use_cases_2024` (narrative + stage)
+ * → `use_case_tags_2024_canonical` (the IFP GenAI tag). Ordered by agency then
+ * use-case name. Excludes the dissolved-agency rows so the list reflects the
+ * compliance gap among agencies that still filed in 2025.
+ */
+export function getSilentlyDroppedGenAiRows(): SilentlyDroppedGenAiRow[] {
+  return getDb()
+    .prepare<[], SilentlyDroppedGenAiRow>(`
+      SELECT u.id                       AS uc_2024_id,
+             l.agency_abbreviation      AS agency_abbreviation,
+             COALESCE(a.name, u.agency) AS agency_name,
+             u.use_case_name            AS use_case_name,
+             u.dev_stage                AS dev_stage,
+             u.bureau                   AS bureau,
+             c.tool_product_name        AS tool_product_name,
+             c.ai_sophistication        AS ai_sophistication
+        FROM use_case_year_links l
+        JOIN use_cases_2024 u
+          ON u.id = l.uc_2024_id
+        JOIN use_case_tags_2024_canonical c
+          ON c.use_case_id_2024 = u.id
+        LEFT JOIN agencies a
+          ON a.id = l.agency_id
+       WHERE l.lineage_status = 'retired_2024'
+         AND c.is_generative_ai = 1
+         AND u.dev_stage IN (${LIVE_DEV_STAGES_2024_SQL})
+         AND l.agency_abbreviation != '${DISSOLVED_AGENCY_ABBR}'
+       ORDER BY l.agency_abbreviation ASC, u.use_case_name COLLATE NOCASE ASC
+    `)
+    .all();
 }

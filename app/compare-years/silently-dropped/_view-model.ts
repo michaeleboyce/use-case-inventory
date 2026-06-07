@@ -24,12 +24,14 @@ import {
   getSilentlyDroppedByStage,
   getSilentlyDroppedRows,
   getSilentlyDroppedSummary,
+  getSilentlyDroppedGenAiRows,
 } from "@/lib/db";
 import type {
   SilentlyDroppedAgencyRow,
   SilentlyDroppedRow,
   SilentlyDroppedStageRow,
   SilentlyDroppedSummary,
+  SilentlyDroppedGenAiRow,
 } from "@/lib/types";
 
 /** A `SilentlyDroppedAgencyRow` decorated with its sorted per-use-case rows,
@@ -49,6 +51,9 @@ export interface SilentlyDroppedViewModel {
   allRows: SilentlyDroppedRow[];
   /** Curated case-study pool for §IV (4–6 rows, prose commentary inline). */
   examples: SilentlyDroppedRow[];
+  /** Live (production/implementation) GenAI use cases silently dropped — the
+   *  sharpest subset of the finding. Excludes the dissolved agency. */
+  liveGenAi: SilentlyDroppedGenAiRow[];
 }
 
 /** Use cases whose name appears in this set are skipped when curating
@@ -119,6 +124,7 @@ export async function buildSilentlyDroppedViewModel(): Promise<SilentlyDroppedVi
   const byStage = getSilentlyDroppedByStage();
   const byAgency = getSilentlyDroppedByAgency();
   const allRows = getSilentlyDroppedRows({ includeDissolved: false });
+  const liveGenAi = getSilentlyDroppedGenAiRows();
   // Second fetch including USAID, so the §III table can expand USAID's row
   // and reveal its 137 dropped use cases too. Cheap — ~600 rows total.
   const allRowsWithDissolved = getSilentlyDroppedRows({
@@ -157,5 +163,6 @@ export async function buildSilentlyDroppedViewModel(): Promise<SilentlyDroppedVi
     byAgencyExpanded,
     allRows,
     examples,
+    liveGenAi,
   };
 }

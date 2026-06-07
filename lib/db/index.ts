@@ -159,6 +159,7 @@ export {
   getSeatExtrapolationByAgency,
   getAgencyToolMatrix,
   getYearCompareGenAi,
+  getYearCompareGenAiByAgency,
   GENAI_DEFINITIONS,
   GENAI_DEFINITION_LABELS,
   GENAI_DEFINITION_SHORT,
@@ -176,6 +177,7 @@ export type {
   MatrixCell,
   MatrixProductKey,
   YearCompareGenAi,
+  AgencyYearCompareGenAiRow,
 } from "./experience";
 export {
   getYearComparisonAggregates,
@@ -187,6 +189,8 @@ export {
   getSilentlyDroppedByStage,
   getSilentlyDroppedByAgency,
   getSilentlyDroppedRows,
+  getSilentlyDroppedGenAiRows,
+  getTags2024Headlines,
 } from "./year-comparison";
 
 // Most query implementations live under ./db/<domain>/ or ./db/<domain>.ts and

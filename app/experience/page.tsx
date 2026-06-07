@@ -85,9 +85,10 @@ export default async function ExperiencePage() {
         </p>
         <p className="mt-6 text-lg leading-relaxed text-foreground">
           The 2024 federal AI use case inventory listed{" "}
-          <strong>{fmt(yearCompare.count_2024_heuristic)}</strong> generative-AI
-          mentions across {fmt(yearCompare.total_2024)} use cases. The 2025
-          inventory lists between <strong>{fmt(ombHeadline?.total ?? 0)}</strong>{" "}
+          <strong>{fmt(yearCompare.count_2024_tagged)}</strong> IFP-tagged
+          generative-AI use cases across {fmt(yearCompare.total_2024)} total.
+          The 2025 inventory lists between{" "}
+          <strong>{fmt(ombHeadline?.total ?? 0)}</strong>{" "}
           and <strong>{fmt(llmHeadline?.total ?? 0)}</strong> — depending on
           whose definition of &ldquo;Generative AI&rdquo; you trust. Of those,
           roughly <strong>{fmt(enterpriseHeadline?.total ?? 0)}</strong> are
@@ -204,23 +205,23 @@ export default async function ExperiencePage() {
 
           <div className="border border-border p-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              2024 baseline
+              2024 → 2025 baseline
             </p>
             <p className="mt-3 text-sm leading-relaxed">
-              The 2024 inventory has no IFP-tag layer yet. A name-and-narrative
-              heuristic catches{" "}
-              <strong>{fmt(yearCompare.count_2024_heuristic)}</strong>{" "}
-              GenAI-flavored mentions in 2024, out of{" "}
-              {fmt(yearCompare.total_2024)} total — roughly{" "}
+              IFP re-tagged the 2024 inventory with the same narrative
+              definitions used for 2025, so the two cycles are now directly
+              comparable. The IFP-tagged GenAI count was{" "}
+              <strong>{fmt(yearCompare.count_2024_tagged)}</strong> in 2024 —
+              roughly{" "}
               <strong>
                 {Math.round(
-                  (yearCompare.count_2024_heuristic / yearCompare.total_2024) *
+                  (yearCompare.count_2024_tagged / yearCompare.total_2024) *
                     100,
                 )}
                 %
               </strong>{" "}
-              of the cycle. By 2025, IFP&apos;s tagged count is{" "}
-              <strong>{fmt(ifpHeadline?.total ?? 0)}</strong> —{" "}
+              of {fmt(yearCompare.total_2024)} use cases — rising to{" "}
+              <strong>{fmt(ifpHeadline?.total ?? 0)}</strong> by 2025,{" "}
               <strong>
                 {Math.round(
                   ((ifpHeadline?.total ?? 0) / yearCompare.total_2025) * 100,
@@ -230,15 +231,10 @@ export default async function ExperiencePage() {
               of {fmt(yearCompare.total_2025)} filings.
             </p>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              The 2024 heuristic and the 2025 IFP tag are not directly
-              comparable — see the{" "}
-              <a
-                className="underline-offset-2 hover:underline"
-                href="https://github.com/michaeleboyce/federal-ai-platform/blob/use-case-inventory/2025-aia-use-case-inventory/docs/plans/2024-tagging/PLAN.md"
-              >
-                2024 tagging plan
-              </a>{" "}
-              for the multi-agent backfill that will make them so.
+              Both counts use IFP&apos;s <code>is_generative_ai</code> tag
+              (2024 from <code>use_case_tags_2024_canonical</code>, 2025 from{" "}
+              <code>use_case_tags</code>) — a like-for-like re-tag rather than
+              agency self-classification.
             </p>
           </div>
         </div>

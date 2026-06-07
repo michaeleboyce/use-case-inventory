@@ -15,11 +15,16 @@ import {
   getPerAgencyLineage,
   getRetiredBreakdown,
   getYearComparisonAggregates,
+  getYearCompareGenAiByAgency,
+  getTags2024Headlines,
+  getSilentlyDroppedGenAiRows,
 } from "@/lib/db";
+import type { AgencyYearCompareGenAiRow } from "@/lib/db";
 import type {
   LineageStatus,
   PerAgencyLineageRow,
   RetiredBreakdown,
+  Tags2024Headlines,
   YearComparisonRow,
 } from "@/lib/types";
 
@@ -51,6 +56,12 @@ export interface CompareYearsViewModel {
   perAgency: PerAgencyLineageRow[];
   /** Active-vs-already-retired split of `retired_2024`. */
   retired: RetiredBreakdown;
+  /** IFP-tagged 2024 headline counts (total / GenAI / enterprise-wide). */
+  tags2024: Tags2024Headlines;
+  /** Per-agency 2024-vs-2025 IFP-tagged GenAI counts + delta. */
+  genaiByAgency: AgencyYearCompareGenAiRow[];
+  /** Count of live GenAI use cases silently dropped from the 2025 cycle. */
+  silentlyDroppedGenAiCount: number;
 }
 
 /** A fallback total row, used only if the table is unexpectedly empty. */
@@ -71,6 +82,9 @@ export async function buildCompareYearsViewModel(): Promise<CompareYearsViewMode
   const lineageRows = getLineageBreakdown();
   const perAgency = getPerAgencyLineage();
   const retired = getRetiredBreakdown();
+  const tags2024 = getTags2024Headlines();
+  const genaiByAgency = getYearCompareGenAiByAgency();
+  const silentlyDroppedGenAiCount = getSilentlyDroppedGenAiRows().length;
 
   const total =
     aggregates.find((r) => r.dimension === "total") ?? EMPTY_TOTAL;
@@ -93,5 +107,8 @@ export async function buildCompareYearsViewModel(): Promise<CompareYearsViewMode
     lineageTotal,
     perAgency,
     retired,
+    tags2024,
+    genaiByAgency,
+    silentlyDroppedGenAiCount,
   };
 }

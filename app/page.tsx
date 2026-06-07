@@ -32,6 +32,7 @@ export default async function HomePage() {
     missingCoding,
     missingEnterpriseLLM,
     reportingAgencies,
+    tags2024,
     topCategories,
     topProductsData,
     totalEntries,
@@ -338,6 +339,37 @@ export default async function HomePage() {
                   entryKind: "all",
                 })}
               />
+            </div>
+
+            {/* 2024 baseline — the prior cycle's IFP-tagged GenAI numbers,
+                shown alongside (not replacing) the 2025 entry mix above so the
+                year-over-year shift is visible at a glance. Links to the full
+                cross-year analysis. */}
+            <div className="mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2 border-t border-dotted border-border pt-4">
+              <span className="eyebrow !text-[var(--stamp)]">
+                2024 baseline
+              </span>
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                <strong className="font-semibold text-foreground tabular-nums">
+                  {formatNumber(tags2024.genai)}
+                </strong>{" "}
+                GenAI use cases
+              </span>
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                <strong className="font-semibold text-foreground tabular-nums">
+                  {formatNumber(tags2024.enterprise_wide)}
+                </strong>{" "}
+                enterprise-wide
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70">
+                of {formatNumber(tags2024.total)} use cases · IFP-tagged
+              </span>
+              <Link
+                href="/compare-years"
+                className="ml-auto font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+              >
+                → 2024 ↔ 2025 comparison
+              </Link>
             </div>
           </div>
 

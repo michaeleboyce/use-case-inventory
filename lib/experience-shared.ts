@@ -169,8 +169,23 @@ export interface CoveragePriors {
 }
 
 export interface YearCompareGenAi {
-  count_2024_heuristic: number;
+  /**
+   * IFP-tagged GenAI count for 2024, from `use_case_tags_2024_canonical`
+   * (is_generative_ai = 1). Directly comparable to the 2025 `ifp_genai`
+   * definition — both are IFP narrative re-tags, not OMB self-classification.
+   */
+  count_2024_tagged: number;
   total_2024: number;
   total_2025: number;
   counts_2025_by_definition: Record<GenAiDefinition, number>;
+}
+
+/** One agency's 2024-vs-2025 IFP-tagged GenAI counts and the net change. */
+export interface AgencyYearCompareGenAiRow {
+  agency_id: number;
+  abbreviation: string;
+  name: string;
+  genai_2024: number;
+  genai_2025: number;
+  delta: number;
 }
