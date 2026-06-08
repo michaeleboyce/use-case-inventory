@@ -8,17 +8,20 @@
  * Route-local: consumed only by `../page.tsx`.
  */
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type ExpandedState,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { MonoChip } from "@/components/editorial";
 import type { SilentlyDroppedRow } from "@/lib/types";
 
@@ -30,6 +33,10 @@ function excerpt(s: string | null | undefined, n = 180): string {
   return t.length <= n ? t : `${t.slice(0, n).trimEnd()}…`;
 }
 
+function fullText(s: string | null | undefined): string {
+  return s ? s.replace(/\s+/g, " ").trim() : "";
+}
+
 export function SilentlyDroppedFullList({
   rows,
 }: {
@@ -39,9 +46,26 @@ export function SilentlyDroppedFullList({
     { id: "agency_abbreviation", desc: false },
   ]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const columns = useMemo(
     () => [
+      columnHelper.display({
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => (
+          <span
+            className="inline-flex size-5 items-center justify-center text-muted-foreground transition-colors group-hover:text-[var(--stamp)]"
+            aria-hidden
+          >
+            {row.getIsExpanded() ? (
+              <ChevronDown className="size-3.5" />
+            ) : (
+              <ChevronRight className="size-3.5" />
+            )}
+          </span>
+        ),
+      }),
       columnHelper.accessor("agency_abbreviation", {
         header: "Agency",
         cell: (info) => (
@@ -85,9 +109,10 @@ export function SilentlyDroppedFullList({
   const table = useReactTable({
     data: rows,
     columns,
-    state: { sorting, globalFilter },
+    state: { sorting, globalFilter, expanded },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onExpandedChange: setExpanded,
     globalFilterFn: (row, _columnId, filterValue: string) => {
       const q = filterValue.trim().toLowerCase();
       if (!q) return true;
@@ -101,10 +126,12 @@ export function SilentlyDroppedFullList({
         (r.outputs ?? "").toLowerCase().includes(q)
       );
     },
+    getRowId: (r) => String(r.uc_2024_id),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     initialState: { pagination: { pageSize: 25 } },
   });
 
@@ -134,11 +161,14 @@ export function SilentlyDroppedFullList({
               <tr key={hg.id} className="border-b-2 border-foreground">
                 {hg.headers.map((h) => {
                   const isSortable = h.column.getCanSort();
+                  const isExpander = h.column.id === "expander";
                   return (
                     <th
                       key={h.id}
                       scope="col"
-                      className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                      className={`py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground ${
+                        isExpander ? "w-7 px-1" : "px-3"
+                      }`}
                     >
                       {isSortable ? (
                         <button
@@ -168,15 +198,81 @@ export function SilentlyDroppedFullList({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-border align-top">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-3 align-top">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {table.getRowModel().rows.map((row) => {
+              const isOpen = row.getIsExpanded();
+              const r = row.original;
+              const narrative = [
+                fullText(r.purpose_benefits),
+                fullText(r.outputs),
+              ].filter(Boolean);
+              return (
+                <Fragment key={row.id}>
+                  <tr
+                    className={`group cursor-pointer border-b border-border align-top transition-colors hover:bg-[var(--highlight)]/20 ${
+                      isOpen ? "bg-[var(--highlight)]/15" : ""
+                    }`}
+                    onClick={() => row.toggleExpanded()}
+                    aria-expanded={isOpen}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const isExpander = cell.column.id === "expander";
+                      return (
+                        <td
+                          key={cell.id}
+                          className={`py-3 align-top ${
+                            isExpander ? "w-7 px-1" : "px-3"
+                          }`}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  {isOpen ? (
+                    <tr className="border-b border-border bg-[var(--paper-warm)]/40">
+                      <td colSpan={columns.length} className="px-3 py-4">
+                        {narrative.length > 0 ? (
+                          <div className="space-y-3 pl-4">
+                            {r.purpose_benefits ? (
+                              <div>
+                                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                                  Purpose &amp; benefits
+                                </p>
+                                <p className="mt-1 max-w-prose text-[0.9rem] leading-[1.55] text-foreground/85">
+                                  {fullText(r.purpose_benefits)}
+                                </p>
+                              </div>
+                            ) : null}
+                            {r.outputs ? (
+                              <div>
+                                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                                  System outputs
+                                </p>
+                                <p className="mt-1 max-w-prose text-[0.9rem] leading-[1.55] text-foreground/85">
+                                  {fullText(r.outputs)}
+                                </p>
+                              </div>
+                            ) : null}
+                            {r.bureau ? (
+                              <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                                {r.bureau}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="pl-4 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                            No narrative recorded.
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
+              );
+            })}
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td
