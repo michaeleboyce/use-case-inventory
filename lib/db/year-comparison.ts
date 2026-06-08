@@ -448,6 +448,8 @@ export function getSilentlyDroppedGenAiRows(): SilentlyDroppedGenAiRow[] {
              u.use_case_name            AS use_case_name,
              u.dev_stage                AS dev_stage,
              u.bureau                   AS bureau,
+             u.purpose_benefits         AS purpose_benefits,
+             u.outputs                  AS outputs,
              c.tool_product_name        AS tool_product_name,
              c.ai_sophistication        AS ai_sophistication
         FROM use_case_year_links l

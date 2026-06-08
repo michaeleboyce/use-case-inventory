@@ -167,6 +167,10 @@ export interface SilentlyDroppedGenAiRow {
   use_case_name: string | null;
   dev_stage: string | null;
   bureau: string | null;
+  /** 2024 free-text narrative — shown when a row is expanded. */
+  purpose_benefits: string | null;
+  /** 2024 reported system outputs — shown when a row is expanded. */
+  outputs: string | null;
   tool_product_name: string | null;
   ai_sophistication: string | null;
 }

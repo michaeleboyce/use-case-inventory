@@ -81,6 +81,20 @@ export interface SilentlyDroppedGenAiGroup {
   /** Single named tool if the group agrees, else null (mixed / unnamed). */
   tool_product_name: string | null;
   ai_sophistication: string | null;
+  /** The underlying filings, Deployed-first. A `count: 1` group has one
+   *  member; the ED "Generative AI Usage" cluster has 49. Rendered when the
+   *  row is expanded. */
+  members: SilentlyDroppedGenAiRow[];
+}
+
+/** Deployed > Pilot > everything else, for ordering members within a group.
+ *  Mirrors the stage buckets used elsewhere on the page. */
+function liveStageRank(devStage: string | null | undefined): number {
+  const s = (devStage ?? "").toLowerCase();
+  if (s.includes("operation") || s.includes("production") || s.includes("mission"))
+    return 2;
+  if (s.includes("implementation") || s.includes("assessment")) return 1;
+  return 0;
 }
 
 /** Collapse live-GenAI rows by (agency, use_case_name). Single-row groups
@@ -109,12 +123,14 @@ function groupLiveGenAi(
         dev_stage: null,
         tool_product_name: null,
         ai_sophistication: r.ai_sophistication,
+        members: [],
         _stages: new Set<string>(),
         _tools: new Set<string>(),
       };
       map.set(key, g);
     }
     g.count += 1;
+    g.members.push(r);
     if (r.bureau && !g.bureaus.includes(r.bureau)) g.bureaus.push(r.bureau);
     if (r.dev_stage) g._stages.add(r.dev_stage);
     if (r.tool_product_name) g._tools.add(r.tool_product_name);
@@ -125,6 +141,13 @@ function groupLiveGenAi(
     g.bureaus.sort((a, b) => a.localeCompare(b));
     g.dev_stage = g._stages.size === 1 ? [...g._stages][0] : null;
     g.tool_product_name = g._tools.size === 1 ? [...g._tools][0] : null;
+    // Members Deployed-first, then by bureau, so the most striking filings
+    // surface at the top of an expanded cluster.
+    g.members.sort(
+      (a, b) =>
+        liveStageRank(b.dev_stage) - liveStageRank(a.dev_stage) ||
+        (a.bureau ?? "").localeCompare(b.bureau ?? ""),
+    );
     const { _stages: _s, _tools: _t, ...clean } = g;
     void _s;
     void _t;
