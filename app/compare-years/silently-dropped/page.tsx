@@ -11,6 +11,7 @@ import { formatNumber, formatPercent } from "@/lib/formatting";
 import { buildSilentlyDroppedViewModel } from "./_view-model";
 import { SilentlyDroppedAgencyTable } from "./_sections/agency-table";
 import { SilentlyDroppedFullList } from "./_sections/full-list-table";
+import { SilentlyDroppedLiveGenAiTable } from "./_sections/live-genai-table";
 
 export const metadata = {
   title:
@@ -463,62 +464,7 @@ export default async function SilentlyDroppedPage() {
               </>
             }
           >
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-foreground">
-                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                      Agency
-                    </th>
-                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                      Use case
-                    </th>
-                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                      2024 stage
-                    </th>
-                    <th className="px-3 py-2.5 text-left font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                      Tool
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {liveGenAiGroups.map((g) => (
-                    <tr
-                      key={g.key}
-                      className="border-b border-border align-top"
-                    >
-                      <td className="px-3 py-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--stamp)]">
-                        {g.agency_abbreviation ?? "—"}
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="font-display text-[1rem] italic leading-tight text-foreground">
-                          {g.use_case_name ?? "Untitled"}
-                        </span>
-                        {g.count > 1 ? (
-                          <span className="ml-2 inline-block rounded-sm bg-[var(--stamp)]/[0.12] px-1.5 py-0.5 align-middle font-mono text-[10px] font-medium not-italic tracking-[0.04em] text-[var(--stamp)]">
-                            ×{g.count}
-                          </span>
-                        ) : null}
-                        <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-                          {g.count > 1
-                            ? `${formatNumber(g.bureaus.length)} ${
-                                g.bureaus.length === 1 ? "bureau" : "bureaus"
-                              }`
-                            : (g.bureaus[0] ?? "")}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 font-mono text-[11px] text-muted-foreground">
-                        {g.dev_stage ?? (g.count > 1 ? "various" : "—")}
-                      </td>
-                      <td className="px-3 py-3 font-mono text-[11px] text-muted-foreground">
-                        {g.tool_product_name ??
-                          (g.count > 1 ? "various / unnamed" : "—")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <SilentlyDroppedLiveGenAiTable groups={liveGenAiGroups} />
           </Figure>
         ) : null}
       </Section>
