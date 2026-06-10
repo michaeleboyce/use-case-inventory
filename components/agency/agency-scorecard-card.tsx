@@ -11,49 +11,9 @@
  */
 import Link from "next/link";
 import type { AgencyReadinessWithName } from "@/lib/types/inventory";
+import { readinessInputSummary } from "@/components/readiness/readiness-derivation";
 import { ReadinessSubscoreBar } from "@/components/readiness/readiness-subscore-bar";
-
-// v1.1 capacity-first weights. MUST match scripts/compute_agency_readiness.py
-// and lib/readiness-rubric.ts.
-const WEIGHTS = {
-  internal_capacity: 0.3,
-  frontier_capability: 0.25,
-  procurement_hygiene: 0.2,
-  risk_relevant_governance: 0.15,
-  adoption_breadth: 0.1,
-} as const;
-
-/** Read a numeric value out of a headline_inputs sub-object, defensively. */
-function num(
-  bucket: Record<string, number | boolean> | undefined,
-  key: string,
-): number | null {
-  if (!bucket) return null;
-  const v = bucket[key];
-  return typeof v === "number" ? v : null;
-}
-
-/** Build a human-readable "X of Y" tooltip from a numerator/denominator pair
- * in headline_inputs, falling back to a generic message when the inputs
- * aren't structured the way we expect. */
-function tooltipFor(
-  inputs: AgencyReadinessWithName["headline_inputs"],
-  dimKey: string,
-  fallback: string,
-): string {
-  const bucket = inputs?.[dimKey];
-  if (!bucket) return fallback;
-  const num_ = num(bucket, "numerator");
-  const den_ = num(bucket, "denominator");
-  const note = bucket["note"];
-  if (num_ != null && den_ != null) {
-    const base = `${Math.round(num_).toLocaleString()} of ${Math.round(
-      den_,
-    ).toLocaleString()}`;
-    return typeof note === "string" ? `${base} — ${note}` : base;
-  }
-  return typeof note === "string" ? note : fallback;
-}
+import { RUBRIC_DIMENSIONS } from "@/lib/readiness/rubric";
 
 export function AgencyScorecardCard({
   readiness,
@@ -85,56 +45,15 @@ export function AgencyScorecardCard({
 
         {/* Right column — 5 subscore bars, ordered by v1.1 weight desc */}
         <div className="flex-1 flex flex-col gap-4">
-          <ReadinessSubscoreBar
-            label="Internal Capacity"
-            value={readiness.internal_capacity}
-            weight={WEIGHTS.internal_capacity}
-            rawInfo={tooltipFor(
-              inputs,
-              "internal_capacity",
-              "Share custom-coded + in-house developed + at deployed stage + on agency-internal platforms.",
-            )}
-          />
-          <ReadinessSubscoreBar
-            label="Frontier Capability"
-            value={readiness.frontier_capability}
-            weight={WEIGHTS.frontier_capability}
-            rawInfo={tooltipFor(
-              inputs,
-              "frontier_capability",
-              "Share of use cases tagged frontier model, agentic AI, or custom-built systems.",
-            )}
-          />
-          <ReadinessSubscoreBar
-            label="Procurement Hygiene"
-            value={readiness.procurement_hygiene}
-            weight={WEIGHTS.procurement_hygiene}
-            rawInfo={tooltipFor(
-              inputs,
-              "procurement_hygiene",
-              "Share of use cases on ATO'd systems and share of vendor products with FedRAMP authorization.",
-            )}
-          />
-          <ReadinessSubscoreBar
-            label="Risk-Relevant Governance"
-            value={readiness.risk_relevant_governance}
-            weight={WEIGHTS.risk_relevant_governance}
-            rawInfo={tooltipFor(
-              inputs,
-              "risk_relevant_governance",
-              "Of risky use cases (PII or high-impact), share with any oversight signal (PIA URL, ATO, or hi_* fields filled).",
-            )}
-          />
-          <ReadinessSubscoreBar
-            label="Adoption Breadth"
-            value={readiness.adoption_breadth}
-            weight={WEIGHTS.adoption_breadth}
-            rawInfo={tooltipFor(
-              inputs,
-              "adoption_breadth",
-              "Normalized count of use cases × share of bureaus participating × distinct capability templates.",
-            )}
-          />
+          {RUBRIC_DIMENSIONS.map((dim) => (
+            <ReadinessSubscoreBar
+              key={dim.key}
+              label={dim.label}
+              value={readiness[dim.key]}
+              weight={dim.weight}
+              rawInfo={readinessInputSummary(inputs, dim.key, dim.definition)}
+            />
+          ))}
         </div>
       </div>
 

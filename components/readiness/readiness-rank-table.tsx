@@ -1,14 +1,17 @@
 "use client";
 
+import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { ReadinessDerivation } from "@/components/readiness/readiness-derivation";
 import type { AgencyReadinessWithName } from "@/lib/types/inventory";
 
 /**
  * Sortable client-component ranked table for the /readiness hub.
  *
- * Columns: Rank · Agency abbr · Agency name · Composite · 5 subscores · Tier · View.
- * Subscore cells get a subtle bg tint based on threshold:
+ * Columns: Chevron · Rank · Agency abbr · Agency name · Composite ·
+ * 5 subscores · Tier · View. Subscore cells get a subtle bg tint based
+ * on threshold:
  *
  *   ≥ 70  → emerald (strong)
  *   40–69 → amber  (mid)
@@ -16,6 +19,11 @@ import type { AgencyReadinessWithName } from "@/lib/types/inventory";
  *
  * Click any column header to sort by that column (toggles asc/desc). Default
  * sort: rank ascending (1 = best).
+ *
+ * Click a row to expand its score derivation in place — the "X of Y" inputs,
+ * weight arithmetic, and methodology links per dimension (the same
+ * `headline_inputs` the agency scorecard renders as hover tooltips). The
+ * agency-name and "View →" links still navigate (stopPropagation).
  */
 type SortKey =
   | "rank"
@@ -58,6 +66,16 @@ export function ReadinessRankTable({
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  function toggleExpanded(agencyId: number) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(agencyId)) next.delete(agencyId);
+      else next.add(agencyId);
+      return next;
+    });
+  }
 
   const sorted = useMemo(() => {
     const copy = [...rows];
@@ -127,6 +145,7 @@ export function ReadinessRankTable({
       <table className="w-full border-collapse text-sm">
         <thead className="bg-stone-100">
           <tr>
+            <th className="w-7 border-b border-stone-300 px-1 py-2" aria-label="Expand" />
             <Th label="#" k="rank" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="right" />
             <Th label="Agency" k="agency" sortKey={sortKey} sortDir={sortDir} onClick={toggle} />
             <Th label="Composite" k="composite" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="right" />
@@ -142,8 +161,27 @@ export function ReadinessRankTable({
           </tr>
         </thead>
         <tbody>
-          {sorted.map((r) => (
-            <tr key={r.agency_id} className="border-b border-stone-200 hover:bg-stone-50">
+          {sorted.map((r) => {
+            const isOpen = expanded.has(r.agency_id);
+            return (
+            <Fragment key={r.agency_id}>
+            <tr
+              className={`cursor-pointer border-b border-stone-200 hover:bg-stone-50 ${isOpen ? "bg-stone-50" : ""}`}
+              onClick={() => toggleExpanded(r.agency_id)}
+              aria-expanded={isOpen}
+            >
+              <td className="w-7 px-1 py-2 align-middle">
+                <span
+                  className="inline-flex size-5 items-center justify-center text-stone-400"
+                  aria-hidden
+                >
+                  {isOpen ? (
+                    <ChevronDown className="size-3.5" />
+                  ) : (
+                    <ChevronRight className="size-3.5" />
+                  )}
+                </span>
+              </td>
               <td className="px-2 py-2 text-right font-mono tabular-nums text-stone-600">
                 {r.rank}
               </td>
@@ -152,6 +190,7 @@ export function ReadinessRankTable({
                   href={`/agencies/${r.agency_slug}#scorecard`}
                   className="block min-w-0"
                   title={r.agency_name}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-stone-900">
                     {r.agency_abbreviation}
@@ -191,15 +230,25 @@ export function ReadinessRankTable({
                 <Link
                   href={`/agencies/${r.agency_slug}#scorecard`}
                   className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500 hover:text-[var(--stamp)]"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   View →
                 </Link>
               </td>
             </tr>
-          ))}
+            {isOpen ? (
+              <tr className="border-b border-stone-200 bg-[#f6efdf]/60">
+                <td colSpan={11} className="px-4 py-4 md:px-10">
+                  <ReadinessDerivation readiness={r} />
+                </td>
+              </tr>
+            ) : null}
+            </Fragment>
+            );
+          })}
           {sorted.length === 0 ? (
             <tr>
-              <td colSpan={10} className="px-4 py-6 text-center font-mono text-xs uppercase tracking-[0.14em] text-stone-400">
+              <td colSpan={11} className="px-4 py-6 text-center font-mono text-xs uppercase tracking-[0.14em] text-stone-400">
                 No readiness data available.
               </td>
             </tr>

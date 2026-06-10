@@ -36,7 +36,8 @@ export function ReadinessRubricTable() {
           {RUBRIC_DIMENSIONS.map((d) => (
             <tr
               key={d.key}
-              className="border-b border-border/60 align-top last:border-b-0"
+              id={d.key}
+              className="scroll-mt-24 border-b border-border/60 align-top last:border-b-0"
             >
               <th
                 scope="row"
