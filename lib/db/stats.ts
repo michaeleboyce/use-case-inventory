@@ -152,7 +152,46 @@ export function getCommandPaletteIndex(
     `)
     .all(useCaseLimit);
 
-  const result = { agencies, products, templates, useCases };
+  // Tag-dimension values so the palette can jump to filtered explorer
+  // views ("agentic" → /use-cases?sophistication=agentic). Dimension
+  // slugs match CrossCutDimension in lib/urls.ts; tagFilterUrl consumes
+  // them client-side.
+  const dimensions = db
+    .prepare<[], { dimension: string; value: string; count: number }>(`
+      SELECT 'sophistication' AS dimension, ai_sophistication AS value, COUNT(*) AS count
+        FROM use_case_tags
+       WHERE ai_sophistication IS NOT NULL AND ai_sophistication NOT IN ('', 'unknown')
+       GROUP BY ai_sophistication
+      UNION ALL
+      SELECT 'entry_type', entry_type, COUNT(*)
+        FROM use_case_tags
+       WHERE entry_type IS NOT NULL AND entry_type NOT IN ('', 'unknown')
+       GROUP BY entry_type
+      UNION ALL
+      SELECT 'scope', deployment_scope, COUNT(*)
+        FROM use_case_tags
+       WHERE deployment_scope IS NOT NULL AND deployment_scope NOT IN ('', 'unknown')
+       GROUP BY deployment_scope
+      UNION ALL
+      SELECT 'use_type', use_type, COUNT(*)
+        FROM use_case_tags
+       WHERE use_type IS NOT NULL AND use_type NOT IN ('', 'unknown')
+       GROUP BY use_type
+      UNION ALL
+      SELECT 'topic_area', topic_area, COUNT(*)
+        FROM use_cases
+       WHERE topic_area IS NOT NULL AND topic_area <> ''
+       GROUP BY topic_area
+      UNION ALL
+      SELECT 'product_type', product_type, COUNT(*)
+        FROM products
+       WHERE product_type IS NOT NULL AND product_type NOT IN ('', 'unclassified')
+       GROUP BY product_type
+      ORDER BY count DESC
+    `)
+    .all();
+
+  const result = { agencies, products, templates, useCases, dimensions };
   _paletteCache.set(useCaseLimit, result);
   return result;
 }

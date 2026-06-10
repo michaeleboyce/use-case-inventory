@@ -125,4 +125,9 @@ export interface CommandPaletteIndex {
     use_case_name: string;
     agency_abbreviation: string;
   }>;
+  /** Tag-dimension values ("agentic", "enterprise_wide", topic areas,
+   *  product categories…) so the palette can jump straight to a filtered
+   *  explorer view. `dimension` is a CrossCutDimension slug consumed by
+   *  `tagFilterUrl`. */
+  dimensions: Array<{ dimension: string; value: string; count: number }>;
 }

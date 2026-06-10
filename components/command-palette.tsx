@@ -20,17 +20,27 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import {
+  ENTRY_TYPE_LABELS,
+  SCOPE_LABELS,
+  SOPHISTICATION_LABELS,
+} from "@/components/editorial";
 import type { CommandPaletteIndex } from "@/lib/types";
+import { tagFilterUrl, type CrossCutDimension } from "@/lib/urls";
 import {
   BarChart3,
   Box,
   Building2,
   FileText,
+  Gauge,
+  GitCompareArrows,
   Home,
   LayoutDashboard,
   ListFilter,
   ScrollText,
+  ShieldCheck,
   SplitSquareHorizontal,
+  Tags,
   Telescope,
 } from "lucide-react";
 
@@ -45,13 +55,51 @@ const QUICK_LINKS: Array<{
 }> = [
   { href: "/", label: "Home", icon: Home },
   { href: "/agencies", label: "Agencies", icon: Building2 },
+  { href: "/readiness", label: "Readiness", icon: Gauge },
+  { href: "/readiness/methodology", label: "Readiness Methodology", icon: Gauge },
+  { href: "/readiness/access", label: "AI Access & Scale", icon: Gauge },
+  { href: "/experience", label: "AI Experience", icon: Gauge },
   { href: "/use-cases", label: "Use Cases", icon: ListFilter },
   { href: "/products", label: "Products", icon: Box },
   { href: "/templates", label: "Templates", icon: ScrollText },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/compare", label: "Compare", icon: SplitSquareHorizontal },
+  { href: "/policy", label: "Policy", icon: FileText },
+  { href: "/compare", label: "Compare Agencies", icon: SplitSquareHorizontal },
+  { href: "/compare-years", label: "Compare Years (2024 ↔ 2025)", icon: GitCompareArrows },
+  {
+    href: "/compare-years/silently-dropped",
+    label: "Silently Dropped",
+    icon: GitCompareArrows,
+  },
+  { href: "/fedramp", label: "FedRAMP", icon: ShieldCheck },
+  { href: "/fedramp/marketplace", label: "FedRAMP Marketplace", icon: ShieldCheck },
+  { href: "/fedramp/coverage", label: "FedRAMP Coverage", icon: ShieldCheck },
+  { href: "/discrepancies", label: "Discrepancies", icon: FileText },
   { href: "/about", label: "About", icon: FileText },
 ];
+
+/** Reader-facing names for the dimension slugs in the palette index. */
+const DIMENSION_NAMES: Record<string, string> = {
+  sophistication: "AI sophistication",
+  entry_type: "Entry type",
+  scope: "Deployment scope",
+  use_type: "Use type",
+  topic_area: "Topic area",
+  product_type: "Product category",
+};
+
+const VALUE_LABELS: Record<string, string> = {
+  ...ENTRY_TYPE_LABELS,
+  ...SOPHISTICATION_LABELS,
+  ...SCOPE_LABELS,
+};
+
+function titleCase(value: string): string {
+  return value
+    .split(/[_\s]+/)
+    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
 
 export function CommandPalette({ index }: Props) {
   const [open, setOpen] = React.useState(false);
@@ -95,6 +143,29 @@ export function CommandPalette({ index }: Props) {
               <Icon className="size-4" />
               <span>{label}</span>
               <CommandShortcut>{href}</CommandShortcut>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Filters & dimensions">
+          {index.dimensions.map((d) => (
+            <CommandItem
+              key={`dim-${d.dimension}-${d.value}`}
+              value={`filter ${DIMENSION_NAMES[d.dimension] ?? d.dimension} ${d.value} ${VALUE_LABELS[d.value] ?? ""}`}
+              onSelect={() =>
+                go(tagFilterUrl(d.dimension as CrossCutDimension, d.value))
+              }
+            >
+              <Tags className="size-4" />
+              <span className="truncate">
+                {VALUE_LABELS[d.value] ?? titleCase(d.value)}
+              </span>
+              <span className="ml-1 text-xs text-muted-foreground">
+                {DIMENSION_NAMES[d.dimension] ?? titleCase(d.dimension)}
+              </span>
+              <CommandShortcut>{d.count.toLocaleString()}</CommandShortcut>
             </CommandItem>
           ))}
         </CommandGroup>
