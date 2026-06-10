@@ -158,6 +158,7 @@ export {
   getAgencyGenAiCounts,
   getSeatExtrapolationByAgency,
   getAgencyToolMatrix,
+  getCapabilityLadder,
   getYearCompareGenAi,
   getYearCompareGenAiByAgency,
   GENAI_DEFINITIONS,
@@ -178,6 +179,7 @@ export type {
   MatrixProductKey,
   YearCompareGenAi,
   AgencyYearCompareGenAiRow,
+  CapabilityLadderData,
 } from "./experience";
 export {
   getYearComparisonAggregates,

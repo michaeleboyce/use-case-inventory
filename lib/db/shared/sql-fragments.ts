@@ -7,29 +7,19 @@
  */
 
 /**
- * Normalize the 30+ free-text variants of `use_cases.stage_of_development`
- * into the 4 canonical OMB M-25-21 buckets:
+ * Canonical stage bucket for `use_cases` rows:
  *   'pre_deployment' | 'pilot' | 'deployed' | 'retired' | 'unknown'.
+ *
+ * Reads the `stage_normalized` column computed at ETL time by the ETL
+ * repo's `scripts/normalize_use_case_fields.py` (migration m016) — the
+ * single source of truth for collapsing the ~40 free-text variants of
+ * `stage_of_development`. The COALESCE covers rows predating the column.
  *
  * Usage:
  *   SELECT ${STAGE_BUCKET_SQL} AS stage_bucket FROM use_cases uc ...
  */
 export const STAGE_BUCKET_SQL = `
-  CASE
-    WHEN uc.stage_of_development IS NULL OR TRIM(uc.stage_of_development) = ''
-      THEN 'unknown'
-    WHEN LOWER(uc.stage_of_development) LIKE '%retired%'
-      THEN 'retired'
-    WHEN LOWER(uc.stage_of_development) LIKE '%pilot%'
-      THEN 'pilot'
-    WHEN LOWER(uc.stage_of_development) LIKE '%deployed%'
-      THEN 'deployed'
-    WHEN LOWER(uc.stage_of_development) LIKE '%pre-deployment%'
-      OR LOWER(uc.stage_of_development) LIKE '%pre deployment%'
-      OR LOWER(uc.stage_of_development) LIKE '%development or acquisition%'
-      THEN 'pre_deployment'
-    ELSE 'unknown'
-  END
+  COALESCE(uc.stage_normalized, 'unknown')
 `;
 
 /**

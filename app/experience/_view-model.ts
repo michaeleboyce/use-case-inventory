@@ -1,5 +1,6 @@
 import {
   getAgencyToolMatrix,
+  getCapabilityLadder,
   getGenAiHeadlines,
   getGenAiTimeline,
   getOmbIfpCrosstab,
@@ -14,6 +15,7 @@ export async function buildExperienceViewModel() {
   const seats = getSeatExtrapolationByAgency();
   const matrix = getAgencyToolMatrix();
   const yearCompare = getYearCompareGenAi();
+  const ladder = getCapabilityLadder();
 
   const totalSeatsMidpoint = seats.reduce((a, r) => a + r.midpoint, 0);
   const totalSeatsLower = seats.reduce((a, r) => a + r.lower_bound, 0);
@@ -26,6 +28,7 @@ export async function buildExperienceViewModel() {
     seats,
     matrix,
     yearCompare,
+    ladder,
     totalSeatsMidpoint,
     totalSeatsLower,
     totalSeatsUpper,

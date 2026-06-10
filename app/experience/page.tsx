@@ -23,6 +23,10 @@ import { SeatsByAgencyChart } from "@/components/experience/seats-by-agency-char
 import { SeatsHeadcountChart } from "@/components/experience/seats-headcount-chart";
 import { SeatsAgencyDetails } from "@/components/experience/seats-agency-details";
 import { PageNav } from "@/components/experience/page-nav";
+import {
+  CapabilityLadder,
+  CapabilityLadderFootnote,
+} from "@/components/experience/capability-ladder";
 import { buildExperienceViewModel } from "./_view-model";
 
 export const metadata: Metadata = {
@@ -44,6 +48,7 @@ export default async function ExperiencePage() {
     seats,
     matrix,
     yearCompare,
+    ladder,
     totalSeatsMidpoint,
     totalSeatsLower,
     totalSeatsUpper,
@@ -298,10 +303,22 @@ export default async function ExperiencePage() {
         <SeatsAgencyDetails rows={matrix} />
       </Section>
 
-      {/* § 05 — What the inventory can't tell you */}
+      {/* § 05 — The capability ladder */}
       <div id="section-05" className="scroll-mt-24" />
       <Section
         number="05"
+        title="The capability ladder"
+        source="derived"
+        lede="Adoption climbed one rung. A chat assistant is now the normal federal experience; a coding assistant is still the exception; AI on real agency data barely registers in the inventory at all."
+      >
+        <CapabilityLadder data={ladder} />
+        <CapabilityLadderFootnote />
+      </Section>
+
+      {/* § 06 — What the inventory can't tell you */}
+      <div id="section-06" className="scroll-mt-24" />
+      <Section
+        number="06"
         title="What the inventory still won't tell you"
         source="derived"
         lede="The use-case inventory is a tool ledger, not a workforce-access ledger. These are the gaps an essay should name explicitly."

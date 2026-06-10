@@ -539,14 +539,14 @@ export function getCoverageUnusedProducts(opts: { agencyId?: number } = {}): Arr
 /* --------------------------------------------------------------------- */
 
 /** Stable sort key: Deployed first, then Pilot, then Pre-deployment,
- *  then Retired. SQLite lacks a portable enum sort, so we materialize it
- *  via CASE. */
+ *  then Retired. Reads the ETL-computed `stage_normalized` column (m016)
+ *  rather than re-deriving from the free-text stage. */
 const STAGE_ORDER_SQL = `
-  CASE
-    WHEN uc.stage_of_development LIKE '%Deployed%' THEN 0
-    WHEN uc.stage_of_development LIKE '%Pilot%'    THEN 1
-    WHEN uc.stage_of_development LIKE '%Pre-deployment%' OR uc.stage_of_development LIKE '%pre-deployment%' THEN 2
-    WHEN uc.stage_of_development LIKE '%Retired%'  THEN 3
+  CASE COALESCE(uc.stage_normalized, 'unknown')
+    WHEN 'deployed'       THEN 0
+    WHEN 'pilot'          THEN 1
+    WHEN 'pre_deployment' THEN 2
+    WHEN 'retired'        THEN 3
     ELSE 4
   END
 `;

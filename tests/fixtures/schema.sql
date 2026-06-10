@@ -102,7 +102,7 @@ CREATE TABLE use_cases (
     -- Lossless preservation
     raw_json TEXT,
     created_at TEXT DEFAULT (datetime('now'))
-, id_provenance TEXT, organization_id INTEGER REFERENCES federal_organizations(id), bureau_organization_id INTEGER REFERENCES federal_organizations(id), omb_consolidated_id TEXT, omb_consolidated_source TEXT, omb_consolidated_first_seen TEXT, omb_consolidated_last_seen TEXT);
+, id_provenance TEXT, organization_id INTEGER REFERENCES federal_organizations(id), bureau_organization_id INTEGER REFERENCES federal_organizations(id), omb_consolidated_id TEXT, omb_consolidated_source TEXT, omb_consolidated_first_seen TEXT, omb_consolidated_last_seen TEXT, stage_normalized TEXT, ai_classification_normalized TEXT);
 CREATE INDEX idx_use_cases_agency ON use_cases(agency_id);
 CREATE INDEX idx_use_cases_product ON use_cases(product_id);
 CREATE INDEX idx_use_cases_template ON use_cases(template_id);

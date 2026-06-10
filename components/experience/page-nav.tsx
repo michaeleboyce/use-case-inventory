@@ -15,7 +15,8 @@ const ITEMS: NavItem[] = [
   { href: "#section-02", label: "When did it land", kicker: "02" },
   { href: "#section-03", label: "Who has what", kicker: "03" },
   { href: "#section-04", label: "Estimated seats", kicker: "04" },
-  { href: "#section-05", label: "What's missing", kicker: "05" },
+  { href: "#section-05", label: "Capability ladder", kicker: "05" },
+  { href: "#section-06", label: "What's missing", kicker: "06" },
 ];
 
 export function PageNav() {

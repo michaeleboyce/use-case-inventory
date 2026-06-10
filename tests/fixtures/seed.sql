@@ -161,3 +161,19 @@ VALUES
     'OMB Memorandum','OMB M-25-21: Accelerating Federal Use of AI',
     2025,'2025-04-03',25,NULL,0,1,'https://www.whitehouse.gov/M-25-21.pdf',NULL,
     'Downloaded','2026-05-21',NULL);
+
+-- Mirror of the ETL repo's scripts/normalize_use_case_fields.py (m016):
+-- the app reads stage_normalized via STAGE_BUCKET_SQL, so the fixture must
+-- populate it the same way the pipeline does.
+UPDATE use_cases SET stage_normalized = CASE
+    WHEN stage_of_development IS NULL OR TRIM(stage_of_development) = '' THEN 'unknown'
+    WHEN LOWER(stage_of_development) LIKE '%retired%' THEN 'retired'
+    WHEN LOWER(stage_of_development) LIKE '%pilot%' THEN 'pilot'
+    WHEN LOWER(stage_of_development) LIKE '%deployed%' THEN 'deployed'
+    WHEN LOWER(stage_of_development) LIKE '%production%' THEN 'deployed'
+    WHEN LOWER(stage_of_development) LIKE '%pre-deployment%'
+      OR LOWER(stage_of_development) LIKE '%pre deployment%'
+      OR LOWER(stage_of_development) LIKE '%development or acquisition%'
+      THEN 'pre_deployment'
+    ELSE 'unknown'
+END;
