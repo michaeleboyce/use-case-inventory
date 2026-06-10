@@ -3,11 +3,13 @@
  *
  * Renders two side-by-side horizontal bar charts: "Agencies using" and
  * "Total entries", both sorted by the same metric (descending). Well-known
- * vendors get distinct colors; everything else is slate.
+ * vendors get distinct colors; everything else is slate. Bars navigate to
+ * the use-case explorer filtered to that vendor.
  */
 
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   Bar,
   BarChart,
@@ -103,6 +105,7 @@ function VendorPanel({
   data: VendorShareDatum[];
   valueKey: "agency_count" | "use_case_count";
 }) {
+  const router = useRouter();
   // Reverse for top-down display in a vertical-layout BarChart.
   const display = [...data].reverse();
   const height = Math.max(240, display.length * 28);
@@ -154,7 +157,17 @@ function VendorPanel({
             }}
             labelFormatter={() => ""}
           />
-          <Bar dataKey={valueKey} radius={[0, 4, 4, 0]}>
+          <Bar
+            dataKey={valueKey}
+            radius={[0, 4, 4, 0]}
+            cursor="pointer"
+            onClick={(entry) => {
+              const vendor = (entry as { vendor?: string }).vendor;
+              if (vendor) {
+                router.push(`/use-cases?vendor=${encodeURIComponent(vendor)}`);
+              }
+            }}
+          >
             {display.map((d) => (
               <Cell key={d.vendor} fill={vendorColor(d.vendor)} />
             ))}

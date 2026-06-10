@@ -2,6 +2,7 @@
 
 // Client Component — Recharts renders via browser APIs (SVG + ResizeObserver).
 
+import { useRouter } from "next/navigation";
 import {
   Cell,
   Legend,
@@ -25,6 +26,9 @@ type Props = {
   labelMap?: Record<string, string>;
   centerLabel?: string;
   centerSubLabel?: string;
+  /** When provided, slices whose datum maps to a URL become clickable.
+   *  Return undefined for synthetic buckets that have no filter target. */
+  hrefFor?: (d: DonutDatum) => string | undefined;
 };
 
 const DEFAULT_PALETTE = [
@@ -50,7 +54,9 @@ export function DonutChart({
   labelMap,
   centerLabel,
   centerSubLabel,
+  hrefFor,
 }: Props) {
+  const router = useRouter();
   const total = data.reduce((acc, d) => acc + d.count, 0);
   const display = centerLabel ?? String(total);
 
@@ -61,6 +67,7 @@ export function DonutChart({
       rawLabel: d.label,
       value: d.count,
       fill: colorMap[d.label] ?? palette[i % palette.length],
+      href: hrefFor?.(d),
     }));
 
   if (chartData.length === 0) {
@@ -99,9 +106,17 @@ export function DonutChart({
           outerRadius="85%"
           strokeWidth={1}
           paddingAngle={1}
+          onClick={(entry) => {
+            const href = (entry as { href?: string }).href;
+            if (href) router.push(href);
+          }}
         >
           {chartData.map((d) => (
-            <Cell key={d.rawLabel} fill={d.fill} />
+            <Cell
+              key={d.rawLabel}
+              fill={d.fill}
+              cursor={d.href ? "pointer" : undefined}
+            />
           ))}
         </Pie>
         <Tooltip

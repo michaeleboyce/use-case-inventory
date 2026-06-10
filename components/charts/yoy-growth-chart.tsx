@@ -10,6 +10,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Bar,
   BarChart,
@@ -37,6 +38,7 @@ type ChartRow = {
 };
 
 export function YoYGrowthChart({ data }: { data: YoYRow[] }) {
+  const router = useRouter();
   const [mode, setMode] = React.useState<ViewMode>("top20");
 
   const rows = React.useMemo<ChartRow[]>(
@@ -133,7 +135,17 @@ export function YoYGrowthChart({ data }: { data: YoYRow[] }) {
               ];
             }}
           />
-          <Bar dataKey="growth" radius={[0, 4, 4, 0]}>
+          <Bar
+            dataKey="growth"
+            radius={[0, 4, 4, 0]}
+            cursor="pointer"
+            onClick={(entry) => {
+              const abbr = (entry as { abbreviation?: string }).abbreviation;
+              if (abbr) {
+                router.push(`/agencies/${abbr.toLowerCase()}`);
+              }
+            }}
+          >
             {display.map((row) => (
               <Cell
                 key={row.abbreviation}

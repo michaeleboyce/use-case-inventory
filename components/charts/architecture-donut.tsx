@@ -1,11 +1,13 @@
 /**
  * Architecture-type donut chart. Thin wrapper around the shared DonutChart
  * that centralizes the color map and humanized labels for the
- * `tag.architecture_type` enum.
+ * `tag.architecture_type` enum. Slices click through to the use-case
+ * explorer filtered to that architecture.
  */
 
 "use client";
 
+import { buildUseCasesUrl } from "@/lib/urls";
 import { DonutChart, type DonutDatum } from "./donut-chart";
 
 const ARCHITECTURE_COLORS: Record<string, string> = {
@@ -34,6 +36,7 @@ export function ArchitectureDonut({ data }: { data: DonutDatum[] }) {
       labelMap={ARCHITECTURE_LABELS}
       centerSubLabel="use cases"
       height={280}
+      hrefFor={(d) => buildUseCasesUrl({ architectureTypes: [d.label] })}
     />
   );
 }

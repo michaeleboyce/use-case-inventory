@@ -1,10 +1,12 @@
 /**
  * Scatter plot: YoY growth (x) × total use-case count (y), colored by
- * maturity tier. Client Component.
+ * maturity tier. Client Component. Each point navigates to its agency's
+ * detail page on click.
  */
 
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   CartesianGrid,
   Scatter,
@@ -50,6 +52,7 @@ type ChartPoint = {
 };
 
 export function MaturityScatter({ data }: { data: MaturityScatterDatum[] }) {
+  const router = useRouter();
   // Group by tier so each series gets its own color + legend entry.
   const buckets = new Map<string, ChartPoint[]>();
   for (const d of data) {
@@ -148,6 +151,9 @@ export function MaturityScatter({ data }: { data: MaturityScatterDatum[] }) {
                     Total: <span className="font-medium">{p.total}</span> use
                     cases
                   </div>
+                  <div className="mt-1 text-muted-foreground">
+                    Click to open agency page
+                  </div>
                 </div>
               );
             }}
@@ -163,6 +169,13 @@ export function MaturityScatter({ data }: { data: MaturityScatterDatum[] }) {
               }))}
               fill={TIER_COLORS[tier] ?? "#64748b"}
               fillOpacity={0.8}
+              cursor="pointer"
+              onClick={(entry) => {
+                const abbr = (entry as { abbreviation?: string }).abbreviation;
+                if (abbr) {
+                  router.push(`/agencies/${abbr.toLowerCase()}`);
+                }
+              }}
             />
           ))}
         </ScatterChart>
