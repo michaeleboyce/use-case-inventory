@@ -5,6 +5,15 @@
  * per "thing" (product / agency / etc.) with an expanded payload
  * server-rendered and passed as a ReactNode-returning callback.
  *
+ * SITE-WIDE ROW-AFFORDANCE CONVENTION (this file is the pattern home):
+ *   - chevron column (right→down) = the row EXPANDS in place;
+ *   - a name-cell <Link> = NAVIGATES (use stopPropagation inside
+ *     expanding rows);
+ *   - whole-row navigation (no expansion) shows a hover-visible ↗
+ *     (ArrowUpRight) at the row end — see components/agencies-table.tsx.
+ * New tables should pick exactly one row-click behavior and signal it
+ * with the matching affordance.
+ *
  * Mirrors the pattern from
  * `app/compare-years/silently-dropped/_sections/agency-table.tsx`:
  * - TanStack Table v8 with `getExpandedRowModel()`

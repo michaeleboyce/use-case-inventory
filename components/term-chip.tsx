@@ -141,6 +141,7 @@ export function TermLinkChip({
       <PopoverTrigger
         openOnHover
         delay={250}
+        nativeButton={false}
         render={
           <Link
             href={href}

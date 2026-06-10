@@ -26,9 +26,45 @@ function num(
   return typeof v === "number" ? v : null;
 }
 
-/** Build a human-readable "X of Y — note" summary from a
- * numerator/denominator pair in headline_inputs, falling back to the
- * given text when the inputs aren't structured the way we expect. */
+function humanizeKey(key: string): string {
+  const k = key.replace(/_/g, " ");
+  return k.length > 0 ? k[0].toUpperCase() + k.slice(1) : k;
+}
+
+/** Keys that denote the bucket's denominator rather than an input signal. */
+const DENOMINATOR_KEYS = new Set([
+  "denominator",
+  "total_use_cases",
+  "total",
+  "risky_total",
+  "ato_total",
+  "products_total",
+]);
+
+/** The raw input signals for one dimension, as label/value pairs, with the
+ * bucket's denominator (when one is recognizable) split out. Returns null
+ * when headline_inputs has no bucket for the dimension. */
+export function readinessInputBreakdown(
+  inputs: AgencyReadinessWithName["headline_inputs"],
+  dimKey: string,
+): { signals: Array<{ label: string; value: number }>; denominators: Array<{ label: string; value: number }> } | null {
+  const bucket = inputs?.[dimKey];
+  if (!bucket) return null;
+  const signals: Array<{ label: string; value: number }> = [];
+  const denominators: Array<{ label: string; value: number }> = [];
+  for (const [key, v] of Object.entries(bucket)) {
+    if (typeof v !== "number") continue;
+    (DENOMINATOR_KEYS.has(key) ? denominators : signals).push({
+      label: humanizeKey(key === "numerator" ? "qualifying" : key),
+      value: v,
+    });
+  }
+  if (signals.length === 0 && denominators.length === 0) return null;
+  return { signals, denominators };
+}
+
+/** Build a human-readable one-line summary of a dimension's inputs,
+ * falling back to the given text when headline_inputs has no bucket. */
 export function readinessInputSummary(
   inputs: AgencyReadinessWithName["headline_inputs"],
   dimKey: string,
@@ -44,6 +80,14 @@ export function readinessInputSummary(
       den_,
     ).toLocaleString()}`;
     return typeof note === "string" ? `${base} — ${note}` : base;
+  }
+  const breakdown = readinessInputBreakdown(inputs, dimKey);
+  if (breakdown && breakdown.signals.length > 0) {
+    const parts = breakdown.signals.map((s) => `${s.label} ${s.value}`);
+    const den = breakdown.denominators[0];
+    return (
+      parts.join(" · ") + (den ? ` — of ${den.value} ${den.label.toLowerCase()}` : "")
+    );
   }
   return typeof note === "string" ? note : fallback;
 }
@@ -61,6 +105,7 @@ export function ReadinessDerivation({
         {RUBRIC_DIMENSIONS.map((dim) => {
           const score = readiness[dim.key];
           const contribution = score * dim.weight;
+          const breakdown = readinessInputBreakdown(inputs, dim.key);
           return (
             <div key={dim.key} className="flex flex-col gap-1.5">
               <ReadinessSubscoreBar
@@ -68,9 +113,30 @@ export function ReadinessDerivation({
                 value={score}
                 weight={dim.weight}
               />
-              <p className="text-[0.8rem] leading-snug text-stone-600">
-                {readinessInputSummary(inputs, dim.key, dim.definition)}
-              </p>
+              {breakdown && breakdown.signals.length > 0 ? (
+                <p className="font-mono text-[11px] leading-relaxed text-stone-600">
+                  {breakdown.signals.map((s, i) => (
+                    <span key={s.label} className="whitespace-nowrap">
+                      {i > 0 ? " · " : ""}
+                      {s.label}{" "}
+                      <span className="font-semibold tabular-nums text-stone-800">
+                        {s.value.toLocaleString()}
+                      </span>
+                    </span>
+                  ))}
+                  {breakdown.denominators[0] ? (
+                    <span className="text-stone-400">
+                      {" "}
+                      / {breakdown.denominators[0].value.toLocaleString()}{" "}
+                      {breakdown.denominators[0].label.toLowerCase()}
+                    </span>
+                  ) : null}
+                </p>
+              ) : (
+                <p className="text-[0.8rem] leading-snug text-stone-600">
+                  {readinessInputSummary(inputs, dim.key, dim.definition)}
+                </p>
+              )}
               <p className="font-mono text-[10px] tabular-nums text-stone-400">
                 {Math.round(dim.weight * 100)}% × {score.toFixed(1)} ={" "}
                 {contribution.toFixed(1)} pts of composite ·{" "}
