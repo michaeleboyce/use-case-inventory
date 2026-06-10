@@ -42,7 +42,7 @@ export default async function ProductsPage() {
       {/* ------------------------------------------------------------ */}
       <header
         id="overview"
-        className="ink-in grid scroll-mt-32 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
+        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
       >
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-4">
@@ -198,7 +198,7 @@ export default async function ProductsPage() {
       {/* ------------------------------------------------------------ */}
       {/* § I — VENDOR MARKET SHARE                                    */}
       {/* ------------------------------------------------------------ */}
-      <div id="vendors" className="scroll-mt-32">
+      <div id="vendors" className="scroll-mt-36">
       <Section
         number="I"
         title="Who sells"
@@ -222,7 +222,7 @@ export default async function ProductsPage() {
       {/* ------------------------------------------------------------ */}
       {/* § II — CATEGORY DISTRIBUTION                                 */}
       {/* ------------------------------------------------------------ */}
-      <div id="categories" className="scroll-mt-32">
+      <div id="categories" className="scroll-mt-36">
       <Section
         number="II"
         title="By category"
@@ -256,7 +256,7 @@ export default async function ProductsPage() {
       {/* ------------------------------------------------------------ */}
       {/* § III — CATALOGUE                                            */}
       {/* ------------------------------------------------------------ */}
-      <div id="catalogue" className="scroll-mt-32">
+      <div id="catalogue" className="scroll-mt-36">
       <Section
         number="III"
         title="The catalogue"

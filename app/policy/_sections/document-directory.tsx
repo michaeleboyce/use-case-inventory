@@ -15,6 +15,8 @@ import type { PolicyDocument } from "@/lib/types/policy";
 
 interface Props {
   documents: PolicyDocument[];
+  /** Pre-select the agency filter (deep links from /agencies/[slug]). */
+  initialAgency?: string;
 }
 
 const ch = createColumnHelper<PolicyDocument>();
@@ -52,8 +54,8 @@ const columns: ColumnDef<PolicyDocument, any>[] = [
   }),
 ];
 
-export function DocumentDirectory({ documents }: Props) {
-  const [agency, setAgency] = useState<string>("");
+export function DocumentDirectory({ documents, initialAgency }: Props) {
+  const [agency, setAgency] = useState<string>(initialAgency ?? "");
   const [docType, setDocType] = useState<string>("");
   const [year, setYear] = useState<string>("");
   const [sorting, setSorting] = useState<SortingState>([

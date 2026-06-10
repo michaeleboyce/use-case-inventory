@@ -52,6 +52,14 @@ export default async function ScorecardPrintPage({
 
   return (
     <main className="max-w-3xl mx-auto p-8 print:p-4 print:max-w-none">
+      <nav className="mb-4 print:hidden">
+        <Link
+          href={`/agencies/${slug}`}
+          className="font-mono text-[10px] uppercase tracking-[0.18em] text-stone-500 hover:text-stone-900"
+        >
+          ← {agency.abbreviation} agency page
+        </Link>
+      </nav>
       <header className="border-b border-stone-300 pb-4 mb-6">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-stone-500">
           Federal AI Use Case Inventory · IFP

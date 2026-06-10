@@ -22,11 +22,12 @@
  *  - Mono uppercase pills matching the existing filter-row aesthetic on
  *    /products. Active-state highlight via a single shared
  *    IntersectionObserver keyed off the tab `id`s. The tab whose target
- *    section is most visible (and whose center has crossed the upper third
- *    of the viewport) gets `data-active="true"` and renders with a
- *    [var(--stamp)] bottom-border + foreground text. Threshold 0.5 with
- *    rootMargin "-30% 0px -50% 0px" so the active flips when the section
- *    center crosses the upper third of viewport.
+ *    section shows the most visible pixels inside the observation band
+ *    (viewport shrunk by rootMargin "-30% 0px -50% 0px") gets
+ *    `data-active="true"` and renders with a [var(--stamp)] bottom-border
+ *    + foreground text. Visible *height* (intersectionRect), not ratio,
+ *    is compared — ratio-based comparison biases toward short sections
+ *    and, with a single high threshold, tall sections never fire at all.
  */
 
 "use client";
@@ -43,7 +44,7 @@ export type PageSubnavTab = {
 
 export function PageSubnav({ tabs }: { tabs: PageSubnavTab[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  // Track per-id intersection ratios so we can pick the most-visible target.
+  // Track per-id visible heights so we can pick the most-visible target.
   const ratiosRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
@@ -64,23 +65,29 @@ export function PageSubnav({ tabs }: { tabs: PageSubnavTab[] }) {
       (entries) => {
         for (const entry of entries) {
           const id = (entry.target as HTMLElement).id;
-          ratiosRef.current.set(id, entry.intersectionRatio);
+          ratiosRef.current.set(
+            id,
+            entry.isIntersecting ? entry.intersectionRect.height : 0,
+          );
         }
-        // Pick the id with the highest intersection ratio. If nothing's
-        // intersecting (all ratios 0), leave the previous active state alone
+        // Pick the id with the most visible pixels. If nothing's
+        // intersecting (all heights 0), leave the previous active state alone
         // — avoids flicker when scrolling fast between sections.
-        let best: { id: string; ratio: number } | null = null;
-        for (const [id, ratio] of ratiosRef.current) {
-          if (best == null || ratio > best.ratio) {
-            best = { id, ratio };
+        let best: { id: string; height: number } | null = null;
+        for (const [id, height] of ratiosRef.current) {
+          if (best == null || height > best.height) {
+            best = { id, height };
           }
         }
-        if (best && best.ratio > 0) {
+        if (best && best.height > 0) {
           setActiveId(best.id);
         }
       },
       {
-        threshold: 0.5,
+        // Dense thresholds so tall sections (which can never reach a high
+        // intersection *ratio* inside the narrow band) still fire updates
+        // as they enter/leave.
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
         rootMargin: "-30% 0px -50% 0px",
       },
     );

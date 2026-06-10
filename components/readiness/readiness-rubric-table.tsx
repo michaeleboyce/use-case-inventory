@@ -37,7 +37,7 @@ export function ReadinessRubricTable() {
             <tr
               key={d.key}
               id={d.key}
-              className="scroll-mt-24 border-b border-border/60 align-top last:border-b-0"
+              className="scroll-mt-36 border-b border-border/60 align-top last:border-b-0"
             >
               <th
                 scope="row"

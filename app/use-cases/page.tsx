@@ -216,7 +216,7 @@ export default async function UseCasesPage({
       {/* ------------------------------------------------------------ */}
       <header
         id="overview"
-        className="ink-in grid scroll-mt-32 grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14"
+        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14"
       >
         <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-3">
@@ -265,7 +265,7 @@ export default async function UseCasesPage({
            on the outer cell, which created a nested scroll container
            competing with the window scrollbar and made page scrolling
            feel "strange". */}
-        <div id="filters" className="min-w-0 scroll-mt-32">
+        <div id="filters" className="min-w-0 scroll-mt-36">
           <div className="lg:sticky lg:top-32 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
             <MobileFiltersSheet triggerLabel="Filter use cases">
               <UseCaseFilters
@@ -293,7 +293,7 @@ export default async function UseCasesPage({
           </div>
         </div>
 
-        <section id="results" className="flex min-w-0 scroll-mt-32 flex-col gap-6">
+        <section id="results" className="flex min-w-0 scroll-mt-36 flex-col gap-6">
           {/* Toolbar — mono-styled bar. */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-y-2 border-foreground py-2.5">
             <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">

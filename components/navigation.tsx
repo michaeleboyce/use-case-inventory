@@ -301,7 +301,7 @@ function FedrampMenu() {
           aria-hidden
           className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
         >
-          V
+          VII
         </span>
         FedRAMP
         <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">

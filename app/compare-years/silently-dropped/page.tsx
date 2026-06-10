@@ -7,6 +7,7 @@ import {
   SourceLegend,
 } from "@/components/editorial";
 import { InsightCard } from "@/components/insight-card";
+import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber, formatPercent } from "@/lib/formatting";
 import { buildSilentlyDroppedViewModel } from "./_view-model";
 import { SilentlyDroppedAgencyTable } from "./_sections/agency-table";
@@ -154,11 +155,27 @@ export default async function SilentlyDroppedPage() {
   const otherAgencyRows = byAgencyExpanded;
 
   return (
+    <>
+    <PageSubnav
+      tabs={[
+        { id: "overview", label: "Overview" },
+        { id: "breakdown", label: "Breakdown" },
+        { id: "by-stage", label: "By stage" },
+        { id: "live-genai", label: "Live GenAI" },
+        { id: "by-agency", label: "By agency" },
+        { id: "examples", label: "Examples" },
+        { id: "full-list", label: "Full list" },
+        { id: "caveats", label: "Caveats" },
+      ]}
+    />
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* ------------------------------------------------------------ */}
       {/* HERO                                                          */}
       {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
+      <header
+        id="overview"
+        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
+      >
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-4">
             <div>
@@ -263,6 +280,7 @@ export default async function SilentlyDroppedPage() {
       {/* § I — THE BREAKDOWN                                           */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="breakdown"
         number="I"
         title="The breakdown"
         source="derived"
@@ -343,6 +361,7 @@ export default async function SilentlyDroppedPage() {
       {/* § II — BY 2024 STAGE                                          */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="by-stage"
         number="II"
         title="By 2024 stage"
         source="omb-derived"
@@ -404,8 +423,8 @@ export default async function SilentlyDroppedPage() {
       {/* ------------------------------------------------------------ */}
       {/* § IIa — LIVE GENERATIVE AI THAT VANISHED                      */}
       {/* ------------------------------------------------------------ */}
-      <div id="live-genai" className="scroll-mt-24" />
       <Section
+        id="live-genai"
         number="IIa"
         title="Live generative AI that vanished"
         source="derived"
@@ -473,6 +492,7 @@ export default async function SilentlyDroppedPage() {
       {/* § III — BY AGENCY                                             */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="by-agency"
         number="III"
         title="By agency"
         source="omb-derived"
@@ -533,6 +553,7 @@ export default async function SilentlyDroppedPage() {
       {/* § IV — EXAMPLES                                               */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="examples"
         number="IV"
         title="Examples"
         source="omb-derived"
@@ -605,6 +626,7 @@ export default async function SilentlyDroppedPage() {
       {/* § V — FULL LIST                                               */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="full-list"
         number="V"
         title="Full list"
         source="omb-derived"
@@ -628,6 +650,7 @@ export default async function SilentlyDroppedPage() {
       {/* § VI — CAVEATS                                                */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="caveats"
         number="VI"
         title="Caveats"
         source="mixed"
@@ -783,5 +806,6 @@ export default async function SilentlyDroppedPage() {
         </p>
       </footer>
     </div>
+    </>
   );
 }

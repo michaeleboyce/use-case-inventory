@@ -8,6 +8,7 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PageSubnav } from "@/components/page-subnav";
 import { Section, MonoChip } from "@/components/editorial";
 import { ReadinessRubricTable } from "@/components/readiness/readiness-rubric-table";
 import {
@@ -46,6 +47,19 @@ export default function MethodologyPage() {
   });
 
   return (
+    <>
+      <PageSubnav
+        tabs={[
+          { id: "why", label: "Why" },
+          { id: "rubric", label: "Rubric" },
+          { id: "tier-bands", label: "Tier bands" },
+          { id: "headline-statistics", label: "Headline stats" },
+          { id: "caveats", label: "Caveats" },
+          { id: "source-data", label: "Sources" },
+          { id: "changelog", label: "Changelog" },
+          { id: "citation", label: "Citation" },
+        ]}
+      />
     <main className="mx-auto max-w-[1400px] px-4 pb-24 md:px-8">
       {/* Dateline strip */}
       <div className="mt-6 flex flex-wrap items-baseline gap-3 border-b border-border pb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -85,6 +99,7 @@ export default function MethodologyPage() {
       </header>
 
       <Section
+        id="why"
         number="01"
         title="Why this exists"
         source="derived"
@@ -128,7 +143,7 @@ export default function MethodologyPage() {
         source="derived"
         lede="Five dimensions, weighted. Each yields 0–100; composite is the weighted sum."
       >
-        <div id="rubric">
+        <div id="rubric" className="scroll-mt-36">
           <ReadinessRubricTable />
           <p className="mt-4 font-mono text-[11px] text-muted-foreground">
             Weights sum to{" "}
@@ -147,7 +162,7 @@ export default function MethodologyPage() {
         source="derived"
         lede="Composite scores translate into letter tiers. Bands are intentionally demanding."
       >
-        <div id="tier-bands" className="border-t-2 border-foreground">
+        <div id="tier-bands" className="scroll-mt-36 border-t-2 border-foreground">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -210,10 +225,10 @@ export default function MethodologyPage() {
         source="derived"
         lede="Three capacity-first numbers are featured; a fourth compliance baseline is preserved for contrast."
       >
-        <div id="headline-statistics" className="space-y-6">
+        <div id="headline-statistics" className="scroll-mt-36 space-y-6">
           <article
             id="internal-build"
-            className="border-l-4 border-[var(--stamp)] bg-stone-50 p-4"
+            className="scroll-mt-36 border-l-4 border-[var(--stamp)] bg-stone-50 p-4"
           >
             <div className="flex items-baseline gap-3">
               <span className="font-mono tabular-nums text-3xl font-semibold text-foreground">
@@ -237,7 +252,7 @@ export default function MethodologyPage() {
 
           <article
             id="production-rate"
-            className="border-l-2 border-border bg-background p-4"
+            className="scroll-mt-36 border-l-2 border-border bg-background p-4"
           >
             <span className="font-mono tabular-nums text-2xl font-semibold text-foreground">
               {headline.production_rate_pct.toFixed(1)}%
@@ -255,7 +270,7 @@ export default function MethodologyPage() {
 
           <article
             id="fedramp"
-            className="border-l-2 border-border bg-background p-4"
+            className="scroll-mt-36 border-l-2 border-border bg-background p-4"
           >
             <span className="font-mono tabular-nums text-2xl font-semibold text-foreground">
               {headline.fedramp_coverage_pct.toFixed(1)}%
@@ -274,7 +289,7 @@ export default function MethodologyPage() {
 
           <article
             id="compliance-vs-capacity"
-            className="border-l-2 border-stone-400 bg-stone-50/60 p-4"
+            className="scroll-mt-36 border-l-2 border-stone-400 bg-stone-50/60 p-4"
           >
             <div className="flex items-baseline gap-3">
               <span className="font-mono tabular-nums text-2xl font-semibold text-foreground">
@@ -308,7 +323,7 @@ export default function MethodologyPage() {
         source="derived"
         lede="What this score does not measure, and where the data is thinnest."
       >
-        <div id="caveats" className="space-y-4 text-base leading-relaxed text-foreground">
+        <div id="caveats" className="scroll-mt-36 space-y-4 text-base leading-relaxed text-foreground">
           <ul className="list-disc space-y-2 pl-6">
             <li>
               <strong>Agencies with no risky use cases score 0 on
@@ -361,7 +376,7 @@ export default function MethodologyPage() {
         source="omb-derived"
         lede="Per-dimension source tables. Same lineage as the rest of the dashboard."
       >
-        <div id="source-data" className="space-y-4">
+        <div id="source-data" className="scroll-mt-36 space-y-4">
           <p className="text-sm leading-relaxed text-muted-foreground">
             All inputs are derived from the OMB M-25-21 federal AI use case
             inventory plus the IFP analytical layer described on the{" "}
@@ -414,7 +429,7 @@ export default function MethodologyPage() {
         source="derived"
         lede="Versioned changes to weights, thresholds, or dimension definitions are recorded here."
       >
-        <div id="changelog">
+        <div id="changelog" className="scroll-mt-36">
           <ul className="space-y-3 text-base leading-relaxed text-foreground">
             <li>
               <span className="font-mono font-semibold text-foreground">
@@ -451,7 +466,7 @@ export default function MethodologyPage() {
         source="derived"
         lede="Copy-paste citation for footnoting in policy papers and articles."
       >
-        <div id="citation">
+        <div id="citation" className="scroll-mt-36">
           <blockquote className="border-l-4 border-stone-400 bg-stone-50 p-4 font-mono text-sm leading-relaxed text-foreground">
             Institute for Progress. &ldquo;Federal AI Readiness
             Index.&rdquo; Federal AI Use Case Inventory, accessed{" "}
@@ -473,5 +488,6 @@ export default function MethodologyPage() {
         Data as of {computedAtLabel} · Rubric v{RUBRIC_VERSION}
       </footer>
     </main>
+    </>
   );
 }

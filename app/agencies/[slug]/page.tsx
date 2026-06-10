@@ -170,7 +170,7 @@ function TopLevelOrgPage({
           carrying the #scorecard anchor so deep links from /readiness and
           from the scorecard card's own footer land at the right spot. */}
       {readiness ? (
-        <div id="scorecard">
+        <div id="scorecard" className="scroll-mt-36">
           <Section
             number="0"
             title="Readiness scorecard"

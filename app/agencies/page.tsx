@@ -67,7 +67,7 @@ export default async function AgenciesPage({
       {/* ---------------------------------------------------------------- */}
       <header
         id="overview"
-        className="ink-in grid scroll-mt-32 grid-cols-12 gap-x-6 border-b border-border pb-12"
+        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12"
       >
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-3">
@@ -136,7 +136,7 @@ export default async function AgenciesPage({
       {/* ---------------------------------------------------------------- */}
       {/* Directory table or hierarchy tree                                 */}
       {/* ---------------------------------------------------------------- */}
-      <section id="directory" className="mt-16 scroll-mt-32 md:mt-20">
+      <section id="directory" className="mt-16 scroll-mt-36 md:mt-20">
         <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 border-b border-border pb-3">
           <div className="eyebrow">
             Fig. 1 · {view === "tree" ? "Hierarchy" : "Directory"}

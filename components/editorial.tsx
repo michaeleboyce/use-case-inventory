@@ -50,6 +50,7 @@ export function Section({
   source,
   children,
   className = "mt-16 md:mt-24",
+  id,
 }: {
   number: string;
   title: string;
@@ -57,9 +58,14 @@ export function Section({
   source?: SectionSource;
   children: ReactNode;
   className?: string;
+  /** Anchor id for in-page jump navigation (PageSubnav / TOC links). */
+  id?: string;
 }) {
   return (
-    <section className={`ink-in grid grid-cols-12 gap-x-6 ${className}`}>
+    <section
+      id={id}
+      className={`ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 ${className}`}
+    >
       <header className="col-span-12 mb-8 md:col-span-3">
         <div className="sticky top-32 space-y-1">
           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--stamp)]">

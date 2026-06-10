@@ -8,8 +8,19 @@ import { GoverningDocsBlock } from "./_sections/governing-docs-block";
 
 export const metadata = { title: "Federal AI Policy" };
 
-export default async function PolicyPage() {
+export default async function PolicyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ agency?: string | string[] }>;
+}) {
   const vm = await buildPolicyViewModel();
+  const sp = await searchParams;
+  const rawAgency = Array.isArray(sp.agency) ? sp.agency[0] : sp.agency;
+  // Only honor the param if it matches a known agency in the directory, so a
+  // bad deep link degrades to the unfiltered table instead of an empty one.
+  const initialAgency = vm.documents.some((d) => d.agency_abbr === rawAgency)
+    ? rawAgency
+    : undefined;
 
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-8">
@@ -64,11 +75,11 @@ export default async function PolicyPage() {
         </div>
       </section>
 
-      <section className="mb-12">
+      <section id="documents" className="mb-12 scroll-mt-36">
         <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
           All policy documents
         </h2>
-        <DocumentDirectory documents={vm.documents} />
+        <DocumentDirectory documents={vm.documents} initialAgency={initialAgency} />
       </section>
 
       <GoverningDocsBlock governing={vm.governing} />

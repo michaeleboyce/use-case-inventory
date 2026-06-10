@@ -173,7 +173,7 @@ export default async function AnalyticsPage() {
       >
         <div
           id="insights"
-          className="scroll-mt-32 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          className="scroll-mt-36 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           <InsightCard
             kicker="A · Enterprise LLM"
@@ -285,7 +285,7 @@ export default async function AnalyticsPage() {
         </p>
         <div
           id="architecture"
-          className="scroll-mt-32 mt-4 grid gap-x-6 gap-y-10 md:grid-cols-2"
+          className="scroll-mt-36 mt-4 grid gap-x-6 gap-y-10 md:grid-cols-2"
         >
           <Figure
             eyebrow="Fig. 06 · Architecture type"
@@ -296,7 +296,7 @@ export default async function AnalyticsPage() {
           <Figure
             eyebrow="Fig. 10 · Entry-type mix"
             caption={
-              <span id="entry-mix" className="scroll-mt-32">
+              <span id="entry-mix" className="scroll-mt-36">
                 Segments are the derived <code>tag.entry_type</code>:
                 product_deployment (COTS/SaaS), custom_system (bespoke
                 in-house), generic_use_pattern (&quot;employees use
@@ -318,7 +318,7 @@ export default async function AnalyticsPage() {
         title="Market share"
         lede="Who is selling, who is installed, and at how many doors — vendor reach versus vendor footprint."
       >
-        <div id="vendors" className="scroll-mt-32 space-y-14">
+        <div id="vendors" className="scroll-mt-36 space-y-14">
           <Figure
             eyebrow="Fig. 03 · Vendor share"
             caption="Distinct agencies and total use-case entries for each vendor. Microsoft dominates reach; everyone else is long-tail."
@@ -326,7 +326,7 @@ export default async function AnalyticsPage() {
             <VendorShareChart data={vendorShare} />
           </Figure>
 
-          <div id="heatmap" className="scroll-mt-32">
+          <div id="heatmap" className="scroll-mt-36">
             <Figure
               eyebrow="Fig. 04 · Product adoption heatmap"
               caption="Top 15 products (rows) × top 20 agencies (columns). Darker ink = more reported use cases. Click a cell to drill into the matching entries."
@@ -335,7 +335,7 @@ export default async function AnalyticsPage() {
             </Figure>
           </div>
 
-          <div id="llm-vendors" className="scroll-mt-32">
+          <div id="llm-vendors" className="scroll-mt-36">
             <Figure
               eyebrow="Fig. 07 · LLM vendor share"
               caption={
@@ -400,7 +400,7 @@ export default async function AnalyticsPage() {
         title="Growth"
         lede="Which agencies grew, which shrank, and whether fast growth implies real maturity."
       >
-        <div id="yoy" className="scroll-mt-32 space-y-14">
+        <div id="yoy" className="scroll-mt-36 space-y-14">
           <Figure
             eyebrow="Fig. 02 · Year-over-year growth"
             caption={
@@ -435,7 +435,7 @@ export default async function AnalyticsPage() {
             </MonoChip>
           </div>
 
-          <div id="scatter" className="scroll-mt-32">
+          <div id="scatter" className="scroll-mt-36">
             <Figure
               eyebrow="Fig. 05 · Maturity × growth × scale"
               caption={
@@ -462,7 +462,7 @@ export default async function AnalyticsPage() {
         lede="Two adoption leaderboards that tell very different stories about how far a technology has spread."
       >
         <div className="grid gap-x-6 gap-y-10 md:grid-cols-2">
-          <div id="coding" className="scroll-mt-32">
+          <div id="coding" className="scroll-mt-36">
             <Figure
               eyebrow="Fig. 08 · Coding tool adoption"
               caption="Top 20 agencies by count of coding-assistant use cases. Click an agency to see the underlying inventory."
@@ -474,7 +474,7 @@ export default async function AnalyticsPage() {
               />
             </Figure>
           </div>
-          <div id="enterprise-llm" className="scroll-mt-32">
+          <div id="enterprise-llm" className="scroll-mt-36">
             <Figure
               eyebrow="Fig. 09 · Enterprise LLM distribution"
               caption="Agencies with enterprise-wide LLM access, sorted by the number of general-LLM entries in their inventory (entries per agency, not number of agencies)."

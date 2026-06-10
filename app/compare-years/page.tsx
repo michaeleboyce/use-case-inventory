@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatNumber, formatYoY } from "@/lib/formatting";
 import { InsightCard } from "@/components/insight-card";
+import { PageSubnav } from "@/components/page-subnav";
 import { Section, Figure, SourceLegend, Eyebrow } from "@/components/editorial";
 import { TermChip } from "@/components/term-chip";
 import { LINEAGE_STATUS_DEFS } from "@/lib/definitions";
@@ -57,11 +58,26 @@ export default async function CompareYearsPage() {
     }));
 
   return (
+    <>
+    <PageSubnav
+      tabs={[
+        { id: "overview", label: "Overview" },
+        { id: "growth", label: "Growth" },
+        { id: "lineage", label: "Lineage" },
+        { id: "genai-yoy", label: "GenAI YoY" },
+        { id: "by-agency", label: "By agency" },
+        { id: "stage-mix", label: "Stage mix" },
+        { id: "methodology", label: "Methodology" },
+      ]}
+    />
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* ------------------------------------------------------------ */}
       {/* HERO                                                          */}
       {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
+      <header
+        id="overview"
+        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
+      >
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-4">
             <div>
@@ -145,6 +161,7 @@ export default async function CompareYearsPage() {
       {/* § I — GROWTH AT A GLANCE                                       */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="growth"
         number="I"
         title="Growth at a glance"
         source="omb-derived"
@@ -200,6 +217,7 @@ export default async function CompareYearsPage() {
       {/* § II — USE-CASE LINEAGE                                       */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="lineage"
         number="II"
         title="Use-case lineage"
         source="derived"
@@ -277,6 +295,7 @@ export default async function CompareYearsPage() {
       {/* § IIa — GENERATIVE AI, YEAR OVER YEAR                         */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="genai-yoy"
         number="IIa"
         title="Generative AI, year over year"
         source="derived"
@@ -370,6 +389,7 @@ export default async function CompareYearsPage() {
       {/* § III — BY AGENCY                                             */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="by-agency"
         number="III"
         title="By agency"
         source="omb-derived"
@@ -404,6 +424,7 @@ export default async function CompareYearsPage() {
       {/* § IV — STAGE MIX                                              */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="stage-mix"
         number="IV"
         title="Stage mix"
         source="omb-derived"
@@ -486,6 +507,7 @@ export default async function CompareYearsPage() {
       {/* § V — METHODOLOGY & CAVEATS                                   */}
       {/* ------------------------------------------------------------ */}
       <Section
+        id="methodology"
         number="V"
         title="Methodology & caveats"
         source="omb-derived"
@@ -568,6 +590,7 @@ export default async function CompareYearsPage() {
         </p>
       </footer>
     </div>
+    </>
   );
 }
 

@@ -20,7 +20,7 @@ export function AgencyPolicyDocuments({ agencyAbbr }: Props) {
           Policy &amp; strategy documents
         </h2>
         <a
-          href={`/policy#agency-${agencyAbbr}`}
+          href={`/policy?agency=${encodeURIComponent(agencyAbbr)}#documents`}
           className="text-[11px] text-foreground/55 underline-offset-2 hover:underline"
         >
           See in full /policy view →

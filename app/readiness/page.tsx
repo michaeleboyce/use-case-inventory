@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageSubnav } from "@/components/page-subnav";
 import { Section } from "@/components/editorial";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
 import { ReadinessTierBand } from "@/components/readiness/readiness-tier-band";
@@ -30,6 +31,16 @@ export default async function ReadinessPage() {
   } = await buildReadinessViewModel();
 
   return (
+    <>
+    <PageSubnav
+      tabs={[
+        { id: "overview", label: "Overview" },
+        { id: "headline", label: "Headline" },
+        { id: "league-table", label: "League table" },
+        { id: "ranked", label: "Ranked" },
+        { id: "sub-stories", label: "Sub-stories" },
+      ]}
+    />
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* ----------------------------------------------------------------- */}
       {/* Top banner — data-as-of + methodology link                         */}
@@ -51,7 +62,10 @@ export default async function ReadinessPage() {
       {/* ----------------------------------------------------------------- */}
       {/* HERO — H1 + lede                                                   */}
       {/* ----------------------------------------------------------------- */}
-      <header className="mt-10 grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:mt-14 md:pb-16">
+      <header
+        id="overview"
+        className="mt-10 grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:mt-14 md:pb-16"
+      >
         <div className="col-span-12 md:col-span-9">
           <div className="eyebrow mb-2 !text-[var(--stamp)]">
             No. 002 · Filed · Readiness Index v1.1
@@ -92,6 +106,7 @@ export default async function ReadinessPage() {
       {/* § 01 — THE HEADLINE                                                */}
       {/* ----------------------------------------------------------------- */}
       <Section
+        id="headline"
         number="01"
         title="The headline"
         lede="One quotable number that frames the gap between AI policy ambition and operational capacity."
@@ -141,6 +156,7 @@ export default async function ReadinessPage() {
       {/* § 02 — THE LEAGUE TABLE                                            */}
       {/* ----------------------------------------------------------------- */}
       <Section
+        id="league-table"
         number="02"
         title="The league table"
         lede="All scored agencies sorted into five tiers by composite score. Empty top tiers tell as much as full bottom ones."
@@ -187,6 +203,7 @@ export default async function ReadinessPage() {
       {/* § 03 — RANKED                                                      */}
       {/* ----------------------------------------------------------------- */}
       <Section
+        id="ranked"
         number="03"
         title="Ranked"
         lede={`All ${formatNumber(ranked.length)} agencies with composite, subscores, and tier. Click any column header to re-sort.`}
@@ -203,6 +220,7 @@ export default async function ReadinessPage() {
       {/* § 04 — SUB-STORIES                                                 */}
       {/* ----------------------------------------------------------------- */}
       <Section
+        id="sub-stories"
         number="04"
         title="Sub-stories"
         lede="Three angles into the readiness data — vendor concentration, frontier penetration, reporting completeness."
@@ -437,5 +455,6 @@ export default async function ReadinessPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
