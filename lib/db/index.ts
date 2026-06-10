@@ -161,6 +161,7 @@ export {
   getCapabilityLadder,
   getYearCompareGenAi,
   getYearCompareGenAiByAgency,
+  getEnterpriseTierRollup,
   GENAI_DEFINITIONS,
   GENAI_DEFINITION_LABELS,
   GENAI_DEFINITION_SHORT,
@@ -180,6 +181,7 @@ export type {
   YearCompareGenAi,
   AgencyYearCompareGenAiRow,
   CapabilityLadderData,
+  EnterpriseTierRollupRow,
 } from "./experience";
 export {
   getYearComparisonAggregates,

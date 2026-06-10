@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MonoChip, Section } from "@/components/editorial";
 import { GenAiByStageChart } from "@/components/experience/genai-by-stage-chart";
+import { EnterpriseTierChart } from "@/components/experience/enterprise-tier-chart";
 import { GenAiTimelineChart } from "@/components/experience/genai-timeline-chart";
 import { AgencyToolMatrix } from "@/components/experience/agency-tool-matrix";
 import { SeatsByAgencyChart } from "@/components/experience/seats-by-agency-chart";
@@ -49,6 +50,7 @@ export default async function ExperiencePage() {
     matrix,
     yearCompare,
     ladder,
+    enterpriseTiers,
     totalSeatsMidpoint,
     totalSeatsLower,
     totalSeatsUpper,
@@ -243,6 +245,41 @@ export default async function ExperiencePage() {
             </p>
           </div>
         </div>
+
+        {enterpriseTiers.length > 0 ? (
+          <div className="mt-10">
+            <h3 className="font-display text-xl italic">
+              What &ldquo;enterprise-wide&rdquo; meant changed in kind
+            </h3>
+            <p className="mt-2 max-w-prose text-sm leading-relaxed text-foreground/85">
+              The enterprise-wide GenAI count didn&apos;t just grow — its
+              composition flipped. In 2024 the modal enterprise row was a{" "}
+              <strong>permission memo</strong> (&ldquo;employees are permitted
+              to use commercial generative AI&rdquo;), an AI feature{" "}
+              <strong>embedded in software the agency already licensed</strong>
+              , or a small agency switching on Copilot — and the permission
+              rows explicitly prohibited internal data. By 2025 the dominant
+              tier is the <strong>operated internal service</strong>: a named,
+              governed chat tool — tenanted (OPM&apos;s ChatGPT Enterprise,
+              HHS&apos;s Claude for Government) or purpose-built (StateChat,
+              DHSChat, GSAi, SSA&apos;s ASC) — approved to touch internal
+              data. The unlock wasn&apos;t the model; it was a perimeter that
+              let AI touch the actual work.
+            </p>
+            <div className="mt-5">
+              <EnterpriseTierChart data={enterpriseTiers} />
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              Tier classification is rule-based with hand-reviewed overrides
+              (tool names, use-case titles, and M-24-10 task phrases);
+              per-row assignments and the rule that fired are persisted in the
+              ETL repo under{" "}
+              <code>audit/retag/enterprise-scope-2026-06/</code>. Counts use
+              the scope-corrected enterprise tags and include pre-deployment
+              and retired rows.
+            </p>
+          </div>
+        ) : null}
       </Section>
 
       {/* § 02 — Timeline */}

@@ -189,3 +189,44 @@ export interface AgencyYearCompareGenAiRow {
   genai_2025: number;
   delta: number;
 }
+
+/* ------------------------------------------------------------------ */
+/* Enterprise-GenAI delivery tiers                                     */
+/* ------------------------------------------------------------------ */
+
+/** How an enterprise-wide GenAI capability is delivered. Classified per row
+ *  by the ETL repo's `scripts/classify_enterprise_genai_tiers.py` (rule
+ *  tables + hand overrides; per-row provenance in
+ *  `audit/retag/enterprise-scope-2026-06/tier_classification_*.csv`). */
+export const ENTERPRISE_TIERS = [
+  "permission",
+  "embedded_cots",
+  "tenanted",
+  "operated_build",
+] as const;
+
+export type EnterpriseTier = (typeof ENTERPRISE_TIERS)[number];
+
+export const ENTERPRISE_TIER_LABELS: Record<EnterpriseTier, string> = {
+  permission: "Permission to use commercial AI",
+  embedded_cots: "AI features in existing licenses",
+  tenanted: "Tenanted commercial assistant",
+  operated_build: "Operated internal service",
+};
+
+export const ENTERPRISE_TIER_BLURBS: Record<EnterpriseTier, string> = {
+  permission:
+    "A policy allowing employees to use public commercial GenAI — no agency-run service, public data only.",
+  embedded_cots:
+    "AI features arriving inside software the agency already licenses (Westlaw AI, ServiceNow Now Assist, Adobe Firefly).",
+  tenanted:
+    "A procured enterprise instance of a commercial assistant switched on for the workforce (M365 Copilot, ChatGPT Enterprise, Claude, Gemini).",
+  operated_build:
+    "A purpose-built, agency-branded service inside the agency boundary, typically approved for internal data (StateChat, DHSChat, GSAi, SSA's ASC).",
+};
+
+export interface EnterpriseTierRollupRow {
+  year: number;
+  tier: EnterpriseTier;
+  n: number;
+}

@@ -38,6 +38,7 @@ import {
   type SeatExtrapolationRow,
   type YearCompareGenAi,
   type AgencyYearCompareGenAiRow,
+  type EnterpriseTierRollupRow,
 } from "../experience-shared";
 
 // Re-export for callers importing from @/lib/db.
@@ -58,6 +59,7 @@ export {
   type MatrixProductKey,
   type YearCompareGenAi,
   type AgencyYearCompareGenAiRow,
+  type EnterpriseTierRollupRow,
 } from "../experience-shared";
 
 /**
@@ -979,4 +981,34 @@ export function getCapabilityLadder(): CapabilityLadderData {
       env_known_rows: envKnown,
     },
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Enterprise-GenAI delivery tiers                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Per-(year, tier) counts of enterprise-wide GenAI use cases, classified by
+ * delivery mode (permission / embedded COTS / tenanted / operated build).
+ *
+ * The rollup table is produced by the ETL repo's
+ * `scripts/classify_enterprise_genai_tiers.py` and shipped inside the DB.
+ * `make fix` drops it (full rebuild from sources) — so callers must tolerate
+ * an empty result, and the page hides the chart rather than erroring.
+ */
+export function getEnterpriseTierRollup(): EnterpriseTierRollupRow[] {
+  const db = getDb();
+  const exists = db
+    .prepare(
+      `SELECT 1 FROM sqlite_master
+       WHERE type = 'table' AND name = 'enterprise_genai_tier_rollup'`,
+    )
+    .get();
+  if (!exists) return [];
+  return db
+    .prepare(
+      `SELECT year, tier, n FROM enterprise_genai_tier_rollup
+       ORDER BY year, tier`,
+    )
+    .all() as EnterpriseTierRollupRow[];
 }
