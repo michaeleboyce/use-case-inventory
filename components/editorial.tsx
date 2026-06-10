@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { tagFilterUrl, type CrossCutDimension } from "@/lib/urls";
 import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
+import { termDefinition } from "@/lib/definitions";
+import { TermLinkChip } from "@/components/term-chip";
 
 /* --------------------------------------------------------------------- */
 /* Section                                                                */
@@ -341,6 +343,7 @@ export function TagChip({
   size = "xs",
   title,
   showProvenance = true,
+  defined = false,
 }: {
   dimension: CrossCutDimension;
   value: string;
@@ -355,6 +358,10 @@ export function TagChip({
    *  filing or from IFP's analytical layer. Set false for very tight
    *  layouts (e.g. inside dense tables where the marker would crowd). */
   showProvenance?: boolean;
+  /** When true, hovering the chip opens a popover with the term's
+   *  definition (lib/definitions.ts). Click still navigates. Default off
+   *  so existing call sites are unchanged. */
+  defined?: boolean;
 }) {
   const display = label ?? TAG_CHIP_LABELS[value] ?? _titleCase(value);
   const href = tagFilterUrl(dimension, value, agencyId);
@@ -367,8 +374,8 @@ export function TagChip({
         ? `Click to see peers at this agency.`
         : `Click to see all use cases.`
     }`;
-  return (
-    <MonoChip href={href} tone={tone} size={size} title={tip}>
+  const chipContent = (
+    <>
       {display}
       {showProvenance ? (
         <span
@@ -382,6 +389,24 @@ export function TagChip({
           {provenanceLabel}
         </span>
       ) : null}
+    </>
+  );
+  if (defined) {
+    return (
+      <TermLinkChip
+        term={termDefinition(dimension, value)}
+        href={href}
+        tone={tone}
+        size={size}
+        title={title}
+      >
+        {chipContent}
+      </TermLinkChip>
+    );
+  }
+  return (
+    <MonoChip href={href} tone={tone} size={size} title={tip}>
+      {chipContent}
     </MonoChip>
   );
 }

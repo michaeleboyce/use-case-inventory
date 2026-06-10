@@ -4,6 +4,8 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { ReadinessDerivation } from "@/components/readiness/readiness-derivation";
+import { TermChip } from "@/components/term-chip";
+import { READINESS_TIER_DEFS } from "@/lib/definitions";
 import type { AgencyReadinessWithName } from "@/lib/types/inventory";
 
 /**
@@ -219,12 +221,23 @@ export function ReadinessRankTable({
                 {fmt(r.adoption_breadth)}
               </td>
               <td className="px-2 py-2 text-center">
-                <span
-                  className={`inline-block border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${TIER_BADGE[r.tier] ?? ""}`}
-                  title={r.tier_label}
-                >
-                  {r.tier}
-                </span>
+                {READINESS_TIER_DEFS[r.tier] ? (
+                  <TermChip
+                    term={READINESS_TIER_DEFS[r.tier]}
+                    className={TIER_BADGE[r.tier] ?? ""}
+                    href="/readiness/methodology"
+                    hrefLabel="Methodology →"
+                  >
+                    {r.tier}
+                  </TermChip>
+                ) : (
+                  <span
+                    className={`inline-block border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${TIER_BADGE[r.tier] ?? ""}`}
+                    title={r.tier_label}
+                  >
+                    {r.tier}
+                  </span>
+                )}
               </td>
               <td className="px-2 py-2 text-right">
                 <Link

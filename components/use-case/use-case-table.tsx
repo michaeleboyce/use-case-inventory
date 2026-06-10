@@ -171,6 +171,7 @@ export function UseCaseTable({ rows, showTopicArea = false }: UseCaseTableProps)
                     <TagChip
                       dimension="entry_type"
                       value={row.tags.entry_type}
+                      defined
                     />
                   ) : (
                     <span className="text-muted-foreground">—</span>
@@ -181,6 +182,7 @@ export function UseCaseTable({ rows, showTopicArea = false }: UseCaseTableProps)
                     <TagChip
                       dimension="scope"
                       value={row.tags.deployment_scope}
+                      defined
                     />
                   ) : (
                     <span className="text-muted-foreground">—</span>

@@ -35,6 +35,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonoChip } from "@/components/editorial";
+import { TermChip } from "@/components/term-chip";
+import { MATURITY_TIER_DEFS } from "@/lib/definitions";
 import {
   agencyTypeLabel,
   formatNumber,
@@ -240,6 +242,14 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
         header: () => <SourceHead label="Maturity" source="ifp" />,
         cell: (info) => {
           const v = info.getValue();
+          const def = MATURITY_TIER_DEFS[v ?? "none"];
+          if (def) {
+            return (
+              <TermChip term={def} tone={tierTone(v)} size="xs">
+                {maturityTierLabel(v)}
+              </TermChip>
+            );
+          }
           return (
             <MonoChip tone={tierTone(v)} size="xs">
               {maturityTierLabel(v)}

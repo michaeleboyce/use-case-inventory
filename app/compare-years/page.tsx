@@ -2,6 +2,8 @@ import Link from "next/link";
 import { formatNumber, formatYoY } from "@/lib/formatting";
 import { InsightCard } from "@/components/insight-card";
 import { Section, Figure, SourceLegend, Eyebrow } from "@/components/editorial";
+import { TermChip } from "@/components/term-chip";
+import { LINEAGE_STATUS_DEFS } from "@/lib/definitions";
 import { YearComparisonChart } from "@/components/charts/year-comparison-chart";
 import { LineageBreakdownChart } from "@/components/charts/lineage-breakdown-chart";
 import { buildCompareYearsViewModel } from "./_view-model";
@@ -244,7 +246,11 @@ export default async function CompareYearsPage() {
               key={key}
               className="flex flex-col gap-1 border-t-2 border-foreground pt-2"
             >
-              <div className="eyebrow truncate">{LINEAGE_LABELS[key]}</div>
+              <div className="eyebrow truncate">
+                <TermChip term={LINEAGE_STATUS_DEFS[key]} variant="text">
+                  {LINEAGE_LABELS[key]}
+                </TermChip>
+              </div>
               <div
                 className={`font-display text-[2.2rem] italic leading-[0.95] tracking-[-0.02em] tabular-nums ${
                   accent === "verified"
