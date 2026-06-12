@@ -25,6 +25,7 @@ import {
   SCOPE_LABELS,
   SOPHISTICATION_LABELS,
 } from "@/components/editorial";
+import { titleCase } from "@/lib/formatting";
 import type { CommandPaletteIndex } from "@/lib/types";
 import { tagFilterUrl, type CrossCutDimension } from "@/lib/urls";
 import {
@@ -93,13 +94,6 @@ const VALUE_LABELS: Record<string, string> = {
   ...SOPHISTICATION_LABELS,
   ...SCOPE_LABELS,
 };
-
-function titleCase(value: string): string {
-  return value
-    .split(/[_\s]+/)
-    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(" ");
-}
 
 export function CommandPalette({ index }: Props) {
   const [open, setOpen] = React.useState(false);

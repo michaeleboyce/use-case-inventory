@@ -55,6 +55,23 @@ export function formatDatelineDate(iso: string | null | undefined): string {
     .toUpperCase();
 }
 
+/** snake_case OR whitespace-separated → Title Case. The general-purpose
+ *  fallback for enum values without an explicit label map. */
+export function titleCase(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .split(/[_\s]+/)
+    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+/** Collapse runs of whitespace (incl. newlines) to single spaces and trim.
+ *  Used to render free-text narrative fields as clean paragraphs. */
+export function collapseWhitespace(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.replace(/\s+/g, " ").trim();
+}
+
 /** snake_case → Title Case with spaces. Used for chart legend labels. */
 export function humanize(s: string | null | undefined): string {
   if (!s) return "";

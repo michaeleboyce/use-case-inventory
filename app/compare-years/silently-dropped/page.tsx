@@ -8,7 +8,11 @@ import {
 } from "@/components/editorial";
 import { InsightCard } from "@/components/insight-card";
 import { PageSubnav } from "@/components/page-subnav";
-import { formatNumber, formatPercent } from "@/lib/formatting";
+import {
+  collapseWhitespace,
+  formatNumber,
+  formatPercent,
+} from "@/lib/formatting";
 import { buildSilentlyDroppedViewModel } from "./_view-model";
 import { SilentlyDroppedAgencyTable } from "./_sections/agency-table";
 import { SilentlyDroppedFullList } from "./_sections/full-list-table";
@@ -33,11 +37,6 @@ const STAGE_LABEL: Record<string, string> = {
  *  of the lineage adjudication pass. */
 function roundTo(n: number, step: number): number {
   return Math.round(n / step) * step;
-}
-
-function paragraph(s: string | null | undefined): string {
-  if (!s) return "";
-  return s.replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -597,7 +596,7 @@ export default async function SilentlyDroppedPage() {
 
                   {ex.purpose_benefits ? (
                     <p className="mt-3 max-w-prose text-[0.94rem] leading-[1.65] text-foreground/85">
-                      {paragraph(ex.purpose_benefits)}
+                      {collapseWhitespace(ex.purpose_benefits)}
                     </p>
                   ) : null}
 
@@ -606,7 +605,7 @@ export default async function SilentlyDroppedPage() {
                       <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                         Outputs ·
                       </span>{" "}
-                      {paragraph(ex.outputs)}
+                      {collapseWhitespace(ex.outputs)}
                     </p>
                   ) : null}
 

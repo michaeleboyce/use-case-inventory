@@ -21,25 +21,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  CHIP_BASE,
+  CHIP_SIZING,
+  CHIP_TONE,
+  type ChipSize,
+  type ChipTone,
+} from "@/lib/chip-styles";
 import type { TermDefinition } from "@/lib/definitions";
-
-const CHIP_BASE =
-  "inline-flex items-center border bg-background font-mono font-semibold uppercase tracking-[0.06em] transition-colors cursor-help";
-
-const CHIP_SIZING: Record<"xs" | "sm" | "md", string> = {
-  xs: "px-1.5 py-0.5 text-[10px]",
-  sm: "px-2 py-0.5 text-[11px]",
-  md: "px-2.5 py-1 text-[12px]",
-};
-
-const CHIP_TONE: Record<"ink" | "stamp" | "verified" | "muted", string> = {
-  ink: "border-border text-foreground hover:border-foreground",
-  stamp:
-    "border-border text-foreground hover:border-[var(--stamp)] hover:text-[var(--stamp)]",
-  verified:
-    "border-border text-foreground hover:border-[var(--verified)] hover:text-[var(--verified)]",
-  muted: "border-border text-muted-foreground hover:text-foreground",
-};
 
 export function TermChip({
   children,
@@ -57,8 +46,8 @@ export function TermChip({
   /** Optional "see all uses" target (a filtered explorer URL). */
   href?: string;
   hrefLabel?: string;
-  tone?: "ink" | "stamp" | "verified" | "muted";
-  size?: "xs" | "sm" | "md";
+  tone?: ChipTone;
+  size?: ChipSize;
   /** REPLACES the tone classes (border/text/bg) when provided — use for
    *  custom-colored badges like the readiness tier bands. */
   className?: string;
@@ -72,7 +61,7 @@ export function TermChip({
   const triggerClasses =
     variant === "text"
       ? `inline-flex cursor-help items-center underline decoration-muted-foreground/50 decoration-dotted underline-offset-4 ${className ?? ""}`
-      : `${CHIP_BASE} ${CHIP_SIZING[size]} ${toneClasses}`;
+      : `${CHIP_BASE} cursor-help ${CHIP_SIZING[size]} ${toneClasses}`;
   return (
     <Popover>
       <PopoverTrigger
@@ -132,8 +121,8 @@ export function TermLinkChip({
   term: TermDefinition;
   href: string;
   title?: string;
-  tone?: "ink" | "stamp" | "verified" | "muted";
-  size?: "xs" | "sm" | "md";
+  tone?: ChipTone;
+  size?: ChipSize;
 }) {
   const provenanceLabel = term.source === "omb" ? "OMB-filed" : "IFP-derived";
   return (
@@ -146,7 +135,7 @@ export function TermLinkChip({
           <Link
             href={href}
             title={title}
-            className={`${CHIP_BASE.replace("cursor-help", "")} ${CHIP_SIZING[size]} ${CHIP_TONE[tone]}`}
+            className={`${CHIP_BASE} ${CHIP_SIZING[size]} ${CHIP_TONE[tone]}`}
           />
         }
       >

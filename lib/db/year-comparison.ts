@@ -9,6 +9,12 @@
  * and prepared statements; rows are typed against `@/lib/types`.
  */
 
+import {
+  DEPLOYED_STAGES_2024,
+  LIVE_DEV_STAGES_2024,
+  PILOT_STAGES_2024,
+  PRE_DEPLOYMENT_STAGES_2024,
+} from "../stage-buckets";
 import { getDb } from "./shared/init";
 import type {
   LineageSample,
@@ -43,18 +49,19 @@ const SILENT_DROP_FILTER = `
  *                      "Initiated", "Ideation", "Research or … Action Complete"
  *   other            → null / blank / unmapped
  *
- * The mapping mirrors `column_maps_2024.DEV_STAGE_RECODE_2024`.
+ * Stage lists come from `lib/stage-buckets.ts` (the single source, mirroring
+ * `column_maps_2024.DEV_STAGE_RECODE_2024`).
  */
+const sqlList = (stages: readonly string[]) =>
+  stages.map((s) => `'${s}'`).join(", ");
+
 const STAGE_BUCKET_2024_SQL = `
   CASE
-    WHEN u.dev_stage IN ('Operation and Maintenance', 'In production', 'In mission')
+    WHEN u.dev_stage IN (${sqlList(DEPLOYED_STAGES_2024)})
       THEN 'deployed'
-    WHEN u.dev_stage = 'Implementation and Assessment'
+    WHEN u.dev_stage IN (${sqlList(PILOT_STAGES_2024)})
       THEN 'pilot'
-    WHEN u.dev_stage IN (
-        'Acquisition and/or Development', 'Planned', 'Initiated',
-        'Ideation', 'Research or  Administrative Action Complete'
-      )
+    WHEN u.dev_stage IN (${sqlList(PRE_DEPLOYMENT_STAGES_2024)})
       THEN 'pre_deployment'
     ELSE 'other'
   END
@@ -62,21 +69,7 @@ const STAGE_BUCKET_2024_SQL = `
 
 const DISSOLVED_AGENCY_ABBR = "USAID";
 
-/**
- * 2024 deployment stages that count as a *live* capability for the
- * silently-dropped-GenAI callout — production/implementation, not planning or
- * research. Mirrors the dev_stage set in the feature spec.
- */
-const LIVE_DEV_STAGES_2024 = [
-  "Operation and Maintenance",
-  "Implementation and Assessment",
-  "In production",
-  "Full operation",
-] as const;
-
-const LIVE_DEV_STAGES_2024_SQL = LIVE_DEV_STAGES_2024.map(
-  (s) => `'${s}'`,
-).join(", ");
+const LIVE_DEV_STAGES_2024_SQL = sqlList(LIVE_DEV_STAGES_2024);
 
 /**
  * Every row of `year_comparison` — the `total`, per-`agency`, `stage`, and

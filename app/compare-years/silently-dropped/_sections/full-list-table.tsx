@@ -23,18 +23,15 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { MonoChip } from "@/components/editorial";
+import { collapseWhitespace } from "@/lib/formatting";
 import type { SilentlyDroppedRow } from "@/lib/types";
 
 const columnHelper = createColumnHelper<SilentlyDroppedRow>();
 
 function excerpt(s: string | null | undefined, n = 180): string {
-  if (!s) return "—";
-  const t = s.replace(/\s+/g, " ").trim();
+  const t = collapseWhitespace(s);
+  if (!t) return "—";
   return t.length <= n ? t : `${t.slice(0, n).trimEnd()}…`;
-}
-
-function fullText(s: string | null | undefined): string {
-  return s ? s.replace(/\s+/g, " ").trim() : "";
 }
 
 export function SilentlyDroppedFullList({
@@ -202,8 +199,8 @@ export function SilentlyDroppedFullList({
               const isOpen = row.getIsExpanded();
               const r = row.original;
               const narrative = [
-                fullText(r.purpose_benefits),
-                fullText(r.outputs),
+                collapseWhitespace(r.purpose_benefits),
+                collapseWhitespace(r.outputs),
               ].filter(Boolean);
               return (
                 <Fragment key={row.id}>
@@ -242,7 +239,7 @@ export function SilentlyDroppedFullList({
                                   Purpose &amp; benefits
                                 </p>
                                 <p className="mt-1 max-w-prose text-[0.9rem] leading-[1.55] text-foreground/85">
-                                  {fullText(r.purpose_benefits)}
+                                  {collapseWhitespace(r.purpose_benefits)}
                                 </p>
                               </div>
                             ) : null}
@@ -252,7 +249,7 @@ export function SilentlyDroppedFullList({
                                   System outputs
                                 </p>
                                 <p className="mt-1 max-w-prose text-[0.9rem] leading-[1.55] text-foreground/85">
-                                  {fullText(r.outputs)}
+                                  {collapseWhitespace(r.outputs)}
                                 </p>
                               </div>
                             ) : null}

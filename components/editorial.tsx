@@ -3,6 +3,12 @@ import type { ReactNode } from "react";
 import { tagFilterUrl, type CrossCutDimension } from "@/lib/urls";
 import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
 import { termDefinition } from "@/lib/definitions";
+import {
+  chipClasses,
+  type ChipSize,
+  type ChipTone,
+} from "@/lib/chip-styles";
+import { titleCase } from "@/lib/formatting";
 import { TermLinkChip } from "@/components/term-chip";
 
 /* --------------------------------------------------------------------- */
@@ -210,27 +216,10 @@ export function MonoChip({
   children: ReactNode;
   href?: string;
   title?: string;
-  tone?: "ink" | "stamp" | "verified" | "muted";
-  size?: "xs" | "sm" | "md";
+  tone?: ChipTone;
+  size?: ChipSize;
 }) {
-  const base =
-    "inline-flex items-center border bg-background font-mono font-semibold uppercase tracking-[0.06em] transition-colors";
-  const sizing =
-    size === "xs"
-      ? "px-1.5 py-0.5 text-[10px]"
-      : size === "md"
-        ? "px-2.5 py-1 text-[12px]"
-        : "px-2 py-0.5 text-[11px]";
-  const toneClasses =
-    tone === "stamp"
-      ? "border-border text-foreground hover:border-[var(--stamp)] hover:text-[var(--stamp)]"
-      : tone === "verified"
-        ? "border-border text-foreground hover:border-[var(--verified)] hover:text-[var(--verified)]"
-        : tone === "muted"
-          ? "border-border text-muted-foreground hover:text-foreground"
-          : "border-border text-foreground hover:border-foreground";
-
-  const className = `${base} ${sizing} ${toneClasses}`;
+  const className = chipClasses(tone, size);
 
   if (href) {
     return (
@@ -333,13 +322,6 @@ const TAG_CHIP_LABELS: Record<string, string> = {
   // Use-type, high-impact, etc. fall through to titleCase below.
 };
 
-function _titleCase(value: string): string {
-  return value
-    .split(/[_\s]+/)
-    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(" ");
-}
-
 export function TagChip({
   dimension,
   value,
@@ -369,7 +351,7 @@ export function TagChip({
    *  so existing call sites are unchanged. */
   defined?: boolean;
 }) {
-  const display = label ?? TAG_CHIP_LABELS[value] ?? _titleCase(value);
+  const display = label ?? TAG_CHIP_LABELS[value] ?? titleCase(value);
   const href = tagFilterUrl(dimension, value, agencyId);
   const provenance = DIMENSION_PROVENANCE[dimension];
   const provenanceLabel = provenance.source === "omb" ? "OMB" : "IFP";

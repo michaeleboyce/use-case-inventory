@@ -32,40 +32,17 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { MonoChip } from "@/components/editorial";
-import { formatNumber, formatPercent } from "@/lib/formatting";
+import {
+  collapseWhitespace,
+  formatNumber,
+  formatPercent,
+} from "@/lib/formatting";
+import { stageBucket } from "@/lib/stage-buckets";
 import type { SilentlyDroppedRow } from "@/lib/types";
 import type { SilentlyDroppedAgencyRowExpanded } from "../_view-model";
 
 const columnHelper = createColumnHelper<SilentlyDroppedAgencyRowExpanded>();
 
-/** Bucket a raw `dev_stage` string into the four high-level deployment
- *  buckets the page uses elsewhere. Mirrors the logic in
- *  `_view-model.ts#exampleScore` so the chips on the expanded sub-rows
- *  and the Deployed-first sort agree on what counts as Deployed/Pilot. */
-function stageBucket(devStage: string | null | undefined):
-  | "Deployed"
-  | "Pilot"
-  | "Pre-deployment"
-  | "Retired" {
-  const s = (devStage ?? "").toLowerCase();
-  if (s.includes("retired")) return "Retired";
-  if (
-    s.includes("operation") ||
-    s.includes("production") ||
-    s.includes("mission")
-  ) {
-    return "Deployed";
-  }
-  if (s.includes("implementation") || s.includes("assessment")) {
-    return "Pilot";
-  }
-  return "Pre-deployment";
-}
-
-function paragraph(s: string | null | undefined): string {
-  if (!s) return "";
-  return s.replace(/\s+/g, " ").trim();
-}
 
 export function SilentlyDroppedAgencyTable({
   rows,
@@ -311,8 +288,8 @@ function ExpandedUseCaseItem({ row }: { row: SilentlyDroppedRow }) {
         ? "ink"
         : "muted";
   const narrative = [
-    paragraph(row.purpose_benefits),
-    paragraph(row.outputs),
+    collapseWhitespace(row.purpose_benefits),
+    collapseWhitespace(row.outputs),
   ]
     .filter(Boolean)
     .join(" — ");

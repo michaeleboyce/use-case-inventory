@@ -26,6 +26,7 @@ import {
   getSilentlyDroppedSummary,
   getSilentlyDroppedGenAiRows,
 } from "@/lib/db";
+import { liveStageRank, stageBucket } from "@/lib/stage-buckets";
 import type {
   SilentlyDroppedAgencyRow,
   SilentlyDroppedRow,
@@ -87,15 +88,6 @@ export interface SilentlyDroppedGenAiGroup {
   members: SilentlyDroppedGenAiRow[];
 }
 
-/** Deployed > Pilot > everything else, for ordering members within a group.
- *  Mirrors the stage buckets used elsewhere on the page. */
-function liveStageRank(devStage: string | null | undefined): number {
-  const s = (devStage ?? "").toLowerCase();
-  if (s.includes("operation") || s.includes("production") || s.includes("mission"))
-    return 2;
-  if (s.includes("implementation") || s.includes("assessment")) return 1;
-  return 0;
-}
 
 /** Collapse live-GenAI rows by (agency, use_case_name). Single-row groups
  *  pass through unchanged (count 1); multi-row clusters fold into one entry
@@ -179,19 +171,8 @@ function narrativeLength(r: SilentlyDroppedRow): number {
  *  most (Deployed > Pilot > everything else); narrative length is the
  *  tiebreaker. */
 function exampleScore(r: SilentlyDroppedRow): number {
-  const stage = (r.dev_stage ?? "").toLowerCase();
-  let stageScore = 0;
-  if (
-    stage.includes("operation") ||
-    stage.includes("production") ||
-    stage.includes("mission")
-  ) {
-    stageScore = 100; // Deployed
-  } else if (stage.includes("implementation") || stage.includes("assessment")) {
-    stageScore = 60; // Pilot
-  } else {
-    stageScore = 20;
-  }
+  const bucket = stageBucket(r.dev_stage);
+  const stageScore = bucket === "Deployed" ? 100 : bucket === "Pilot" ? 60 : 20;
   return stageScore * 1000 + Math.min(narrativeLength(r), 5000);
 }
 

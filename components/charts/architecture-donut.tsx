@@ -7,6 +7,10 @@
 
 "use client";
 
+import {
+  LLM_VENDOR_COLOR_OVERRIDES,
+  VENDOR_PALETTE,
+} from "@/lib/color-schemes";
 import { buildUseCasesUrl } from "@/lib/urls";
 import { DonutChart, type DonutDatum } from "./donut-chart";
 
@@ -42,29 +46,8 @@ export function ArchitectureDonut({ data }: { data: DonutDatum[] }) {
 }
 
 const LLM_VENDOR_COLORS: Record<string, string> = {
-  Microsoft: "#2563eb", // blue-600
-  OpenAI: "#10b981", // emerald-500
-  Anthropic: "#f59e0b", // amber-500
-  Google: "#ef4444", // red-500
-  Amazon: "#f97316", // orange-500
-  Perplexity: "#0ea5e9", // sky-500
-  Palantir: "#6366f1", // indigo-500
-  ServiceNow: "#22c55e", // green-500
-  Databricks: "#eab308", // yellow-500
-  xAI: "#475569", // slate-600
-  Meta: "#1d4ed8", // blue-700
-  "In-house": "#8b5cf6", // violet-500
-  // Agency-built LLM platforms wrapping commercial models (EDAV, VA GPT,
-  // ELSA, USAi, LibreChat, etc.). Distinct color so the editorial pattern
-  // — "agencies are quietly standing up their own LLM frontends" — reads
-  // visually distinct from the commercial-vendor slices.
-  "Agency platform": "#a3e635", // lime-400
-  "Other named": "#64748b", // slate-500
-  // "Vendor unspecified" — agency reports general-LLM access without
-  // naming the tool. Distinct from "Other named" (a real vendor, just
-  // not in our color map). Render muted so it visually recedes.
-  "Vendor unspecified": "#cbd5e1", // slate-300
-  Other: "#94a3b8", // slate-400 (legacy fallback)
+  ...VENDOR_PALETTE,
+  ...LLM_VENDOR_COLOR_OVERRIDES,
 };
 
 export function LLMVendorDonut({ data }: { data: DonutDatum[] }) {

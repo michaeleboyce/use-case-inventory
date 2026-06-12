@@ -19,40 +19,13 @@ import {
   YAxis,
 } from "recharts";
 import { ChartFrame } from "@/components/charts/chart-frame";
+import { vendorColor } from "@/lib/color-schemes";
 
 export type VendorShareDatum = {
   vendor: string;
   agency_count: number;
   use_case_count: number;
 };
-
-const VENDOR_COLORS: Record<string, string> = {
-  Microsoft: "#2563eb", // blue-600
-  OpenAI: "#10b981", // emerald-500
-  Anthropic: "#f59e0b", // amber-500
-  Google: "#ef4444", // red-500
-  Amazon: "#f97316", // orange-500
-  AWS: "#f97316",
-  Meta: "#8b5cf6",
-  GitHub: "#0ea5e9", // sky-500
-};
-
-function vendorColor(v: string): string {
-  if (VENDOR_COLORS[v]) return VENDOR_COLORS[v];
-  // Heuristics for vendor-name variants.
-  const lower = v.toLowerCase();
-  if (lower.includes("microsoft") || lower.includes("azure"))
-    return VENDOR_COLORS.Microsoft!;
-  if (lower.includes("openai")) return VENDOR_COLORS.OpenAI!;
-  if (lower.includes("anthropic") || lower.includes("claude"))
-    return VENDOR_COLORS.Anthropic!;
-  if (lower.includes("google") || lower.includes("gemini"))
-    return VENDOR_COLORS.Google!;
-  if (lower.includes("amazon") || lower.includes("aws"))
-    return VENDOR_COLORS.Amazon!;
-  if (lower.includes("github")) return VENDOR_COLORS.GitHub!;
-  return "#64748b"; // slate-500
-}
 
 type Props = {
   data: VendorShareDatum[];

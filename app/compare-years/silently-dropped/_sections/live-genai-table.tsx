@@ -24,29 +24,12 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { MonoChip } from "@/components/editorial";
-import { formatNumber } from "@/lib/formatting";
+import { collapseWhitespace, formatNumber } from "@/lib/formatting";
+import { stageBucket } from "@/lib/stage-buckets";
 import type { SilentlyDroppedGenAiRow } from "@/lib/types";
 import type { SilentlyDroppedGenAiGroup } from "../_view-model";
 
 const columnHelper = createColumnHelper<SilentlyDroppedGenAiGroup>();
-
-/** Bucket a raw 2024 `dev_stage` into a high-level label for the chip. */
-function stageBucket(devStage: string | null | undefined):
-  | "Deployed"
-  | "Pilot"
-  | "Pre-deployment"
-  | "Retired" {
-  const s = (devStage ?? "").toLowerCase();
-  if (s.includes("retired")) return "Retired";
-  if (s.includes("operation") || s.includes("production") || s.includes("mission"))
-    return "Deployed";
-  if (s.includes("implementation") || s.includes("assessment")) return "Pilot";
-  return "Pre-deployment";
-}
-
-function paragraph(s: string | null | undefined): string {
-  return s ? s.replace(/\s+/g, " ").trim() : "";
-}
 
 export function SilentlyDroppedLiveGenAiTable({
   groups,
@@ -231,7 +214,10 @@ function ExpandedFilingItem({ row }: { row: SilentlyDroppedGenAiRow }) {
   const bucket = stageBucket(row.dev_stage);
   const tone =
     bucket === "Deployed" ? "stamp" : bucket === "Pilot" ? "ink" : "muted";
-  const narrative = [paragraph(row.purpose_benefits), paragraph(row.outputs)]
+  const narrative = [
+    collapseWhitespace(row.purpose_benefits),
+    collapseWhitespace(row.outputs),
+  ]
     .filter(Boolean)
     .join(" — ");
   return (
