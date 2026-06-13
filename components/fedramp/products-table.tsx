@@ -13,7 +13,7 @@ import { MonoChip } from "@/components/editorial";
 import { ImpactBadge } from "@/components/fedramp/impact-badge";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
 import { formatDate, formatNumber } from "@/lib/formatting";
-import type { FedrampProduct } from "@/lib/types";
+import type { FedrampAiCategory, FedrampProduct } from "@/lib/types";
 
 export type ProductSortKey =
   | "cso"
@@ -31,17 +31,42 @@ const COLUMN_LABELS: Record<ProductSortKey, string> = {
   auth_date: "Auth date",
 };
 
+/** Small chip marking a product's independent AI classification. Rendered only
+ *  when `aiCategoryById` is supplied (i.e. the classification table exists). */
+function AiCell({ category }: { category: FedrampAiCategory | null }) {
+  if (category === "core_ai") {
+    return (
+      <MonoChip tone="stamp" size="xs" title="Independent LLM review: primary purpose is AI/ML">
+        AI
+      </MonoChip>
+    );
+  }
+  if (category === "ai_featured") {
+    return (
+      <MonoChip tone="ink" size="xs" title="Independent LLM review: ships material AI/ML as a feature">
+        AI-feat.
+      </MonoChip>
+    );
+  }
+  return <span className="font-mono text-[10.5px] text-muted-foreground/60">—</span>;
+}
+
 export function ProductsTable({
   rows,
   sortKey,
   sortDir,
   buildSortHref,
+  aiCategoryById = null,
 }: {
   rows: FedrampProduct[];
   sortKey: ProductSortKey;
   sortDir: SortDir;
   buildSortHref: (key: ProductSortKey, dir: SortDir) => string;
+  /** fedramp_id → AI category. When null, the AI column is hidden entirely
+   *  (classification table absent). */
+  aiCategoryById?: Record<string, FedrampAiCategory | null> | null;
 }) {
+  const showAi = aiCategoryById != null;
   if (rows.length === 0) {
     return (
       <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -79,6 +104,15 @@ export function ProductsTable({
               activeDir={sortDir}
               buildSortHref={buildSortHref}
             />
+            {showAi ? (
+              <th
+                scope="col"
+                className="px-2 pb-1.5 text-left font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                title="Independent LLM classification of the FedRAMP listing — distinct from inventory linkage"
+              >
+                AI
+              </th>
+            ) : null}
             <SortHeader
               column="auth_date"
               activeSort={sortKey}
@@ -121,6 +155,11 @@ export function ProductsTable({
               <td className="px-2 py-2.5">
                 <ImpactBadge impact={p.impact_level} />
               </td>
+              {showAi ? (
+                <td className="px-2 py-2.5">
+                  <AiCell category={aiCategoryById?.[p.fedramp_id] ?? null} />
+                </td>
+              ) : null}
               <td className="px-2 py-2.5 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
                 {formatDate(p.auth_date)}
               </td>
@@ -130,7 +169,7 @@ export function ProductsTable({
         <tfoot>
           <tr className="border-t-2 border-foreground">
             <td
-              colSpan={5}
+              colSpan={showAi ? 6 : 5}
               className="px-2 py-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground"
             >
               {formatNumber(rows.length)} {rows.length === 1 ? "row" : "rows"}

@@ -3,6 +3,7 @@ import {
   getCoverageAgencyDrill,
   getFedrampSnapshot,
   getUseCasesForCoverageAgencyProduct,
+  getUnlinkedAiProductsForAgency,
 } from "@/lib/db";
 import type {
   CoverageAgencyDrill,
@@ -129,6 +130,12 @@ export default async function FedrampCoverageAgencyDrillPage({
 
   const { agency, authorized_but_unreported, mentioned_without_ato, unresolved_tokens } =
     drill;
+
+  // Additive: AI products (by independent classification) this agency holds an
+  // ATO for but never reports — distinct from `authorized_but_unreported`,
+  // which is scoped to inventory-LINKED products. This catches FedRAMP AI
+  // tools the inventory never named. Empty when classification isn't loaded.
+  const unlinkedAiHeld = getUnlinkedAiProductsForAgency(agency.id);
 
   // Attach top-10 use cases per "mentioned without ATO" row, server-side.
   // Cheap — each row's product is a single id lookup; rows are O(few-dozen).
@@ -295,8 +302,55 @@ export default async function FedrampCoverageAgencyDrillPage({
       {/* ------------------------------------------------------------ */}
       {/* § III — UNRESOLVED INVENTORY TOKENS                           */}
       {/* ------------------------------------------------------------ */}
+      {unlinkedAiHeld.length > 0 ? (
+        <Section
+          number="IV"
+          title="AI ATOs absent from this agency's inventory"
+          lede="FedRAMP products an independent LLM review judged to be AI/ML offerings that this agency holds an ATO for, yet names in no use case. Distinct from §II above, which is scoped to products already in the inventory's AI catalog — this catches AI tools the inventory never named."
+        >
+          <ul className="border-t-2 border-foreground divide-y divide-border/60">
+            {unlinkedAiHeld.map((p) => (
+              <li
+                key={p.fedramp_id}
+                className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 px-2 py-2.5 text-sm hover:bg-muted/30"
+              >
+                <MonoChip
+                  href={`/fedramp/marketplace/products/${p.fedramp_id}`}
+                  tone={p.category === "core_ai" ? "stamp" : "ink"}
+                  size="xs"
+                  title={p.category === "core_ai" ? "Core AI" : "AI-featured"}
+                >
+                  {p.category === "core_ai" ? "Core AI" : "AI-feat."}
+                </MonoChip>
+                <span className="min-w-0">
+                  <span className="text-foreground">{p.cso}</span>
+                  <span className="ml-2 text-[0.85rem] text-muted-foreground">
+                    {p.csp}
+                  </span>
+                </span>
+                {p.impact_level ? (
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+                    {p.impact_level}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 max-w-prose text-sm text-muted-foreground">
+            See the full cross-agency board at{" "}
+            <Link
+              href="/fedramp/coverage/unlinked-ai"
+              className="text-foreground hover:text-[var(--stamp)] underline-offset-2 hover:underline"
+            >
+              FedRAMP AI absent from the inventory
+            </Link>
+            .
+          </p>
+        </Section>
+      ) : null}
+
       <Section
-        number="III"
+        number={unlinkedAiHeld.length > 0 ? "V" : "III"}
         title="Unresolved inventory tokens"
         lede="Free-text vendor strings on this agency&rsquo;s use cases that didn&rsquo;t bind to a curated product."
       >

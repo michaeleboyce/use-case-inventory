@@ -41,6 +41,7 @@ const BOARD_OF: Record<string, "ai_to_fedramp" | "fedramp_to_ai" | "agencies"> =
   mismatched: "ai_to_fedramp",
   unused_products: "fedramp_to_ai",
   sleeping_authorizations: "fedramp_to_ai",
+  unlinked_ai: "fedramp_to_ai",
   agencies_with_gaps: "agencies",
 };
 
@@ -50,6 +51,7 @@ const PANEL_HREF: Record<string, string> = {
   agencies_with_gaps: "/fedramp/coverage/agencies",
   unused_products: "/fedramp/coverage/products",
   sleeping_authorizations: "/fedramp/coverage/sleeping",
+  unlinked_ai: "/fedramp/coverage/unlinked-ai",
 };
 
 const PANEL_LABEL_OVERRIDE: Record<string, string> = {
@@ -57,6 +59,7 @@ const PANEL_LABEL_OVERRIDE: Record<string, string> = {
   mismatched: "Use cases on questionable impact level",
   unused_products: "FedRAMP products with zero inventory mentions",
   agencies_with_gaps: "Agencies with a FedRAMP × inventory delta",
+  unlinked_ai: "FedRAMP AI products absent from the inventory",
 };
 
 // The four drill-down panels reachable from this hub. Mirrored in the
@@ -70,6 +73,7 @@ const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
   { href: "/fedramp/coverage/vendors", label: "Vendor coverage" },
   { href: "/fedramp/coverage/products", label: "Unused authorizations" },
   { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations" },
+  { href: "/fedramp/coverage/unlinked-ai", label: "Unlinked AI products" },
   { href: "/fedramp/coverage/fit", label: "Authorization fit" },
   { href: "/fedramp/coverage/agencies", label: "Agency gaps" },
 ];

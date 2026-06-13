@@ -14,6 +14,8 @@ import {
   getFedrampProductServiceModels,
   getDistinctBusinessFunctions,
   getDistinctServiceModels,
+  getAiClassificationMap,
+  hasAiClassification,
 } from "@/lib/db";
 import { formatDate, formatNumber } from "@/lib/formatting";
 import {
@@ -21,7 +23,7 @@ import {
   type ProductSortKey,
   type SortDir,
 } from "@/components/fedramp/products-table";
-import type { FedrampProduct } from "@/lib/types";
+import type { FedrampAiCategory, FedrampProduct } from "@/lib/types";
 
 export const metadata = {
   title: "Products · FedRAMP Marketplace · Federal AI Inventory",
@@ -98,6 +100,7 @@ export default async function MarketplaceProductsPage({
   const impact = typeof sp.impact === "string" ? sp.impact : "";
   const bf = typeof sp.bf === "string" ? sp.bf : "";
   const sm = typeof sp.sm === "string" ? sp.sm : "";
+  const ai = typeof sp.ai === "string" ? sp.ai : ""; // "core" | "featured" | "any" | "none"
   const sortRaw = typeof sp.sort === "string" ? sp.sort : undefined;
   const sort = parseSort(sortRaw);
 
@@ -107,6 +110,15 @@ export default async function MarketplaceProductsPage({
   const smMap = sm ? getFedrampProductServiceModels() : null;
   const bfChoices = getDistinctBusinessFunctions();
   const smChoices = getDistinctServiceModels();
+
+  // Independent AI classification (orthogonal to inventory linkage). Map every
+  // listed product's category; absent table → all null, filter/column hide.
+  const aiClassified = hasAiClassification();
+  const aiMap = aiClassified
+    ? getAiClassificationMap(all.map((p) => p.fedramp_id))
+    : null;
+  const categoryOf = (id: string): FedrampAiCategory | null =>
+    aiMap?.get(id)?.category ?? null;
 
   let rows = all;
   if (q) {
@@ -125,6 +137,16 @@ export default async function MarketplaceProductsPage({
   if (sm && smMap) {
     rows = rows.filter((p) => smMap.get(p.fedramp_id)?.includes(sm));
   }
+  if (ai && aiMap) {
+    rows = rows.filter((p) => {
+      const c = categoryOf(p.fedramp_id);
+      if (ai === "core") return c === "core_ai";
+      if (ai === "featured") return c === "ai_featured";
+      if (ai === "any") return c === "core_ai" || c === "ai_featured";
+      if (ai === "none") return c === "not_ai" || c === null;
+      return true;
+    });
+  }
   rows = applySort(rows, sort);
 
   const snapshot = getFedrampSnapshot();
@@ -136,16 +158,24 @@ export default async function MarketplaceProductsPage({
     if (impact) params.set("impact", impact);
     if (bf) params.set("bf", bf);
     if (sm) params.set("sm", sm);
+    if (ai) params.set("ai", ai);
     params.set("sort", `${key}:${dir}`);
     return `?${params.toString()}`;
   };
 
+  const AI_FILTER_LABEL: Record<string, string> = {
+    core: "AI · core",
+    featured: "AI · featured",
+    any: "AI · any",
+    none: "AI · none",
+  };
   const activeChips: { label: string; tone: "stamp" | "ink" | "muted" }[] = [];
   if (q) activeChips.push({ label: `“${q}”`, tone: "stamp" });
   if (status) activeChips.push({ label: status, tone: "ink" });
   if (impact) activeChips.push({ label: impact, tone: "ink" });
   if (bf) activeChips.push({ label: bf, tone: "ink" });
   if (sm) activeChips.push({ label: sm, tone: "ink" });
+  if (ai && AI_FILTER_LABEL[ai]) activeChips.push({ label: AI_FILTER_LABEL[ai], tone: "stamp" });
 
   return (
     <div>
@@ -211,7 +241,7 @@ export default async function MarketplaceProductsPage({
             <form
               action="/fedramp/marketplace/products"
               method="get"
-              className="mt-8 grid grid-cols-1 items-end gap-3 border-t border-border pt-4 md:grid-cols-[1fr_10rem_8rem_12rem_8rem_auto]"
+              className="mt-8 grid grid-cols-1 items-end gap-3 border-t border-border pt-4 md:grid-cols-[1fr_10rem_8rem_12rem_8rem_9rem_auto]"
             >
               <div>
                 <label
@@ -310,6 +340,28 @@ export default async function MarketplaceProductsPage({
                   ))}
                 </select>
               </div>
+              {aiClassified ? (
+                <div>
+                  <label
+                    htmlFor="ai"
+                    className="block font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                  >
+                    AI (classified)
+                  </label>
+                  <select
+                    id="ai"
+                    name="ai"
+                    defaultValue={ai}
+                    className="mt-1 w-full border-b border-border bg-transparent px-1 py-1.5 font-mono text-[12px] focus:border-foreground focus:outline-none"
+                  >
+                    <option value="">Any</option>
+                    <option value="any">AI (any)</option>
+                    <option value="core">Core AI</option>
+                    <option value="featured">AI-featured</option>
+                    <option value="none">Not AI</option>
+                  </select>
+                </div>
+              ) : null}
               <button
                 type="submit"
                 className="border border-foreground bg-background px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground hover:bg-foreground hover:text-background"
@@ -327,6 +379,13 @@ export default async function MarketplaceProductsPage({
           sortKey={sort.key}
           sortDir={sort.dir}
           buildSortHref={buildSortHref}
+          aiCategoryById={
+            aiMap
+              ? Object.fromEntries(
+                  rows.map((p) => [p.fedramp_id, categoryOf(p.fedramp_id)]),
+                )
+              : null
+          }
         />
       </Section>
     </div>

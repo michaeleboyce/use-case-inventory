@@ -20,6 +20,8 @@ import {
   getFedrampAssessors,
   getLeveragedSystemsForFedrampProduct,
   getProductsLeveragedBy,
+  getAiClassificationFor,
+  getInventoryProductsForFedrampProduct,
 } from "@/lib/db";
 import { Section, MonoChip, Eyebrow, Figure } from "@/components/editorial";
 import { MetricTile } from "@/components/metric-tile";
@@ -60,6 +62,14 @@ export default async function MarketplaceProductDetailPage({
   const leveragedBy = getProductsLeveragedBy(product.fedramp_id);
   const hasSupplyChain = leverages.length > 0 || leveragedBy.length > 0;
 
+  // Independent AI classification (orthogonal to inventory linkage). Present
+  // only after the classification pass has shipped in the DB.
+  const aiClassification = getAiClassificationFor(product.fedramp_id);
+  const linkedInventory =
+    aiClassification && aiClassification.category !== "not_ai"
+      ? getInventoryProductsForFedrampProduct(product.fedramp_id)
+      : [];
+
   // Look up the assessor's slug from the assessors directory so we can link
   // back to the 3PAO profile page.
   let assessorSlug: string | null = null;
@@ -71,10 +81,11 @@ export default async function MarketplaceProductDetailPage({
 
   // Roman-numeral section counter — Identity is always § I; Supply chain and
   // Description are conditional; Authorizations and Colophon always render.
-  const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+  const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII"];
   let sectionIdx = 0;
   const nextSection = () => ROMAN[sectionIdx++];
   const identityNum = nextSection();
+  const aiNum = aiClassification ? nextSection() : null;
   const supplyChainNum = hasSupplyChain ? nextSection() : null;
   const descriptionNum = product.service_desc ? nextSection() : null;
   const authorizationsNum = nextSection();
@@ -190,6 +201,73 @@ export default async function MarketplaceProductDetailPage({
           </Detail>
         </dl>
       </Section>
+
+      {aiClassification ? (
+        <Section
+          number={aiNum!}
+          title="AI classification"
+          lede="An independent LLM review of this FedRAMP listing — separate from whether the product links to the AI use-case inventory. It judges whether the offering itself is AI/ML."
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {aiClassification.category === "core_ai" ? (
+              <MonoChip tone="stamp" size="sm">Core AI</MonoChip>
+            ) : aiClassification.category === "ai_featured" ? (
+              <MonoChip tone="ink" size="sm">AI-featured</MonoChip>
+            ) : (
+              <MonoChip tone="muted" size="sm">Not AI</MonoChip>
+            )}
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+              {aiClassification.confidence} confidence · {aiClassification.model}
+            </span>
+          </div>
+          <p className="mt-4 max-w-[68ch] font-body text-[15px] leading-relaxed text-foreground/90">
+            {aiClassification.reasoning}
+          </p>
+          {aiClassification.signals.length > 0 ? (
+            <ul className="mt-3 space-y-1">
+              {aiClassification.signals.map((s, i) => (
+                <li
+                  key={i}
+                  className="border-l border-[var(--rule)] pl-3 text-[13px] italic leading-snug text-foreground/75"
+                >
+                  &ldquo;{s}&rdquo;
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {aiClassification.category !== "not_ai" ? (
+            <p className="mt-5 border-t border-dotted border-border pt-3 text-[13px] text-muted-foreground">
+              {linkedInventory.length > 0 ? (
+                <>
+                  Linked to inventory product
+                  {linkedInventory.length === 1 ? " " : "s "}
+                  {linkedInventory.map((p, i) => (
+                    <span key={p.id}>
+                      {i > 0 ? ", " : ""}
+                      <span className="font-medium text-foreground">
+                        {p.canonical_name}
+                      </span>
+                    </span>
+                  ))}
+                  {" "}— it appears on the inventory-linkage coverage boards.
+                </>
+              ) : (
+                <>
+                  Not linked to any inventory product — this AI tool appears on
+                  the{" "}
+                  <Link
+                    href="/fedramp/coverage/unlinked-ai"
+                    className="text-foreground underline decoration-[var(--stamp)] underline-offset-2"
+                  >
+                    FedRAMP AI absent from the inventory
+                  </Link>{" "}
+                  gap board.
+                </>
+              )}
+            </p>
+          ) : null}
+        </Section>
+      ) : null}
 
       {hasSupplyChain ? (
         <Section

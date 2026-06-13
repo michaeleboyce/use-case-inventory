@@ -150,6 +150,14 @@ export {
   getUseCasesForCoverageAgencyProduct,
   getLinkQueueGroups,
   getLinkQueueRows,
+  hasAiClassification,
+  getAiClassificationFor,
+  getAiClassificationMap,
+  getAiClassificationCounts,
+  getUnlinkedAiProducts,
+  getAgenciesHoldingAto,
+  getUnlinkedAiByAgency,
+  getUnlinkedAiProductsForAgency,
 } from "./fedramp";
 export {
   getGenAiHeadlines,

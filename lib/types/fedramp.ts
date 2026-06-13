@@ -338,6 +338,86 @@ export interface CoverageAgencyDrill {
   unresolved_tokens: Array<{ token: string; count: number }>;
 }
 
+// -----------------------------------------------------------------------------
+// Independent AI classification of FedRAMP products (fedramp_ai_classification,
+// produced by the ETL repo's scripts/classify_fedramp_ai.py LLM pass). This is
+// orthogonal to fedramp_product_links: a product is "AI by classification" if
+// the LLM judged its listing to be an AI/ML offering, regardless of whether it
+// links to a curated inventory product ("AI by linkage"). The unlinked-AI gap
+// board surfaces products that are AI-by-classification but have NO inventory
+// link — FedRAMP-authorized AI tools absent from agency use-case inventories.
+// All consumers tolerate the table being absent (stale DB / pre-classification
+// build) and degrade to empty.
+// -----------------------------------------------------------------------------
+
+/** AI taxonomy tier assigned to a FedRAMP product. */
+export type FedrampAiCategory = "core_ai" | "ai_featured" | "not_ai";
+
+/** One row of fedramp_ai_classification. */
+export interface FedrampAiClassification {
+  fedramp_id: string;
+  category: FedrampAiCategory;
+  confidence: "high" | "medium" | "low";
+  reasoning: string;
+  /** Decoded `signals` JSON — verbatim evidence phrases from service_desc. */
+  signals: string[];
+  model: string;
+  classified_at: string;
+}
+
+/** Per-category + linkage rollup behind the unlinked-AI hub stat. */
+export interface AiClassificationCounts {
+  core_ai: number;
+  ai_featured: number;
+  not_ai: number;
+  /** AI products (core_ai|ai_featured) that DO have an inventory link. */
+  ai_linked: number;
+  /** AI products (core_ai|ai_featured) with NO inventory link — the gap. */
+  ai_unlinked: number;
+}
+
+/**
+ * One FedRAMP product that is AI-by-classification but has no inventory link:
+ * a FedRAMP-authorized AI tool absent from every agency use-case inventory.
+ * Sorted by ato_count desc on /fedramp/coverage/unlinked-ai.
+ */
+export interface UnlinkedAiProductRow {
+  fedramp_id: string;
+  csp: string;
+  cso: string;
+  category: FedrampAiCategory;
+  confidence: "high" | "medium" | "low";
+  reasoning: string;
+  signals: string[];
+  impact_level: string | null;
+  status: string;
+  /** Distinct agencies (ATO events) holding an authorization for the product. */
+  ato_count: number;
+  /** Distinct inventory-mapped agencies holding an ATO (subset of ato_count). */
+  agency_count: number;
+}
+
+/** One agency that holds an ATO for an unlinked-AI product. Row expansion. */
+export interface UnlinkedAiAtoAgencyRow {
+  /** Inventory agency id when the FedRAMP agency maps to one, else null. */
+  inventory_agency_id: number | null;
+  agency_name: string;
+  agency_abbreviation: string | null;
+  ato_issuance_date: string | null;
+  authorization_type: string | null;
+}
+
+/**
+ * Leaderboard row: an agency and how many unlinked-AI FedRAMP products it
+ * holds ATOs for but never reports in its AI inventory.
+ */
+export interface UnlinkedAiByAgencyRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string;
+  unlinked_ai_ato_count: number;
+}
+
 /**
  * One queue row for the curation page + CSV export. `candidates` is the
  * decoded `candidate_fedramp_ids` JSON; consumers decide how to render it.

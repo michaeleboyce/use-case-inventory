@@ -19,6 +19,7 @@ import type {
   SleepingByImpactRow,
 } from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
+import { getAiClassificationCounts, hasAiClassification } from "./classification";
 
 /** Hub stats for /fedramp/coverage. */
 export function getCoverageHubStats(): CoverageStat[] {
@@ -101,6 +102,13 @@ export function getCoverageHubStats(): CoverageStat[] {
   // using it. Reuses the SLEEPING_CTES building block defined below.
   const sleeping = getSleepingAuthorizationsCounts();
 
+  // Additive (preserve-when-refining): the independent-classification gap.
+  // Distinct from every metric above, which key on inventory LINKAGE. This one
+  // asks how many FedRAMP products an LLM judged to be AI offerings have NO
+  // inventory link at all — FedRAMP-authorized AI absent from the inventory.
+  // Omitted entirely when the classification table isn't present.
+  const aiCounts = hasAiClassification() ? getAiClassificationCounts() : null;
+
   const snapshot = getFedrampSnapshot();
 
   return [
@@ -140,6 +148,18 @@ export function getCoverageHubStats(): CoverageStat[] {
           ? `Agencies holding an ATO for a FedRAMP product their peers use for AI but reporting no AI use case using it. ${sleeping.products_with_gap} of ${sleeping.ai_used_products} AI-used products have a peer gap.`
           : "Agencies holding an ATO for a FedRAMP product their peers use for AI but reporting no AI use case using it.",
     },
+    ...(aiCounts
+      ? [
+          {
+            key: "unlinked_ai",
+            label: "AI products (by classification) absent from inventory",
+            value: aiCounts.ai_unlinked,
+            denominator: aiCounts.core_ai + aiCounts.ai_featured,
+            description:
+              "FedRAMP listings an independent LLM review judged to be AI/ML offerings, with no link to any curated inventory product — i.e. AI by classification, not by inventory linkage. Every one is authorized by at least one agency.",
+          } satisfies CoverageStat,
+        ]
+      : []),
     {
       key: "snapshot_date",
       label: "FedRAMP snapshot date",
