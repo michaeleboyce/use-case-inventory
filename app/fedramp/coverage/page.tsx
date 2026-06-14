@@ -2,10 +2,16 @@ import Link from "next/link";
 import {
   getCoverageHubStats,
   getFedrampSnapshot,
+  hasAiClassification,
+  getAiClassificationCounts,
 } from "@/lib/db";
-import type { CoverageStat, FedrampSnapshot } from "@/lib/types";
+import type {
+  AiClassificationCounts,
+  CoverageStat,
+  FedrampSnapshot,
+} from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
-import { Section } from "@/components/editorial";
+import { Section, MonoChip } from "@/components/editorial";
 
 export const metadata = {
   title: "FedRAMP coverage · Federal AI Use Case Inventory",
@@ -62,6 +68,19 @@ const PANEL_LABEL_OVERRIDE: Record<string, string> = {
   unlinked_ai: "FedRAMP AI products absent from the inventory",
 };
 
+// Which definition of "AI-related" each card uses. "linkage" cards count only
+// FedRAMP products linked to a curated inventory product; the "classification"
+// card counts products an independent LLM judged to be AI regardless of linkage.
+// Surfaced as a per-card badge so the two senses never get conflated.
+const METHOD_OF: Record<string, "linkage" | "classification"> = {
+  matched: "linkage",
+  mismatched: "linkage",
+  unused_products: "linkage",
+  sleeping_authorizations: "linkage",
+  agencies_with_gaps: "linkage",
+  unlinked_ai: "classification",
+};
+
 // The four drill-down panels reachable from this hub. Mirrored in the
 // FedRAMP top-nav dropdown so users can jump to a panel from anywhere; the
 // strip below the page header keeps them visible the moment you land here
@@ -78,13 +97,29 @@ const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
   { href: "/fedramp/coverage/agencies", label: "Agency gaps" },
 ];
 
+function safeAiCounts(): AiClassificationCounts | null {
+  try {
+    return hasAiClassification() ? getAiClassificationCounts() : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function FedrampCoverageHubPage() {
   const { stats, error } = safeStats();
   const snapshot = safeSnapshot();
+  const aiCounts = safeAiCounts();
 
   const cards = stats.filter((s) => s.key !== "snapshot_date");
   const aiToFedramp = cards.filter((s) => BOARD_OF[s.key] === "ai_to_fedramp");
-  const fedrampToAi = cards.filter((s) => BOARD_OF[s.key] === "fedramp_to_ai");
+  // §II splits into linkage cards and the independent-classification card so
+  // the 3-vs-202 contrast reads as intentional, not a bug.
+  const fedrampToAiLinkage = cards.filter(
+    (s) => BOARD_OF[s.key] === "fedramp_to_ai" && METHOD_OF[s.key] !== "classification",
+  );
+  const fedrampToAiClassified = cards.filter(
+    (s) => BOARD_OF[s.key] === "fedramp_to_ai" && METHOD_OF[s.key] === "classification",
+  );
   const agencyCards = cards.filter((s) => BOARD_OF[s.key] === "agencies");
 
   return (
@@ -157,6 +192,8 @@ export default function FedrampCoverageHubPage() {
         ))}
       </nav>
 
+      {aiCounts ? <AiDefinitionBand counts={aiCounts} /> : null}
+
       {error ? (
         <Section
           number="I"
@@ -189,6 +226,7 @@ export default function FedrampCoverageHubPage() {
                   stat={s}
                   href={PANEL_HREF[s.key] ?? "/fedramp/coverage"}
                   labelOverride={PANEL_LABEL_OVERRIDE[s.key]}
+                  method={METHOD_OF[s.key]}
                 />
               ))}
             </div>
@@ -197,18 +235,47 @@ export default function FedrampCoverageHubPage() {
           <Section
             number="II"
             title="FedRAMP → AI"
-            lede="The marketplace side: of the FedRAMP-authorized AI products our catalog can map, which appear in zero 2025 use cases."
+            lede="The marketplace side. The first row counts only FedRAMP products linked into the inventory's AI catalog; the bottom card flips to independent classification and is the widest view of authorized-but-unused AI."
           >
             <div className="border-t-2 border-foreground pt-4 grid gap-x-6 gap-y-6 md:grid-cols-2">
-              {fedrampToAi.map((s) => (
+              {fedrampToAiLinkage.map((s) => (
                 <StatCard
                   key={s.key}
                   stat={s}
                   href={PANEL_HREF[s.key] ?? "/fedramp/coverage"}
                   labelOverride={PANEL_LABEL_OVERRIDE[s.key]}
+                  method={METHOD_OF[s.key]}
                 />
               ))}
             </div>
+
+            {fedrampToAiClassified.length > 0 ? (
+              <>
+                <div className="mt-8 mb-4 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
+                    By independent classification
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <div className="grid gap-x-6 gap-y-6 md:grid-cols-2">
+                  {fedrampToAiClassified.map((s) => (
+                    <StatCard
+                      key={s.key}
+                      stat={s}
+                      href={PANEL_HREF[s.key] ?? "/fedramp/coverage"}
+                      labelOverride={PANEL_LABEL_OVERRIDE[s.key]}
+                      method={METHOD_OF[s.key]}
+                      footnote={
+                        aiCounts
+                          ? `Counts FedRAMP listings; a few AI offerings appear under both Rev 5 and 20x baselines, so distinct offerings is slightly lower.`
+                          : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              </>
+            ) : null}
           </Section>
 
           {agencyCards.length > 0 ? (
@@ -224,6 +291,7 @@ export default function FedrampCoverageHubPage() {
                     stat={s}
                     href={PANEL_HREF[s.key] ?? "/fedramp/coverage"}
                     labelOverride={PANEL_LABEL_OVERRIDE[s.key]}
+                    method={METHOD_OF[s.key]}
                   />
                 ))}
               </div>
@@ -232,26 +300,51 @@ export default function FedrampCoverageHubPage() {
 
           <Section
             number="IV"
-            title="How matches are made"
-            lede="Heuristic seed plus manually curated decisions; never an LLM in V1."
+            title="How the two methods work"
+            lede="Coverage uses two independent definitions of “AI-related.” Most cards key on linkage; the absent-AI card keys on classification. They answer different questions and their numbers are not meant to match."
           >
-            <div className="space-y-4 max-w-prose text-[0.95rem] leading-[1.55] text-foreground/85">
-              <p>
-                The inventory&rsquo;s curated AI products are matched against
-                FedRAMP&rsquo;s product catalog by normalizing each side&rsquo;s
-                vendor and offering names, then cross-referencing the
-                inventory&rsquo;s alias table. Strong (vendor + offering)
-                matches resolve directly. Ambiguous matches land in a review
-                queue adjudicated externally and re-imported. Agency matches
-                use the same machinery against FedRAMP&rsquo;s authorizing-
-                agency list.
-              </p>
-              <p className="text-muted-foreground">
-                This page reads no FedRAMP data not present in the inventory
-                database; the FedRAMP marketplace ETL pipeline is upstream and
-                denormalizes into a single SQLite file at build time.
-              </p>
+            <div className="border-t-2 border-foreground pt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-3 text-[0.95rem] leading-[1.55] text-foreground/85">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Linkage · the “by linkage” cards
+                </p>
+                <p>
+                  The inventory&rsquo;s curated AI products are matched against
+                  FedRAMP&rsquo;s catalog by normalizing each side&rsquo;s vendor
+                  and offering names, then cross-referencing the inventory&rsquo;s
+                  alias table. Strong (vendor + offering) matches resolve
+                  directly; ambiguous ones are curated in a review queue and
+                  re-imported. Agency matches use the same machinery against
+                  FedRAMP&rsquo;s authorizing-agency list. Precise, but blind to
+                  AI tools the inventory never named.
+                </p>
+              </div>
+              <div className="space-y-3 text-[0.95rem] leading-[1.55] text-foreground/85">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--stamp)]">
+                  Classification · the “by classification” card
+                </p>
+                <p>
+                  An independent LLM reads each FedRAMP listing (provider,
+                  offering, service description, business functions) and judges
+                  whether the product itself is{" "}
+                  <span className="font-medium text-foreground">Core AI</span>{" "}
+                  (primary purpose is AI/ML) or{" "}
+                  <span className="font-medium text-foreground">AI-featured</span>{" "}
+                  (ships material AI as a feature) — regardless of whether it
+                  links to the inventory. That is how the absent-AI board sees
+                  hundreds of authorized AI tools the linkage view cannot.
+                </p>
+              </div>
             </div>
+            <p className="mt-4 max-w-prose text-[0.9rem] leading-[1.5] text-muted-foreground">
+              Both read only data present in the inventory database; the FedRAMP
+              marketplace ETL is upstream and denormalizes into a single SQLite
+              file at build time
+              {snapshot?.snapshot_date
+                ? `, snapshot ${formatDate(snapshot.snapshot_date)}`
+                : ""}
+              .
+            </p>
           </Section>
         </>
       )}
@@ -265,10 +358,14 @@ function StatCard({
   stat,
   href,
   labelOverride,
+  method,
+  footnote,
 }: {
   stat: CoverageStat;
   href: string;
   labelOverride?: string;
+  method?: "linkage" | "classification";
+  footnote?: string;
 }) {
   const denom = stat.denominator ?? null;
   const valueText = formatNumber(stat.value);
@@ -280,7 +377,14 @@ function StatCard({
       href={href}
       className="group flex min-w-0 flex-col gap-2 border-t-2 border-foreground pt-3 transition-colors hover:bg-muted/30"
     >
-      <div className="eyebrow">{label}</div>
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="eyebrow">{label}</div>
+        {method ? (
+          <MonoChip tone={method === "classification" ? "stamp" : "muted"} size="xs">
+            {method === "classification" ? "by classification" : "by linkage"}
+          </MonoChip>
+        ) : null}
+      </div>
       <div className="flex items-baseline gap-2">
         <span className="font-display text-[2.6rem] italic leading-[0.95] tracking-[-0.02em] tabular-nums text-foreground transition-colors group-hover:text-[var(--stamp)]">
           {valueText}
@@ -296,10 +400,60 @@ function StatCard({
           {stat.description}
         </p>
       ) : null}
+      {footnote ? (
+        <p className="max-w-[36ch] text-[0.8rem] leading-snug text-muted-foreground/80 italic">
+          {footnote}
+        </p>
+      ) : null}
       <span className="mt-1 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--stamp)] opacity-0 transition-opacity group-hover:opacity-100">
         Open drill-down →
       </span>
     </Link>
+  );
+}
+
+/** The "two ways to be AI" explainer band — mirrors the unlinked-ai page §I, with
+ *  the live linked/absent/total numbers so the relationship is concrete. */
+function AiDefinitionBand({ counts }: { counts: AiClassificationCounts }) {
+  const totalAi = counts.core_ai + counts.ai_featured;
+  return (
+    <div className="mt-8 border border-border bg-muted/20 p-5">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
+          Two ways to be “AI” — read before the numbers
+        </p>
+        <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+          {formatNumber(counts.ai_linked)} linked ·{" "}
+          {formatNumber(counts.ai_unlinked)} absent ·{" "}
+          {formatNumber(totalAi)} classified AI
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="border border-border p-4">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            AI by linkage · most cards
+          </p>
+          <p className="text-[0.9rem] leading-[1.5] text-foreground/85">
+            A FedRAMP product counts as &ldquo;AI&rdquo; only if it links to a
+            curated product in the inventory&rsquo;s AI catalog. Precise, but
+            blind to AI tools the inventory never named.
+          </p>
+        </div>
+        <div className="border border-foreground p-4">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--stamp)]">
+            AI by classification · the absent-AI card
+          </p>
+          <p className="text-[0.9rem] leading-[1.5] text-foreground/85">
+            An independent LLM judges each FedRAMP listing as Core AI,
+            AI-featured, or not AI on its own merits — surfacing{" "}
+            <span className="font-medium text-foreground">
+              {formatNumber(counts.ai_unlinked)}
+            </span>{" "}
+            authorized AI products absent from every agency inventory.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 

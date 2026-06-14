@@ -154,6 +154,7 @@ export {
   getAiClassificationFor,
   getAiClassificationMap,
   getAiClassificationCounts,
+  getAiClassificationByImpactLevel,
   getUnlinkedAiProducts,
   getAgenciesHoldingAto,
   getUnlinkedAiByAgency,

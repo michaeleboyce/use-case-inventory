@@ -13,6 +13,7 @@
 
 import { getDb } from "../shared/init";
 import type {
+  AiByImpactRow,
   AiClassificationCounts,
   FedrampAiClassification,
   UnlinkedAiAtoAgencyRow,
@@ -124,6 +125,34 @@ export function getAiClassificationCounts(): AiClassificationCounts {
   ).c;
   out.ai_unlinked = out.core_ai + out.ai_featured - out.ai_linked;
   return out;
+}
+
+/**
+ * Count of AI-classified products (core_ai|ai_featured) per FedRAMP impact
+ * level, ordered High → Moderate → Low → Li-SaaS for the homepage chart.
+ * Products with a null impact_level are bucketed as "Unspecified".
+ */
+export function getAiClassificationByImpactLevel(): AiByImpactRow[] {
+  if (!hasAiClassification()) return [];
+  const rows = getDb()
+    .prepare<[], { impact_level: string | null; count: number }>(
+      `SELECT p.impact_level AS impact_level, COUNT(*) AS count
+         FROM fedramp_ai_classification c
+         JOIN fedramp_products p ON p.fedramp_id = c.fedramp_id
+        WHERE c.category IN ('core_ai', 'ai_featured')
+        GROUP BY p.impact_level`,
+    )
+    .all();
+  const rank: Record<string, number> = {
+    High: 0,
+    Moderate: 1,
+    Low: 2,
+    "Li-SaaS": 3,
+    Unspecified: 4,
+  };
+  return rows
+    .map((r) => ({ impact_level: r.impact_level ?? "Unspecified", count: r.count }))
+    .sort((a, b) => (rank[a.impact_level] ?? 9) - (rank[b.impact_level] ?? 9));
 }
 
 /**

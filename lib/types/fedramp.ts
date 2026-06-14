@@ -365,6 +365,12 @@ export interface FedrampAiClassification {
   classified_at: string;
 }
 
+/** One bar in the homepage "AI products by FedRAMP impact level" chart. */
+export interface AiByImpactRow {
+  impact_level: string;
+  count: number;
+}
+
 /** Per-category + linkage rollup behind the unlinked-AI hub stat. */
 export interface AiClassificationCounts {
   core_ai: number;

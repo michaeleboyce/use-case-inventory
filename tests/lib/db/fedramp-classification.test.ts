@@ -3,6 +3,7 @@ import { installTestDb, uninstallTestDb } from "@/tests/setup";
 import {
   hasAiClassification,
   getAiClassificationCounts,
+  getAiClassificationByImpactLevel,
   getAiClassificationMap,
   getUnlinkedAiProducts,
   getUnlinkedAiByAgency,
@@ -115,6 +116,16 @@ describe("lib/db/fedramp — AI classification gap", () => {
     expect(map.get("FR_GAP")?.category).toBe("core_ai");
     expect(map.has("FR_UNKNOWN")).toBe(true);
     expect(map.get("FR_UNKNOWN")).toBeNull();
+  });
+
+  it("buckets AI products by impact level, High first", () => {
+    const rows = getAiClassificationByImpactLevel();
+    const byLevel = Object.fromEntries(rows.map((r) => [r.impact_level, r.count]));
+    // FR_LINKED (Moderate) + FR_GAP (High) are the two AI products; FR_NOTAI excluded.
+    expect(byLevel["High"]).toBe(1);
+    expect(byLevel["Moderate"]).toBe(1);
+    expect(byLevel["Low"]).toBeUndefined(); // FR_NOTAI is Low but not AI
+    expect(rows[0].impact_level).toBe("High"); // ordering
   });
 
   it("adds an unlinked_ai hub stat", () => {
