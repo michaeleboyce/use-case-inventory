@@ -27,6 +27,7 @@ const READINESS_SECTIONS: Array<{ href: string; label: string }> = [
   { href: "/readiness", label: "Overview" },
   { href: "/readiness/access", label: "AI Access & Scale" },
   { href: "/experience", label: "AI Experience" },
+  { href: "/stories", label: "Stories: 2024 → 2025" },
   { href: "/readiness/methodology", label: "Methodology" },
 ];
 
