@@ -380,6 +380,56 @@ export interface AiClassificationCounts {
   ai_linked: number;
   /** AI products (core_ai|ai_featured) with NO inventory link — the gap. */
   ai_unlinked: number;
+  /** Unlinked AI products whose marketplace status is "FedRAMP Authorized". */
+  ai_unlinked_authorized: number;
+  /** Unlinked AI products still in the pipeline (Ready / In Process). */
+  ai_unlinked_pipeline: number;
+}
+
+/* --------------------------------------------------------------------- */
+/* Spread board (/fedramp/coverage/spread): does authorization spread     */
+/* into multi-agency adoption, or stall at one ATO?                       */
+/* --------------------------------------------------------------------- */
+
+/** One authorized core-AI product with its spread signals. */
+export interface CoreAiSpreadRow {
+  fedramp_id: string;
+  csp: string;
+  cso: string;
+  impact_level: string | null;
+  auth_date: string | null;
+  /** Distinct FedRAMP agencies holding an authorization for the product. */
+  ato_count: number;
+  /** Marketplace reuse tally (fedramp_products.reuse_count). */
+  reuse_count: number;
+  /** 1 if the product links to a curated inventory product. */
+  linked_to_inventory: number;
+  /** Distinct inventory agencies with a reported use case naming it. */
+  reporting_agency_count: number;
+}
+
+/** Headline cuts for the spread board. */
+export interface SpreadCounts {
+  authorized_core_ai: number;
+  single_ato: number;
+  multi_ato: number;
+  /** (agency × product) ATO pairs mappable to an inventory agency. */
+  ato_pairs: number;
+  /** Of those, pairs where the agency reports a use case with the product. */
+  ato_pairs_with_reported_use: number;
+}
+
+/** Status snapshot for one named frontier product (resolved by cso name). */
+export interface FrontierProductStatus {
+  fedramp_id: string;
+  csp: string;
+  cso: string;
+  status: string;
+  auth_date: string | null;
+  impact_level: string | null;
+  reuse_count: number;
+  /** ATO-holding agencies (often just the FedRAMP PMO for 20x products). */
+  ato_holders: UnlinkedAiAtoAgencyRow[];
 }
 
 /**

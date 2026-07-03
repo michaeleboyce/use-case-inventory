@@ -20,6 +20,7 @@ import type {
 } from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
 import { getAiClassificationCounts, hasAiClassification } from "./classification";
+import { getSpreadCounts } from "./spread";
 
 /** Hub stats for /fedramp/coverage. */
 export function getCoverageHubStats(): CoverageStat[] {
@@ -105,9 +106,13 @@ export function getCoverageHubStats(): CoverageStat[] {
   // Additive (preserve-when-refining): the independent-classification gap.
   // Distinct from every metric above, which key on inventory LINKAGE. This one
   // asks how many FedRAMP products an LLM judged to be AI offerings have NO
-  // inventory link at all — FedRAMP-authorized AI absent from the inventory.
+  // inventory link at all — marketplace AI absent from the inventory.
   // Omitted entirely when the classification table isn't present.
   const aiCounts = hasAiClassification() ? getAiClassificationCounts() : null;
+
+  // Spread: of the fully authorized core-AI products, how many ever picked up
+  // a second agency ATO. Backs the /fedramp/coverage/spread board.
+  const spread = hasAiClassification() ? getSpreadCounts() : null;
 
   const snapshot = getFedrampSnapshot();
 
@@ -124,7 +129,7 @@ export function getCoverageHubStats(): CoverageStat[] {
       label: "Use cases outside agency ATO scope",
       value: mismatched,
       description:
-        "Use cases whose product is FedRAMP-listed but where the using agency has no matching ATO.",
+        "Use cases whose product is FedRAMP-listed but where the using agency has no ATO recorded on the marketplace. The ledger under-records reuse, so read this as an upper bound — not a count of unauthorized deployments.",
     },
     {
       key: "agencies_with_gaps",
@@ -142,11 +147,10 @@ export function getCoverageHubStats(): CoverageStat[] {
       key: "sleeping_authorizations",
       label: "Sleeping authorizations",
       value: sleeping.sleeping_pairs,
-      denominator: sleeping.ai_used_products,
       description:
         sleeping.products_with_gap > 0
-          ? `Agencies holding an ATO for a FedRAMP product their peers use for AI but reporting no AI use case using it. ${sleeping.products_with_gap} of ${sleeping.ai_used_products} AI-used products have a peer gap.`
-          : "Agencies holding an ATO for a FedRAMP product their peers use for AI but reporting no AI use case using it.",
+          ? `Agency × product pairs where the agency holds an ATO for a FedRAMP product its peers use for AI but reports no AI use case using it — across ${sleeping.products_with_gap} of ${sleeping.ai_used_products} AI-used products.`
+          : "Agency × product pairs where the agency holds an ATO for a FedRAMP product its peers use for AI but reports no AI use case using it.",
     },
     ...(aiCounts
       ? [
@@ -155,8 +159,19 @@ export function getCoverageHubStats(): CoverageStat[] {
             label: "AI products (by classification) absent from inventory",
             value: aiCounts.ai_unlinked,
             denominator: aiCounts.core_ai + aiCounts.ai_featured,
+            description: `FedRAMP listings an independent LLM review judged to be AI/ML offerings, with no link to any curated inventory product — i.e. AI by classification, not by inventory linkage. ${aiCounts.ai_unlinked_authorized} are fully FedRAMP Authorized; ${aiCounts.ai_unlinked_pipeline} are still Ready or In Process.`,
+          } satisfies CoverageStat,
+        ]
+      : []),
+    ...(spread && spread.authorized_core_ai > 0
+      ? [
+          {
+            key: "spread",
+            label: "Authorized core-AI stuck at one ATO",
+            value: spread.single_ato,
+            denominator: spread.authorized_core_ai,
             description:
-              "FedRAMP listings an independent LLM review judged to be AI/ML offerings, with no link to any curated inventory product — i.e. AI by classification, not by inventory linkage. Every one is authorized by at least one agency.",
+              "Fully authorized primary-purpose AI products whose marketplace ledger records at most one agency ATO — authorization that never spread.",
           } satisfies CoverageStat,
         ]
       : []),

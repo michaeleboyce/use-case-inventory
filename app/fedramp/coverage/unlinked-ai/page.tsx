@@ -14,7 +14,7 @@ import type {
   UnlinkedAiProductRow,
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
-import { Section, MonoChip } from "@/components/editorial";
+import { Section } from "@/components/editorial";
 import {
   UnlinkedAiTable,
   type UnlinkedAiTableRow,
@@ -23,7 +23,7 @@ import {
 export const metadata = {
   title: "Unlinked AI products · FedRAMP × AI Inventory",
   description:
-    "FedRAMP cloud products an independent LLM review judged to be AI/ML offerings, authorized by at least one agency, that appear in no agency AI use-case inventory — AI by classification, not by inventory linkage.",
+    "FedRAMP cloud products an independent LLM review judged to be AI/ML offerings — most fully authorized, some still in the pipeline — that appear in no agency AI use-case inventory. AI by classification, not by inventory linkage.",
 };
 
 const IMPACT_RANK: Record<string, number> = {
@@ -33,14 +33,24 @@ const IMPACT_RANK: Record<string, number> = {
   Low: 0,
 };
 
+/** URL `status` param → the marketplace statuses it admits. */
+const STATUS_FILTERS: Record<string, string[]> = {
+  authorized: ["FedRAMP Authorized"],
+  ready: ["FedRAMP Ready"],
+  in_process: ["Agency Authorization In Process", "FedRAMP In Process"],
+};
+
 export default async function UnlinkedAiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string; impact?: string }>;
+  searchParams: Promise<{ cat?: string; impact?: string; status?: string }>;
 }) {
   const sp = await searchParams;
-  const catFilter = (sp.cat ?? "").toLowerCase();
+  // Core AI is the default lens — primary-purpose AI tools are the story;
+  // `cat=all` widens to the AI-featured platforms (AWS, Azure, …).
+  const catFilter = (sp.cat ?? "core_ai").toLowerCase();
   const impactFilter = (sp.impact ?? "").toLowerCase();
+  const statusFilter = (sp.status ?? "").toLowerCase();
 
   if (!hasAiClassification()) {
     return <NotClassified />;
@@ -63,9 +73,11 @@ export default async function UnlinkedAiPage({
     new Set(products.map((p) => p.impact_level).filter((v): v is string => Boolean(v))),
   ).sort((a, b) => (IMPACT_RANK[b] ?? -1) - (IMPACT_RANK[a] ?? -1));
 
+  const admittedStatuses = STATUS_FILTERS[statusFilter];
   const filtered = products.filter((p) => {
-    if (catFilter && p.category !== catFilter) return false;
+    if (catFilter !== "all" && p.category !== catFilter) return false;
     if (impactFilter && (p.impact_level ?? "").toLowerCase() !== impactFilter) return false;
+    if (admittedStatuses && !admittedStatuses.includes(p.status)) return false;
     return true;
   });
 
@@ -100,12 +112,14 @@ export default async function UnlinkedAiPage({
             FedRAMP&rsquo;d AI <em className="italic">nobody&rsquo;s reporting.</em>
           </h1>
           <p className="mt-6 max-w-prose text-[1.02rem] leading-[1.55] text-foreground/85">
-            Every product below is an AI/ML cloud offering that has cleared
-            FedRAMP and is authorized by at least one federal agency &mdash; yet
-            it appears in <span className="font-medium text-foreground">no</span>{" "}
-            agency&rsquo;s 2025 AI use-case inventory. These are tools the
-            government has already done the security and procurement work to
-            allow, sitting unused (or at least unreported) in the inventory.
+            Every product below is an AI/ML cloud offering on the FedRAMP
+            marketplace that appears in{" "}
+            <span className="font-medium text-foreground">no</span>{" "}
+            agency&rsquo;s 2025 AI use-case inventory. Most have completed
+            authorization &mdash; capability the government has already done
+            the security work to allow, sitting unused (or at least
+            unreported); the rest are still in the Ready / In&nbsp;Process
+            pipeline, filterable below.
           </p>
           {counts ? (
             <p className="mt-3 max-w-prose text-[0.95rem] leading-[1.55] text-foreground/75">
@@ -120,6 +134,14 @@ export default async function UnlinkedAiPage({
               {formatNumber(counts.ai_linked)} are linked and appear on the
               other coverage boards). Of the absent set,{" "}
               <span className="font-medium text-foreground">
+                {formatNumber(counts.ai_unlinked_authorized)}
+              </span>{" "}
+              are fully FedRAMP Authorized,{" "}
+              <span className="font-medium text-foreground">
+                {formatNumber(counts.ai_unlinked_pipeline)}
+              </span>{" "}
+              are still in the pipeline, and{" "}
+              <span className="font-medium text-foreground">
                 {formatNumber(
                   products.filter((p) => p.category === "core_ai").length,
                 )}
@@ -127,6 +149,11 @@ export default async function UnlinkedAiPage({
               are primary-purpose AI tools.
             </p>
           ) : null}
+          <p className="mt-3 max-w-prose text-[0.85rem] leading-[1.5] text-muted-foreground">
+            Timing note: the 2025 inventories closed before FedRAMP&rsquo;s
+            Jan&ndash;Feb&nbsp;2026 20x AI authorizations, so the newest
+            listings could not have been reported yet.
+          </p>
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             Click any row for the classification reasoning and the agencies holding an ATO.
           </p>
@@ -220,31 +247,62 @@ export default async function UnlinkedAiPage({
             <Section
               number={byAgency.length > 0 ? "III" : "II"}
               title="By product"
-              lede="One row per classified-AI FedRAMP product with no inventory link. Filter by AI class or impact level; sort by any column; click a row to expand."
+              lede="One row per classified-AI FedRAMP product with no inventory link. Filter by AI class, marketplace status, or impact level; sort by any column; click a row to expand."
             >
               <div className="border-t-2 border-foreground pt-4 mb-5 flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground mr-1">
                   Class
                 </span>
-                <FilterChip href={qs({ cat: null, impact: impactFilter || null })} active={!catFilter} label="All" />
                 <FilterChip
-                  href={qs({ cat: "core_ai", impact: impactFilter || null })}
+                  href={qs({ cat: null, impact: impactFilter || null, status: statusFilter || null })}
                   active={catFilter === "core_ai"}
                   label="Core AI"
                 />
                 <FilterChip
-                  href={qs({ cat: "ai_featured", impact: impactFilter || null })}
+                  href={qs({ cat: "ai_featured", impact: impactFilter || null, status: statusFilter || null })}
                   active={catFilter === "ai_featured"}
                   label="AI-featured"
+                />
+                <FilterChip
+                  href={qs({ cat: "all", impact: impactFilter || null, status: statusFilter || null })}
+                  active={catFilter === "all"}
+                  label="All"
+                />
+                <span className="ml-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground mr-1">
+                  Status
+                </span>
+                <FilterChip
+                  href={qs({ cat: sp.cat ?? null, impact: impactFilter || null, status: null })}
+                  active={!statusFilter}
+                  label="All"
+                />
+                <FilterChip
+                  href={qs({ cat: sp.cat ?? null, impact: impactFilter || null, status: "authorized" })}
+                  active={statusFilter === "authorized"}
+                  label="Authorized"
+                />
+                <FilterChip
+                  href={qs({ cat: sp.cat ?? null, impact: impactFilter || null, status: "ready" })}
+                  active={statusFilter === "ready"}
+                  label="Ready"
+                />
+                <FilterChip
+                  href={qs({ cat: sp.cat ?? null, impact: impactFilter || null, status: "in_process" })}
+                  active={statusFilter === "in_process"}
+                  label="In Process"
                 />
                 <span className="ml-4 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground mr-1">
                   Impact
                 </span>
-                <FilterChip href={qs({ cat: catFilter || null, impact: null })} active={!impactFilter} label="All" />
+                <FilterChip
+                  href={qs({ cat: sp.cat ?? null, impact: null, status: statusFilter || null })}
+                  active={!impactFilter}
+                  label="All"
+                />
                 {distinctImpacts.map((lvl) => (
                   <FilterChip
                     key={lvl}
-                    href={qs({ cat: catFilter || null, impact: lvl.toLowerCase() })}
+                    href={qs({ cat: sp.cat ?? null, impact: lvl.toLowerCase(), status: statusFilter || null })}
                     active={impactFilter === lvl.toLowerCase()}
                     label={lvl}
                   />
@@ -268,10 +326,19 @@ export default async function UnlinkedAiPage({
   );
 }
 
-function qs({ cat, impact }: { cat: string | null; impact: string | null }) {
+function qs({
+  cat,
+  impact,
+  status,
+}: {
+  cat: string | null;
+  impact: string | null;
+  status: string | null;
+}) {
   const params = new URLSearchParams();
   if (cat) params.set("cat", cat);
   if (impact) params.set("impact", impact);
+  if (status) params.set("status", status);
   const s = params.toString();
   return s ? `/fedramp/coverage/unlinked-ai?${s}` : "/fedramp/coverage/unlinked-ai";
 }

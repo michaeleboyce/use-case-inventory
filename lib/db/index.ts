@@ -159,6 +159,9 @@ export {
   getAgenciesHoldingAto,
   getUnlinkedAiByAgency,
   getUnlinkedAiProductsForAgency,
+  getAuthorizedCoreAiSpread,
+  getSpreadCounts,
+  getFrontierTrioStatus,
 } from "./fedramp";
 export {
   getGenAiHeadlines,

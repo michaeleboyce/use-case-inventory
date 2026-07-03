@@ -3,8 +3,9 @@
 /**
  * Table for /fedramp/coverage/unlinked-ai. Each row is a FedRAMP product an
  * independent LLM review judged to be an AI/ML offering, with NO link to any
- * curated inventory product — a FedRAMP-authorized AI tool absent from every
- * agency use-case inventory. Expand to read the classification reasoning, the
+ * curated inventory product — marketplace AI (authorized or in the pipeline;
+ * see the Status column) absent from every agency use-case inventory.
+ * Expand to read the classification reasoning, the
  * verbatim evidence signals, and the agencies that hold an ATO for it.
  *
  * Row-expansion detail (the ATO-holding agencies) is pre-fetched server-side
@@ -28,6 +29,21 @@ function impactTone(level: string | null): "stamp" | "verified" | "ink" | "muted
   if (v === "moderate") return "stamp";
   if (v === "low" || v === "li-saas") return "muted";
   return "ink";
+}
+
+/** Compact status chip — Authorized reads strong, pipeline states recede. */
+function StatusChip({ status }: { status: string }) {
+  const authorized = status === "FedRAMP Authorized";
+  const label = authorized
+    ? "Authorized"
+    : status === "FedRAMP Ready"
+      ? "Ready"
+      : "In Process";
+  return (
+    <MonoChip tone={authorized ? "verified" : "muted"} size="xs" title={status}>
+      {label}
+    </MonoChip>
+  );
 }
 
 function CategoryChip({ category }: { category: UnlinkedAiProductRow["category"] }) {
@@ -74,6 +90,11 @@ export function UnlinkedAiTable({ rows }: { rows: UnlinkedAiTableRow[] }) {
       id: "category",
       header: "AI class",
       cell: (info) => <CategoryChip category={info.getValue()} />,
+    }),
+    columnHelper.accessor("status", {
+      id: "status",
+      header: "Status",
+      cell: (info) => <StatusChip status={info.getValue()} />,
     }),
     columnHelper.accessor("confidence", {
       id: "confidence",

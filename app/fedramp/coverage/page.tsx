@@ -48,24 +48,30 @@ const BOARD_OF: Record<string, "ai_to_fedramp" | "fedramp_to_ai" | "agencies"> =
   unused_products: "fedramp_to_ai",
   sleeping_authorizations: "fedramp_to_ai",
   unlinked_ai: "fedramp_to_ai",
+  spread: "fedramp_to_ai",
   agencies_with_gaps: "agencies",
 };
 
 const PANEL_HREF: Record<string, string> = {
   matched: "/fedramp/coverage/vendors",
-  mismatched: "/fedramp/coverage/fit",
+  // The ATO-scope number drills into the per-agency gap view (each row
+  // expands to the specific outside-scope use cases). The impact-level fit
+  // grid is a different question and keeps its own panel link below.
+  mismatched: "/fedramp/coverage/agencies",
   agencies_with_gaps: "/fedramp/coverage/agencies",
   unused_products: "/fedramp/coverage/products",
   sleeping_authorizations: "/fedramp/coverage/sleeping",
   unlinked_ai: "/fedramp/coverage/unlinked-ai",
+  spread: "/fedramp/coverage/spread",
 };
 
 const PANEL_LABEL_OVERRIDE: Record<string, string> = {
   matched: "AI products matched to FedRAMP",
-  mismatched: "Use cases on questionable impact level",
+  mismatched: "Use cases outside agency ATO scope",
   unused_products: "FedRAMP products with zero inventory mentions",
   agencies_with_gaps: "Agencies with a FedRAMP × inventory delta",
   unlinked_ai: "FedRAMP AI products absent from the inventory",
+  spread: "Authorized core-AI stuck at one ATO",
 };
 
 // Which definition of "AI-related" each card uses. "linkage" cards count only
@@ -79,6 +85,7 @@ const METHOD_OF: Record<string, "linkage" | "classification"> = {
   sleeping_authorizations: "linkage",
   agencies_with_gaps: "linkage",
   unlinked_ai: "classification",
+  spread: "classification",
 };
 
 // The four drill-down panels reachable from this hub. Mirrored in the
@@ -93,6 +100,7 @@ const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
   { href: "/fedramp/coverage/products", label: "Unused authorizations" },
   { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations" },
   { href: "/fedramp/coverage/unlinked-ai", label: "Unlinked AI products" },
+  { href: "/fedramp/coverage/spread", label: "Authorization vs adoption" },
   { href: "/fedramp/coverage/fit", label: "Authorization fit" },
   { href: "/fedramp/coverage/agencies", label: "Agency gaps" },
 ];
@@ -449,7 +457,10 @@ function AiDefinitionBand({ counts }: { counts: AiClassificationCounts }) {
             <span className="font-medium text-foreground">
               {formatNumber(counts.ai_unlinked)}
             </span>{" "}
-            authorized AI products absent from every agency inventory.
+            marketplace AI products absent from every agency inventory (
+            {formatNumber(counts.ai_unlinked_authorized)} fully authorized,{" "}
+            {formatNumber(counts.ai_unlinked_pipeline)} still Ready or
+            In&nbsp;Process).
           </p>
         </div>
       </div>

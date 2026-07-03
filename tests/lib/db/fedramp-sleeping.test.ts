@@ -107,7 +107,10 @@ describe("lib/db/fedramp — sleeping authorizations", () => {
       const sleeping = stats.find((s) => s.key === "sleeping_authorizations");
       expect(sleeping).toBeDefined();
       expect(sleeping?.value).toBe(1);
-      expect(sleeping?.denominator).toBe(1);
+      // Pairs and products are different units, so the card no longer carries
+      // a denominator; the product split lives in the description instead.
+      expect(sleeping?.denominator).toBeUndefined();
+      expect(sleeping?.description).toContain("1 of 1 AI-used products");
       expect(sleeping?.label).toBe("Sleeping authorizations");
     });
   });

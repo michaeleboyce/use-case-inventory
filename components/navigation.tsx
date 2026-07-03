@@ -50,6 +50,7 @@ const FEDRAMP_SECTIONS: Array<{ href: string; label: string; indent?: boolean }>
   { href: "/fedramp/coverage/products", label: "Unused authorizations", indent: true },
   { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations", indent: true },
   { href: "/fedramp/coverage/unlinked-ai", label: "Unlinked AI products", indent: true },
+  { href: "/fedramp/coverage/spread", label: "Authorization vs adoption", indent: true },
   { href: "/fedramp/coverage/fit", label: "Authorization fit", indent: true },
   { href: "/fedramp/coverage/agencies", label: "Agency gaps", indent: true },
   { href: "/fedramp/curate", label: "Curate" },

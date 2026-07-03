@@ -98,6 +98,8 @@ export function getAiClassificationCounts(): AiClassificationCounts {
     not_ai: 0,
     ai_linked: 0,
     ai_unlinked: 0,
+    ai_unlinked_authorized: 0,
+    ai_unlinked_pipeline: 0,
   };
   if (!hasAiClassification()) return empty;
   const db = getDb();
@@ -124,6 +126,19 @@ export function getAiClassificationCounts(): AiClassificationCounts {
       .get() ?? { c: 0 }
   ).c;
   out.ai_unlinked = out.core_ai + out.ai_featured - out.ai_linked;
+  out.ai_unlinked_authorized = (
+    db
+      .prepare<[], { c: number }>(
+        `SELECT COUNT(*) AS c
+           FROM fedramp_ai_classification c
+           JOIN fedramp_products p ON p.fedramp_id = c.fedramp_id
+          WHERE c.category IN ('core_ai', 'ai_featured')
+            AND p.status = 'FedRAMP Authorized'
+            AND c.fedramp_id NOT IN (SELECT fedramp_id FROM fedramp_product_links)`,
+      )
+      .get() ?? { c: 0 }
+  ).c;
+  out.ai_unlinked_pipeline = out.ai_unlinked - out.ai_unlinked_authorized;
   return out;
 }
 

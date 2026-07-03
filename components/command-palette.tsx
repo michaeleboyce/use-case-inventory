@@ -76,6 +76,11 @@ const QUICK_LINKS: Array<{
   { href: "/fedramp", label: "FedRAMP", icon: ShieldCheck },
   { href: "/fedramp/marketplace", label: "FedRAMP Marketplace", icon: ShieldCheck },
   { href: "/fedramp/coverage", label: "FedRAMP Coverage", icon: ShieldCheck },
+  {
+    href: "/fedramp/coverage/spread",
+    label: "FedRAMP Authorization vs Adoption",
+    icon: ShieldCheck,
+  },
   { href: "/discrepancies", label: "Discrepancies", icon: FileText },
   { href: "/about", label: "About", icon: FileText },
 ];

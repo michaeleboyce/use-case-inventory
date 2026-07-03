@@ -264,7 +264,8 @@ export default function FedrampLandingPage() {
             agency inventories.
           </p>
           <p className="mt-5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
-            Vendor coverage · Authorization fit · Agency gaps · Unlinked AI
+            Vendor coverage · Authorization fit · Agency gaps · Unlinked AI ·
+            Authorization vs adoption
           </p>
           <div aria-hidden className="mt-5 h-1.5 bg-[var(--stamp)]" />
         </Link>
