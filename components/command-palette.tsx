@@ -60,6 +60,7 @@ const QUICK_LINKS: Array<{
   { href: "/readiness/methodology", label: "Readiness Methodology", icon: Gauge },
   { href: "/readiness/access", label: "AI Access & Scale", icon: Gauge },
   { href: "/experience", label: "AI Experience", icon: Gauge },
+  { href: "/stories", label: "Stories: 2024 → 2025", icon: Gauge },
   { href: "/use-cases", label: "Use Cases", icon: ListFilter },
   { href: "/products", label: "Products", icon: Box },
   { href: "/templates", label: "Templates", icon: ScrollText },
