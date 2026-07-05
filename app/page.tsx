@@ -18,6 +18,7 @@ import { TopProductsChart } from "@/components/charts/top-products-chart";
 import { AgencyTypeChart } from "@/components/charts/agency-type-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
+import { RUBRIC_VERSION } from "@/lib/readiness/rubric";
 import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
 import { NAV_SECTIONS } from "@/lib/nav";
 import { buildHomeViewModel } from "./_view-model";
@@ -227,11 +228,15 @@ export default async function HomePage() {
         <ReadinessHeadlineStat
           value={Number(readinessHeadline.internal_build_pct.toFixed(1))}
           unit="%"
-          label="of federal AI is built in-house — the rest is purchased commercial tooling"
-          caption={`Computed across all reported use cases · ${readinessHeadline.total_agencies_scored} agencies scored against the v1.1 capacity-first rubric`}
+          label="of federal AI is built in-house"
+          caption={`Computed across all reported use cases · ${readinessHeadline.total_agencies_scored} agencies scored against the v${RUBRIC_VERSION} capacity-first rubric`}
           variant="big"
           href="/readiness/methodology#internal-build"
         />
+        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          {Number(readinessHeadline.purchased_pct.toFixed(1))}% purchased ·{" "}
+          {Number(readinessHeadline.unreported_pct.toFixed(1))}% unreported
+        </p>
         <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
           <Link href="/readiness" className="transition-colors hover:text-[var(--stamp)]">
             → The league table

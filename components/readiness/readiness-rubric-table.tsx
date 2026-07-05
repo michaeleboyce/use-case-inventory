@@ -1,6 +1,6 @@
 /**
  * ReadinessRubricTable — renders the 5-dimension rubric from
- * `lib/readiness-rubric.ts` as a citable table for the methodology page.
+ * `lib/readiness/rubric.ts` as a citable table for the methodology page.
  *
  * Server component, no client state. The rubric metadata is the published
  * source of truth; if a dimension changes here, the Python ETL constant

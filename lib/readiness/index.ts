@@ -7,7 +7,7 @@
  * through these helpers, not raw SQL.
  *
  * The rubric definition / weights / tier bands live in
- * `lib/readiness-rubric.ts` (single source of truth for both this query layer
+ * `lib/readiness/rubric.ts` (single source of truth for both this query layer
  * and the methodology page). Constants there MUST stay in sync with the
  * Python script of the same name.
  */
@@ -122,7 +122,7 @@ export interface ReadinessTierSummaryRow {
 }
 
 /**
- * Tier band order — must stay in sync with `lib/readiness-rubric.ts` (which
+ * Tier band order — must stay in sync with `lib/readiness/rubric.ts` (which
  * Agent C owns and which is the published source of truth for the
  * methodology page). We duplicate the minimum needed here so this file
  * compiles before that one lands, and so the rendering layer doesn't have
@@ -158,154 +158,117 @@ export function getReadinessTierSummary(): ReadinessTierSummaryRow[] {
 }
 
 export interface HeadlineStats {
-  /** Share of use cases that are built in-house — custom-coded OR developed
-   *  in-house OR on an agency-internal platform. Capacity-first hero stat. */
+  /** Rubric version that produced these numbers (e.g. "1.2"). */
+  rubric_version: string;
+  /** Share of effective units built in-house — custom-coded OR a validated
+   *  in-house development claim OR on an agency-internal platform. Capacity-
+   *  first hero stat. First leg of the internal/purchased/unreported split. */
   internal_build_pct: number;
-  /** Share of use cases at "deployed" stage (vs. pre-deployment / pilot /
-   *  acquisition / retired). Real-deployment signal. */
+  /** Share of effective units purchased as commercial tooling. */
+  purchased_pct: number;
+  /** Share of effective units with neither a build nor a purchase signal —
+   *  the "unreported" remainder (itself a finding). */
+  unreported_pct: number;
+  /** Share of ACTIVE (non-retired) effective units at "deployed" stage. */
   production_rate_pct: number;
-  /** Share of use cases on products with at least one FedRAMP authorization. */
+  /** Deployed share with retired units back in the denominator. */
+  production_rate_all_pct: number;
+  /** Share of product-linked effective units on a FedRAMP-authorized product. */
+  fedramp_linked_pct: number;
+  /** Share of ALL effective units on a FedRAMP-authorized product (a floor). */
+  fedramp_floor_pct: number;
+  /**
+   * @deprecated v1.1 name for `fedramp_linked_pct`. Kept as an alias so pages
+   * that still reference it don't break; prefer `fedramp_linked_pct`.
+   */
   fedramp_coverage_pct: number;
   /** Count of agencies in the top "Frontier-Ready" tier. */
   frontier_ready_agency_count: number;
   total_agencies_scored: number;
+  /** Effective (deduped) use-case units in the corpus. */
+  total_units: number;
+  /** Raw filed use-case rows (before effective-unit dedup). */
+  total_use_cases: number;
+  /** Curated FedRAMP↔product link rows backing the coverage stats. */
+  fedramp_link_row_count: number;
   computed_at: string | null;
   /** Compliance baseline — share of use cases lacking a meaningful risk doc.
    *  Surfaced on the methodology page as a caveat about compliance vs.
    *  capacity; intentionally NOT featured as a homepage hero number. */
   hi_no_risk_docs_pct: number;
+  /** Same compliance baseline, restricted to high-impact use cases. */
+  hi_no_risk_docs_high_impact_pct: number;
 }
 
-/** Headline candidates for the homepage hero + methodology page. The four
- * "capacity-first" candidates are designed to be hero-quotable; the
- * compliance baseline (`hi_no_risk_docs_pct`) is preserved so the
- * methodology page can explicitly contrast it with the chosen hero.
+interface HeadlineRow {
+  rubric_version: string;
+  internal_build_pct: number;
+  purchased_pct: number;
+  unreported_pct: number;
+  production_rate_pct: number;
+  production_rate_all_pct: number;
+  fedramp_linked_pct: number;
+  fedramp_floor_pct: number;
+  frontier_ready_agency_count: number;
+  total_agencies_scored: number;
+  total_units: number;
+  total_use_cases: number;
+  hi_no_risk_docs_pct: number;
+  hi_no_risk_docs_high_impact_pct: number;
+  fedramp_link_row_count: number;
+  computed_at: string;
+}
+
+/**
+ * Headline stats for the homepage hero + methodology page.
+ *
+ * v1.2: this is a pure READ of the 1-row `readiness_headline` table that the
+ * ETL (`scripts/compute_agency_readiness.py`) persists. The dashboard no
+ * longer recomputes any of these numbers — the old in-TS recomputation had a
+ * substring bug that counted OMB Pilot rows as "deployed". If the table is
+ * absent or empty (an older DB snapshot), we throw a clear Error rather than
+ * fabricate numbers; callers that want graceful degradation try/catch.
  */
 export function getHeadlineStats(): HeadlineStats {
   const db = rawDb();
 
-  const total_uc = (
-    db.prepare(`SELECT COUNT(*) AS c FROM use_cases`).get() as { c: number }
-  ).c || 1;
-
-  // 1) internal_build_pct — custom_code OR in-house dev OR on an internal-
-  //    platform product. Done in TS (not SQL) because the encodings are
-  //    messy and a single regex is cleaner than a 6-CASE WHEN.
-  interface UcRow {
-    id: number;
-    has_custom_code: string | null;
-    development_type: string | null;
+  let row: HeadlineRow | undefined;
+  try {
+    row = db
+      .prepare<[], HeadlineRow>(`SELECT * FROM readiness_headline WHERE id = 1`)
+      .get();
+  } catch (err) {
+    throw new Error(
+      "readiness_headline is missing — this DB predates rubric v1.2. " +
+        "Rebuild it via scripts/compute_agency_readiness.py in the ETL repo. " +
+        `(underlying: ${(err as Error).message})`,
+    );
   }
-  const ucRows = db
-    .prepare<[], UcRow>(
-      `SELECT id, has_custom_code, development_type FROM use_cases`,
-    )
-    .all();
-  const internalUcIds = new Set<number>();
-  for (const r of ucRows) {
-    const cc = (r.has_custom_code ?? "").trim().toLowerCase();
-    const dt = (r.development_type ?? "").toLowerCase().replace(/-/g, " ");
-    if (
-      cc === "yes" ||
-      cc === "true" ||
-      cc === "1" ||
-      (cc.includes("ato") && !cc.includes("waiver"))
-    ) {
-      internalUcIds.add(r.id);
-    } else if (dt.includes("in house")) {
-      internalUcIds.add(r.id);
-    }
+  if (!row) {
+    throw new Error(
+      "readiness_headline has no row — the ETL scorer has not been run " +
+        "against this DB. Rebuild via scripts/compute_agency_readiness.py.",
+    );
   }
-  // Plus: use cases linked to a product with origin='agency_internal_platform'
-  const internalPlatformUcs = db
-    .prepare<[], { id: number }>(
-      `SELECT DISTINCT uc.id FROM use_cases uc
-         JOIN use_case_products ucp ON ucp.use_case_id = uc.id
-         JOIN products p ON p.id = ucp.product_id
-        WHERE p.product_origin = 'agency_internal_platform'`,
-    )
-    .all();
-  for (const r of internalPlatformUcs) internalUcIds.add(r.id);
-  const internal_build_pct =
-    Math.round(1000 * (internalUcIds.size / total_uc)) / 10;
-
-  // 2) production_rate_pct — stage matches "deployed" or "operation and maintenance"
-  const stageRows = db
-    .prepare<[], { stage_of_development: string | null }>(
-      `SELECT stage_of_development FROM use_cases`,
-    )
-    .all();
-  let deployedCount = 0;
-  for (const r of stageRows) {
-    const s = (r.stage_of_development ?? "").toLowerCase();
-    if (s.includes("deployed") || s.includes("operation and maintenance")) {
-      deployedCount += 1;
-    }
-  }
-  const production_rate_pct =
-    Math.round(1000 * (deployedCount / total_uc)) / 10;
-
-  // 3) fedramp_coverage_pct
-  const uc_with_product = (
-    db
-      .prepare(
-        `SELECT COUNT(DISTINCT uc.id) AS c
-           FROM use_cases uc
-           JOIN use_case_products ucp ON ucp.use_case_id = uc.id`,
-      )
-      .get() as { c: number }
-  ).c || 1;
-  const uc_fedramp = (
-    db
-      .prepare(
-        `SELECT COUNT(DISTINCT uc.id) AS c
-           FROM use_cases uc
-           JOIN use_case_products ucp ON ucp.use_case_id = uc.id
-           JOIN fedramp_product_links fpl ON fpl.inventory_product_id = ucp.product_id`,
-      )
-      .get() as { c: number }
-  ).c;
-  const fedramp_coverage_pct =
-    Math.round(1000 * (uc_fedramp / uc_with_product)) / 10;
-
-  // 4) frontier_ready_agency_count
-  const frontier_ready_agency_count = (
-    db
-      .prepare(`SELECT COUNT(*) AS c FROM agency_readiness WHERE tier = 'A'`)
-      .get() as { c: number }
-  ).c;
-
-  const total_agencies_scored = (
-    db
-      .prepare(`SELECT COUNT(*) AS c FROM agency_readiness`)
-      .get() as { c: number }
-  ).c;
-
-  // Compliance baseline (caveat-only — see HeadlineStats docs)
-  const with_risk = (
-    db
-      .prepare(
-        `SELECT COUNT(*) AS c FROM use_case_tags t
-          JOIN use_cases uc ON uc.id = t.use_case_id
-         WHERE t.has_meaningful_risk_docs = 1`,
-      )
-      .get() as { c: number }
-  ).c;
-  const hi_no_risk_docs_pct =
-    Math.round(1000 * (1 - with_risk / total_uc)) / 10;
-
-  const computed_at_row = db
-    .prepare(`SELECT MAX(computed_at) AS t FROM agency_readiness`)
-    .get() as { t: string | null };
 
   return {
-    internal_build_pct,
-    production_rate_pct,
-    fedramp_coverage_pct,
-    frontier_ready_agency_count,
-    total_agencies_scored,
-    computed_at: computed_at_row?.t ?? null,
-    hi_no_risk_docs_pct,
+    rubric_version: row.rubric_version,
+    internal_build_pct: row.internal_build_pct,
+    purchased_pct: row.purchased_pct,
+    unreported_pct: row.unreported_pct,
+    production_rate_pct: row.production_rate_pct,
+    production_rate_all_pct: row.production_rate_all_pct,
+    fedramp_linked_pct: row.fedramp_linked_pct,
+    fedramp_floor_pct: row.fedramp_floor_pct,
+    fedramp_coverage_pct: row.fedramp_linked_pct,
+    frontier_ready_agency_count: row.frontier_ready_agency_count,
+    total_agencies_scored: row.total_agencies_scored,
+    total_units: row.total_units,
+    total_use_cases: row.total_use_cases,
+    fedramp_link_row_count: row.fedramp_link_row_count,
+    computed_at: row.computed_at ?? null,
+    hi_no_risk_docs_pct: row.hi_no_risk_docs_pct,
+    hi_no_risk_docs_high_impact_pct: row.hi_no_risk_docs_high_impact_pct,
   };
 }
 
@@ -321,14 +284,42 @@ export interface VendorReach {
   vendor: string;
   use_case_count: number;
   agency_count: number;
+  /** count / sum of vendor-attributed counts (non-placeholder vendors). */
+  share_of_attributed: number; // 0..1
+  /** count / total use-case count (all filed rows, attributed or not). */
+  share_of_all_ucs: number; // 0..1
+  /**
+   * @deprecated v1.1 name for `share_of_attributed`. Retained as an alias so
+   * existing callers keep working; prefer `share_of_attributed`.
+   */
   share_of_total: number; // 0..1
 }
 
 export interface VendorConcentration {
   top_vendors: VendorReach[]; // top 10
-  herfindahl_index: number; // 0..1, sum of squared shares
-  top5_share: number; // 0..1
+  herfindahl_index: number; // 0..1, sum of squared attributed shares
+  top5_share: number; // 0..1, of attributed shares
 }
+
+/**
+ * Placeholder vendor tokens that are not real vendors — filtered out (case-
+ * insensitive, after TRIM) from both the `products.vendor` and the
+ * `use_cases.vendor_name` fallback branch so they don't distort concentration.
+ */
+const PLACEHOLDER_VENDORS = [
+  "n/a",
+  "na",
+  "none",
+  "not applicable",
+  "in-house",
+  "in house",
+  "internal",
+  "multiple",
+  "various",
+  "tbd",
+  "unknown",
+  "-",
+];
 
 /**
  * Vendor concentration across the federal use-case inventory.
@@ -336,8 +327,11 @@ export interface VendorConcentration {
  * Counts each (use_case, vendor) pair once. A vendor is identified by
  * `products.vendor` (preferred) joined through `use_case_products`; for
  * use cases not linked to a curated product we fall back to
- * `use_cases.vendor_name`. The Herfindahl-Hirschman index is returned on
- * the 0..1 scale (sum of squared shares); multiply by 10,000 for the
+ * `use_cases.vendor_name`. Placeholder tokens (N/A, In-House, Various, …) are
+ * excluded from both branches. Each vendor reports two shares: one relative to
+ * the vendor-attributed total (`share_of_attributed`) and one relative to the
+ * full use-case count (`share_of_all_ucs`). The Herfindahl-Hirschman index is
+ * on the 0..1 scale over attributed shares; multiply by 10,000 for the
  * classical antitrust scale.
  */
 export function getVendorConcentration(): VendorConcentration {
@@ -349,10 +343,12 @@ export function getVendorConcentration(): VendorConcentration {
     agency_count: number;
   }
 
+  const placeholderList = PLACEHOLDER_VENDORS.map((v) => `'${v}'`).join(", ");
+
   // Use cases reached via curated product link, grouped by products.vendor.
   // UNION with use cases that have no product link but do have a raw
-  // vendor_name on the inventory row. COALESCE ensures we don't double-count
-  // rows that appear in both halves.
+  // vendor_name on the inventory row. Placeholder vendors are excluded in
+  // BOTH branches (LOWER(TRIM(...)) NOT IN the placeholder list).
   const rows = db
     .prepare<[], VendorRow>(
       `
@@ -364,6 +360,7 @@ export function getVendorConcentration(): VendorConcentration {
           JOIN use_case_products ucp ON ucp.use_case_id = uc.id
           JOIN products p ON p.id = ucp.product_id
          WHERE p.vendor IS NOT NULL AND TRIM(p.vendor) <> ''
+           AND LOWER(TRIM(p.vendor)) NOT IN (${placeholderList})
         UNION
         SELECT DISTINCT uc.id AS use_case_id,
                uc.agency_id,
@@ -371,11 +368,13 @@ export function getVendorConcentration(): VendorConcentration {
           FROM use_cases uc
          WHERE uc.vendor_name IS NOT NULL
            AND TRIM(uc.vendor_name) <> ''
+           AND LOWER(TRIM(uc.vendor_name)) NOT IN (${placeholderList})
            AND NOT EXISTS (
              SELECT 1 FROM use_case_products ucp
               JOIN products p ON p.id = ucp.product_id
               WHERE ucp.use_case_id = uc.id
                 AND p.vendor IS NOT NULL AND TRIM(p.vendor) <> ''
+                AND LOWER(TRIM(p.vendor)) NOT IN (${placeholderList})
            )
       )
       SELECT vendor,
@@ -388,21 +387,31 @@ export function getVendorConcentration(): VendorConcentration {
     )
     .all();
 
-  const total = rows.reduce((sum, r) => sum + r.use_case_count, 0) || 1;
-  const enriched: VendorReach[] = rows.map((r) => ({
-    vendor: r.vendor,
-    use_case_count: r.use_case_count,
-    agency_count: r.agency_count,
-    share_of_total: r.use_case_count / total,
-  }));
+  const total_attributed =
+    rows.reduce((sum, r) => sum + r.use_case_count, 0) || 1;
+  const total_use_cases =
+    (db.prepare(`SELECT COUNT(*) AS c FROM use_cases`).get() as { c: number })
+      .c || 1;
+
+  const enriched: VendorReach[] = rows.map((r) => {
+    const share_of_attributed = r.use_case_count / total_attributed;
+    return {
+      vendor: r.vendor,
+      use_case_count: r.use_case_count,
+      agency_count: r.agency_count,
+      share_of_attributed,
+      share_of_all_ucs: r.use_case_count / total_use_cases,
+      share_of_total: share_of_attributed,
+    };
+  });
 
   const herfindahl_index = enriched.reduce(
-    (sum, v) => sum + v.share_of_total * v.share_of_total,
+    (sum, v) => sum + v.share_of_attributed * v.share_of_attributed,
     0,
   );
   const top5_share = enriched
     .slice(0, 5)
-    .reduce((sum, v) => sum + v.share_of_total, 0);
+    .reduce((sum, v) => sum + v.share_of_attributed, 0);
 
   return {
     top_vendors: enriched.slice(0, 10),
@@ -413,6 +422,7 @@ export function getVendorConcentration(): VendorConcentration {
 
 export interface FrontierStat {
   agency_abbreviation: string;
+  agency_name: string;
   frontier_pct: number; // 0..1
   frontier_count: number;
   total_count: number;
@@ -453,6 +463,7 @@ export function getFrontierPenetration(): FrontierPenetration {
 
   interface AgencyRow {
     agency_abbreviation: string;
+    agency_name: string;
     frontier_count: number;
     total_count: number;
   }
@@ -460,6 +471,7 @@ export function getFrontierPenetration(): FrontierPenetration {
     .prepare<[], AgencyRow>(
       `
       SELECT a.abbreviation AS agency_abbreviation,
+             a.name AS agency_name,
              SUM(CASE WHEN EXISTS(
                SELECT 1 FROM use_case_tags t
                 WHERE t.use_case_id = uc.id AND t.is_frontier_model = 1
@@ -479,6 +491,7 @@ export function getFrontierPenetration(): FrontierPenetration {
 
   const top_agencies: FrontierStat[] = agencyRows.map((r) => ({
     agency_abbreviation: r.agency_abbreviation,
+    agency_name: r.agency_name,
     frontier_count: r.frontier_count,
     total_count: r.total_count,
     frontier_pct: r.total_count ? r.frontier_count / r.total_count : 0,
@@ -489,6 +502,7 @@ export function getFrontierPenetration(): FrontierPenetration {
 
 export interface FieldCompletenessRow {
   agency_abbreviation: string;
+  agency_name: string;
   overall_completeness: number; // 0..1 avg across the 10 fields
   per_field: Record<string, number>; // 0..1 per field
 }
@@ -525,12 +539,14 @@ export function getReportingCompleteness(): FieldCompletenessRow[] {
 
   interface RawRow {
     agency_abbreviation: string;
+    agency_name: string;
     [field: string]: number | string;
   }
   const rows = db
     .prepare<[], RawRow>(
       `
       SELECT a.abbreviation AS agency_abbreviation,
+             a.name AS agency_name,
              ${selects}
         FROM use_cases uc
         JOIN agencies a ON a.id = uc.agency_id
@@ -549,6 +565,7 @@ export function getReportingCompleteness(): FieldCompletenessRow[] {
     }
     return {
       agency_abbreviation: String(r.agency_abbreviation),
+      agency_name: String(r.agency_name),
       overall_completeness: sum / REPORTING_FIELDS.length,
       per_field,
     };

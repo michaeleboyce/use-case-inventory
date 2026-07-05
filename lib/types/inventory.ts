@@ -401,10 +401,95 @@ export type StageBucket =
 
 // -----------------------------------------------------------------------------
 // Agency Readiness Scorecard (IFP-facing rubric — see
-// scripts/compute_agency_readiness.py and lib/readiness-rubric.ts)
+// scripts/compute_agency_readiness.py and lib/readiness/rubric.ts)
 // -----------------------------------------------------------------------------
 
 export type ReadinessTier = "A" | "B" | "C" | "D" | "F";
+
+/**
+ * One rubric dimension's raw input signals, as parsed from
+ * `agency_readiness.headline_inputs_json`. Keys are numeric signals or
+ * denominators; booleans may appear in legacy (v1.1) snapshots. The string
+ * index signature is what lets the derivation + scorecard components read a
+ * bucket by dynamic dimension key.
+ */
+export type ReadinessInputBucket = Record<string, number | boolean>;
+
+/** internal_capacity bucket (v1.2). `total_use_cases` is the v1.1 denominator,
+ *  superseded by `total_units` / `active_units`; kept optional so an older
+ *  snapshot still type-checks. */
+export type ReadinessInternalCapacityInputs = ReadinessInputBucket & {
+  custom_code?: number;
+  inhouse_dev?: number;
+  deployed?: number;
+  internal_platform?: number;
+  total_units?: number;
+  active_units?: number;
+  /** @deprecated v1.1 denominator — v1.2 uses total_units/active_units. */
+  total_use_cases?: number;
+};
+
+/** frontier_capability bucket (v1.2). */
+export type ReadinessFrontierCapabilityInputs = ReadinessInputBucket & {
+  frontier?: number;
+  agentic?: number;
+  custom_code?: number;
+  total_units?: number;
+  /** @deprecated v1.1 denominator — v1.2 uses total_units. */
+  total_use_cases?: number;
+};
+
+/** procurement_hygiene bucket (v1.2). */
+export type ReadinessProcurementHygieneInputs = ReadinessInputBucket & {
+  ato_yes?: number;
+  ato_total?: number;
+  products_total?: number;
+  products_fedramp?: number;
+};
+
+/** risk_relevant_governance bucket (v1.2). The `raw_score` / `shrunk_score` /
+ *  `prior_rate` / `shrinkage_k` fields are new in v1.2 (Empirical-Bayes
+ *  shrinkage) and absent from v1.1 snapshots — all optional. */
+export type ReadinessRiskRelevantGovernanceInputs = ReadinessInputBucket & {
+  risky_total?: number;
+  risky_with_oversight?: number;
+  raw_score?: number;
+  shrunk_score?: number;
+  prior_rate?: number;
+  shrinkage_k?: number;
+  total_units?: number;
+  /** @deprecated v1.1 denominator — v1.2 uses total_units. */
+  total_use_cases?: number;
+};
+
+/** adoption_breadth bucket (v1.2). */
+export type ReadinessAdoptionBreadthInputs = ReadinessInputBucket & {
+  entries?: number;
+  bureaus?: number;
+  templates?: number;
+};
+
+/**
+ * Parsed shape of `agency_readiness.headline_inputs_json` (rubric v1.2).
+ *
+ * Every per-dimension bucket is optional so a v1.1 snapshot (which used
+ * `total_use_cases` instead of `total_units` and omitted the governance
+ * shrinkage fields) still type-checks. The string index signature preserves
+ * the dynamic dimension-key lookups (`inputs[dimKey]`, `inputs["meta"]`) that
+ * the derivation panel and agency scorecard rely on.
+ *
+ * NOTE: the raw JSON also carries a top-level `rubric_version` string, but the
+ * canonical version lives on `HeadlineStats.rubric_version`; it is intentionally
+ * not surfaced here so the index signature stays bucket-typed.
+ */
+export interface ReadinessHeadlineInputs {
+  [dimension: string]: ReadinessInputBucket | undefined;
+  internal_capacity?: ReadinessInternalCapacityInputs;
+  frontier_capability?: ReadinessFrontierCapabilityInputs;
+  procurement_hygiene?: ReadinessProcurementHygieneInputs;
+  risk_relevant_governance?: ReadinessRiskRelevantGovernanceInputs;
+  adoption_breadth?: ReadinessAdoptionBreadthInputs;
+}
 
 export interface AgencyReadiness {
   agency_id: number;
@@ -417,7 +502,7 @@ export interface AgencyReadiness {
   tier: ReadinessTier;
   tier_label: string;
   rank: number;
-  headline_inputs: Record<string, Record<string, number | boolean>>;
+  headline_inputs: ReadinessHeadlineInputs;
   computed_at: string;
 }
 

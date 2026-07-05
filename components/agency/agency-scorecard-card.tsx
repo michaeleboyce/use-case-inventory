@@ -43,7 +43,7 @@ export function AgencyScorecardCard({
           </div>
         </div>
 
-        {/* Right column — 5 subscore bars, ordered by v1.1 weight desc */}
+        {/* Right column — 5 subscore bars, ordered by rubric weight desc */}
         <div className="flex-1 flex flex-col gap-4">
           {RUBRIC_DIMENSIONS.map((dim) => (
             <ReadinessSubscoreBar

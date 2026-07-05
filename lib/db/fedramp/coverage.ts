@@ -1019,8 +1019,10 @@ export function getUseCasesForCoverageAgencyProduct(
         JOIN agencies a ON a.id = s.agency_id
        ORDER BY
          CASE
-           WHEN s.stage_of_development LIKE '%Deployed%' THEN 0
+           -- Pilot before Deployed: the OMB Pilot label text contains
+           -- "has been deployed", so the Deployed pattern must not win.
            WHEN s.stage_of_development LIKE '%Pilot%'    THEN 1
+           WHEN s.stage_of_development LIKE '%Deployed%' THEN 0
            WHEN s.stage_of_development LIKE '%Pre-deployment%' OR s.stage_of_development LIKE '%pre-deployment%' THEN 2
            WHEN s.stage_of_development LIKE '%Retired%'  THEN 3
            ELSE 4

@@ -93,8 +93,8 @@ export default async function ScorecardPrintPage({
         </h2>
         <p className="mt-3 font-body text-sm leading-relaxed text-muted-foreground">
           Federal AI Readiness is a 5-dimension rubric scoring U.S. federal
-          agencies on adoption breadth, frontier capability, procurement
-          hygiene, reporting quality, and governance documentation. Weights and
+          agencies on internal capacity, frontier capability, procurement
+          hygiene, risk-relevant governance, and adoption breadth. Weights and
           definitions are published at{" "}
           <Link
             href="/readiness/methodology"

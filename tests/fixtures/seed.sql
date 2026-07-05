@@ -193,3 +193,24 @@ INSERT INTO use_case_tags_2024 (use_case_id_2024, is_generative_ai, is_enterpris
 -- lib/readiness getHeadlineStats() (home page). Values mirror a real
 -- 2026-07 snapshot; tests assert plumbing, not these numbers.
 INSERT INTO readiness_headline VALUES(1,'1.2',31.5,13.5,55.0,32.9,30.0,30.9,9.9,0,68,3503,3549,92.0,71.8,132,'2026-07-05T21:59:33+00:00');
+
+-- --------------------------------------------------------------------
+-- Readiness scorecard (rubric v1.2) — two agency_readiness rows carrying
+-- the v1.2 headline_inputs_json shape (total_units + governance shrinkage
+-- fields), for the readiness page / derivation consumers.
+--
+-- The placeholder-vendor product used to test getVendorConcentration's
+-- exclusion is seeded per-test in tests/lib/readiness.test.ts (not here) so
+-- it doesn't perturb the exact product-catalog counts other db tests assert.
+-- --------------------------------------------------------------------
+INSERT INTO agency_readiness (
+  agency_id, internal_capacity, frontier_capability, procurement_hygiene,
+  risk_relevant_governance, adoption_breadth, composite_score, tier,
+  tier_label, rank, headline_inputs_json, computed_at
+) VALUES
+  (1, 62.0, 40.0, 30.0, 25.0, 55.0, 45.6, 'C', 'Building', 1,
+   '{"rubric_version":"1.2","internal_capacity":{"custom_code":3,"inhouse_dev":2,"deployed":3,"internal_platform":1,"total_units":5,"active_units":4},"frontier_capability":{"frontier":2,"agentic":1,"custom_code":3,"total_units":5},"procurement_hygiene":{"ato_yes":2,"ato_total":5,"products_total":4,"products_fedramp":1},"risk_relevant_governance":{"risky_total":2,"risky_with_oversight":1,"raw_score":50.0,"shrunk_score":42.86,"prior_rate":0.4,"shrinkage_k":5,"total_units":5},"adoption_breadth":{"entries":7,"bureaus":3,"templates":2}}',
+   '2026-07-01T00:00:00Z'),
+  (2, 40.0, 20.0, 15.0, 0.0, 30.0, 25.5, 'D', 'Preliminary', 2,
+   '{"rubric_version":"1.2","internal_capacity":{"custom_code":1,"inhouse_dev":0,"deployed":2,"internal_platform":0,"total_units":4,"active_units":4},"frontier_capability":{"frontier":1,"agentic":0,"custom_code":1,"total_units":4},"procurement_hygiene":{"ato_yes":1,"ato_total":4,"products_total":2,"products_fedramp":0},"risk_relevant_governance":{"risky_total":1,"risky_with_oversight":0,"raw_score":0.0,"shrunk_score":16.67,"prior_rate":0.4,"shrinkage_k":5,"total_units":4},"adoption_breadth":{"entries":4,"bureaus":2,"templates":1}}',
+   '2026-07-01T00:00:00Z');

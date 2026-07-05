@@ -22,6 +22,11 @@ function stageBucket(stage: string | null):
   | "Retired" {
   const s = (stage ?? "").toLowerCase();
   if (s.includes("retired")) return "Retired";
+  // Pilot must be checked BEFORE deployed: the OMB Pilot label text reads
+  // "has been deployed in a limited test or pilot capacity".
+  if (s.includes("implementation") || s.includes("assessment") || s.includes("pilot")) {
+    return "Pilot";
+  }
   if (
     s.includes("operation") ||
     s.includes("production") ||
@@ -29,9 +34,6 @@ function stageBucket(stage: string | null):
     s.includes("deployed")
   ) {
     return "Deployed";
-  }
-  if (s.includes("implementation") || s.includes("assessment") || s.includes("pilot")) {
-    return "Pilot";
   }
   return "Pre-deployment";
 }

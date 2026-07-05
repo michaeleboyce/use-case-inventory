@@ -31,15 +31,49 @@ function humanizeKey(key: string): string {
   return k.length > 0 ? k[0].toUpperCase() + k.slice(1) : k;
 }
 
-/** Keys that denote the bucket's denominator rather than an input signal. */
+/** Keys that denote the bucket's denominator rather than an input signal.
+ * `total_units` is the v1.2 effective-unit denominator; `total_use_cases`
+ * is the v1.1 fallback; `active_units` is the (smaller) denominator the
+ * deployed sub-share of Internal Capacity is measured over. */
 const DENOMINATOR_KEYS = new Set([
   "denominator",
+  "total_units",
+  "active_units",
   "total_use_cases",
   "total",
   "risky_total",
   "ato_total",
   "products_total",
 ]);
+
+/**
+ * v1.2 Risk-Relevant Governance renders as shrinkage arithmetic, not a
+ * bare X-of-Y. Returns a one-line summary when the Empirical-Bayes fields
+ * are present, or null so callers fall back to the pre-1.2 rendering.
+ * See /readiness/methodology#shrinkage.
+ */
+export function governanceShrinkageSummary(
+  bucket: Record<string, number | boolean> | undefined,
+): string | null {
+  const n = num(bucket, "risky_total");
+  const x = num(bucket, "risky_with_oversight");
+  const shrunk = num(bucket, "shrunk_score");
+  const prior = num(bucket, "prior_rate");
+  const k = num(bucket, "shrinkage_k");
+  if (n == null || x == null || shrunk == null || prior == null || k == null) {
+    return null;
+  }
+  if (n === 0) {
+    return "No risky use cases — scores 0 on this dimension by design.";
+  }
+  const raw = (x / n) * 100;
+  const priorPct = prior <= 1 ? prior * 100 : prior;
+  return `${Math.round(x)}/${Math.round(n)} risky use cases overseen (raw ${raw.toFixed(
+    1,
+  )}) → shrunk toward federal rate ${priorPct.toFixed(
+    1,
+  )}% with K=${Math.round(k)} → ${shrunk.toFixed(1)}`;
+}
 
 /** The raw input signals for one dimension, as label/value pairs, with the
  * bucket's denominator (when one is recognizable) split out. Returns null
@@ -72,6 +106,10 @@ export function readinessInputSummary(
 ): string {
   const bucket = inputs?.[dimKey];
   if (!bucket) return fallback;
+  if (dimKey === "risk_relevant_governance") {
+    const shrink = governanceShrinkageSummary(bucket);
+    if (shrink) return shrink;
+  }
   const num_ = num(bucket, "numerator");
   const den_ = num(bucket, "denominator");
   const note = bucket["note"];
@@ -105,7 +143,18 @@ export function ReadinessDerivation({
         {RUBRIC_DIMENSIONS.map((dim) => {
           const score = readiness[dim.key];
           const contribution = score * dim.weight;
+          const bucket = inputs[dim.key];
           const breakdown = readinessInputBreakdown(inputs, dim.key);
+          // v1.2 Risk-Relevant Governance renders as shrinkage arithmetic,
+          // linking to the #shrinkage anchor. Null for pre-1.2 rows.
+          const shrink =
+            dim.key === "risk_relevant_governance"
+              ? governanceShrinkageSummary(bucket)
+              : null;
+          // Internal Capacity's deployed sub-share is measured over active
+          // units, not the total — note it when the field is present.
+          const activeUnits =
+            dim.key === "internal_capacity" ? num(bucket, "active_units") : null;
           return (
             <div key={dim.key} className="flex flex-col gap-1.5">
               <ReadinessSubscoreBar
@@ -113,7 +162,17 @@ export function ReadinessDerivation({
                 value={score}
                 weight={dim.weight}
               />
-              {breakdown && breakdown.signals.length > 0 ? (
+              {shrink ? (
+                <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                  {shrink}{" "}
+                  <Link
+                    href="/readiness/methodology#shrinkage"
+                    className="underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    shrinkage →
+                  </Link>
+                </p>
+              ) : breakdown && breakdown.signals.length > 0 ? (
                 <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
                   {breakdown.signals.map((s, i) => (
                     <span key={s.label} className="whitespace-nowrap">
@@ -129,6 +188,12 @@ export function ReadinessDerivation({
                       {" "}
                       / {breakdown.denominators[0].value.toLocaleString()}{" "}
                       {breakdown.denominators[0].label.toLowerCase()}
+                    </span>
+                  ) : null}
+                  {activeUnits != null ? (
+                    <span className="text-muted-foreground/60">
+                      {" "}
+                      (deployed over {activeUnits.toLocaleString()} active)
                     </span>
                   ) : null}
                 </p>

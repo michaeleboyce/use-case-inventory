@@ -325,8 +325,9 @@ export default function AboutPage() {
             describe <em>what an agency filed</em>: a breadth heuristic over
             its inventory that rewards volume and capability coverage.{" "}
             <strong>Readiness grades</strong> (A–F) score <em>how it filed</em>{" "}
-            against the published five-dimension rubric — procurement hygiene,
-            reporting quality, internal build, and so on (see the{" "}
+            against the published five-dimension rubric — internal capacity,
+            frontier capability, procurement hygiene, risk-relevant governance,
+            and adoption breadth (see the{" "}
             <a
               href="/readiness/methodology"
               className="font-medium text-foreground underline-offset-4 hover:text-[var(--stamp)] hover:underline"

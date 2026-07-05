@@ -12,7 +12,7 @@ import { buildReadinessViewModel } from "./_view-model";
 export const metadata = {
   title: "Federal AI Readiness · IFP",
   description:
-    "A published rubric scoring federal agencies on adoption, frontier capability, procurement hygiene, reporting quality, and governance documentation.",
+    "A published rubric scoring federal agencies on internal capacity, frontier capability, procurement hygiene, risk-relevant governance, and adoption breadth.",
 };
 
 export default async function ReadinessPage() {
@@ -25,10 +25,15 @@ export default async function ReadinessPage() {
     frontier,
     reporting,
     totalScored,
-    fedrampPct,
     internalBuildPct,
+    purchasedPct,
+    unreportedPct,
     productionPct,
+    fedrampLinkedPct,
+    fedrampFloorPct,
     complianceGapPct,
+    complianceGapHighImpactPct,
+    rubricVersion,
     aiAccess,
   } = await buildReadinessViewModel();
 
@@ -67,7 +72,7 @@ export default async function ReadinessPage() {
       <div className="mt-10 md:mt-14">
       <PageMasthead
         id="overview"
-        kicker="No. 002 · Filed · Readiness Index v1.1"
+        kicker={`No. 002 · Filed · Readiness Index v${rubricVersion}`}
         title={
           <>
             Federal AI{" "}
@@ -86,19 +91,25 @@ export default async function ReadinessPage() {
             <span className="font-medium text-foreground">
               {formatNumber(totalScored)} federal agencies
             </span>{" "}
-            scored against a published rubric of state-capacity signals, only{" "}
+            scored against a published rubric of state-capacity signals,{" "}
             <span className="font-medium text-foreground">
               {internalBuildPct}%
             </span>{" "}
-            of federal AI is built in-house — the rest is purchased commercial
-            tooling. Just{" "}
+            of federal AI is built in-house and{" "}
+            <span className="font-medium text-foreground">{purchasedPct}%</span>{" "}
+            is purchased commercial tooling — but{" "}
+            <span className="font-medium text-foreground">{unreportedPct}%</span>{" "}
+            of filings don&apos;t say either way, a disclosure gap that is
+            itself a finding. Just{" "}
             <span className="font-medium text-foreground">{productionPct}%</span>{" "}
-            of reported use cases have reached deployed status; the remainder
-            sit in pilots, acquisition, or pre-deployment.
-            FedRAMP-authorized infrastructure covers{" "}
-            <span className="font-medium text-foreground">{fedrampPct}%</span>{" "}
-            of those deployments. These are the gaps between AI policy ambition
-            and operational capacity.
+            of active use cases have reached deployed status; the rest sit in
+            pilots, pre-deployment, or acquisition. FedRAMP-authorized
+            infrastructure covers{" "}
+            <span className="font-medium text-foreground">
+              {fedrampLinkedPct}%
+            </span>{" "}
+            of the use cases that name an identifiable product. These are the
+            gaps between AI policy ambition and operational capacity.
           </>
         }
       />
@@ -119,32 +130,60 @@ export default async function ReadinessPage() {
         <ReadinessHeadlineStat
           value={internalBuildPct}
           unit="%"
-          label="of federal AI is built in-house — the rest is purchased commercial tooling"
+          label="of federal AI is built in-house"
           caption={`Across all ${formatNumber(totalScored)} agencies' reported use cases · capacity-first stat, not a compliance one · IFP-derived from OMB M-25-21 inventory`}
           variant="big"
           href="/readiness/methodology#internal-build"
         />
+        <div
+          id="build-split"
+          className="mt-6 scroll-mt-36 border-t border-dotted border-border pt-5 space-y-2"
+        >
+          <ReadinessHeadlineStat
+            value={purchasedPct}
+            unit="%"
+            label="is purchased commercial tooling"
+            variant="inline"
+            href="/readiness/methodology#build-split"
+          />
+          <ReadinessHeadlineStat
+            value={unreportedPct}
+            unit="%"
+            label="doesn't report a build type at all — the disclosure gap is itself a finding"
+            variant="inline"
+            href="/readiness/methodology#missingness"
+          />
+        </div>
         <div className="mt-6 border-t border-dotted border-border pt-5 space-y-2">
           <ReadinessHeadlineStat
             value={productionPct}
             unit="%"
-            label="of reported use cases have reached deployed status (rest are pilots / pre-deployment / acquisition)"
+            label="of active use cases have reached deployed status (pilots, pre-deployment, and acquisition don't count; retired excluded from the denominator)"
             variant="inline"
             href="/readiness/methodology#production-rate"
           />
           <ReadinessHeadlineStat
-            value={fedrampPct}
+            value={fedrampLinkedPct}
             unit="%"
-            label="of federal AI deployments run on FedRAMP-authorized infrastructure"
+            label="of use cases with an identified product run on FedRAMP-authorized infrastructure"
+            variant="inline"
+            href="/readiness/methodology#fedramp"
+          />
+          <ReadinessHeadlineStat
+            value={fedrampFloorPct}
+            unit="%"
+            label="of all use cases, as a floor — most filings never name a product to check"
             variant="inline"
             href="/readiness/methodology#fedramp"
           />
         </div>
         <p className="mt-6 font-display italic text-[1.05rem] leading-snug text-muted-foreground">
-          All three numbers are computed deterministically from the OMB M-25-21
+          Every number here is computed deterministically from the OMB M-25-21
           inventory and the FedRAMP marketplace, and will move as agencies file
           corrections. A separate compliance baseline — that {complianceGapPct}%
-          of use cases lack the M-25-21 risk-documentation fields — is
+          of use cases lack the M-25-21 risk-documentation fields, rising to{" "}
+          {complianceGapHighImpactPct}% among the high-impact use cases for
+          which Section 5 makes those fields conditionally required — is
           discussed on the{" "}
           <Link
             href="/readiness/methodology#compliance-vs-capacity"
@@ -240,8 +279,13 @@ export default async function ReadinessPage() {
               {vendors.length > 0 ? (
                 <>
                   The top {vendors.length} vendors account for a substantial
-                  share of all reported federal AI use cases. A Herfindahl-style
-                  concentration index over their shares lands at{" "}
+                  share of vendor-attributed federal AI use cases — the largest
+                  alone reaches{" "}
+                  <span className="font-medium text-foreground tabular-nums">
+                    {vendors[0].share_of_all_pct.toFixed(1)}%
+                  </span>{" "}
+                  of all reported use cases. A Herfindahl-style concentration
+                  index over their attributed shares lands at{" "}
                   <span className="font-medium text-foreground tabular-nums">
                     {vendorHerfindahl ?? "—"}
                   </span>{" "}
@@ -268,7 +312,7 @@ export default async function ReadinessPage() {
                       Agencies
                     </th>
                     <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Share %
+                      Share % (attributed)
                     </th>
                   </tr>
                 </thead>
@@ -285,7 +329,7 @@ export default async function ReadinessPage() {
                         {formatNumber(v.agency_count)}
                       </td>
                       <td className="px-2 py-2 text-right font-mono tabular-nums">
-                        {v.share_of_uc_pct.toFixed(1)}%
+                        {v.share_of_attributed_pct.toFixed(1)}%
                       </td>
                     </tr>
                   ))}
@@ -439,7 +483,7 @@ export default async function ReadinessPage() {
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div className="space-y-1">
             <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Federal AI Readiness Index v1.1 ·{" "}
+              Federal AI Readiness Index v{rubricVersion} ·{" "}
               <Link
                 href="/readiness/methodology"
                 className="underline decoration-dotted underline-offset-4 hover:text-[var(--stamp)]"
