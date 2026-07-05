@@ -92,9 +92,9 @@ export function PopulationTelescope({
 
   const [selected, setSelected] = React.useState<string>("all");
   const [mode, setMode] = React.useState<"single" | "compare">("single");
-  const [compareScale, setCompareScale] = React.useState<
-    "relative" | "absolute"
-  >("relative");
+  const [compareScale, setCompareScale] = React.useState<CompareScale>(
+    "relative",
+  );
   const view =
     selected === "all"
       ? allView
@@ -293,13 +293,18 @@ export function PopulationTelescope({
   );
 }
 
+export type CompareScale = "relative" | "absolute" | "log";
+
 /**
  * Consolidated view: every modeled agency as one compact row with the same
- * three nested layers. Two honest scales:
+ * three nested layers. Three honest scales:
  *   relative — each row is normalized to its own workforce, so the SHAPES
  *              compare (how deep does AI reach into each agency);
  *   absolute — one shared people-scale, so the SIZES compare (where the
- *              actual seats are; small agencies become honest slivers).
+ *              actual seats are; small agencies become honest slivers);
+ *   log      — one shared logarithmic people-scale; monotonic, so the
+ *              nesting stays truthful, and each order of magnitude gets
+ *              equal width — Udall's structure is readable next to VA's.
  */
 function CompareAll({
   modeled,
@@ -308,8 +313,8 @@ function CompareAll({
   onBack,
 }: {
   modeled: AgencySeatModel[];
-  scale: "relative" | "absolute";
-  onScale: (s: "relative" | "absolute") => void;
+  scale: CompareScale;
+  onScale: (s: CompareScale) => void;
   onBack: () => void;
 }) {
   const rows = React.useMemo(
@@ -320,6 +325,15 @@ function CompareAll({
     [modeled],
   );
   const maxWorkforce = rows.reduce((m, r) => Math.max(m, r.workforce), 1);
+
+  // Log scale: 10 people anchors the left edge; every power of ten gets
+  // equal width up to the largest workforce.
+  const LOG_MIN = 10;
+  const logSpan = Math.log10(maxWorkforce) - Math.log10(LOG_MIN);
+  const logPos = (n: number) =>
+    n <= LOG_MIN
+      ? 0
+      : ((Math.log10(n) - Math.log10(LOG_MIN)) / logSpan) * 100;
 
   return (
     <div>
@@ -339,6 +353,7 @@ function CompareAll({
             [
               ["relative", "Each agency = 100% of itself"],
               ["absolute", "Shared scale (actual people)"],
+              ["log", "Log scale (small agencies readable)"],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -381,12 +396,17 @@ function CompareAll({
 
       <div className="mt-4 space-y-1">
         {rows.map((r) => {
-          const rowSpan =
-            scale === "relative" ? 1 : r.workforce / maxWorkforce;
-          const frac = (n: number) =>
-            r.workforce > 0
-              ? `${(n / r.workforce) * 100 * rowSpan}%`
-              : "0%";
+          const frac = (n: number): string => {
+            if (r.workforce <= 0) return "0%";
+            switch (scale) {
+              case "relative":
+                return `${(n / r.workforce) * 100}%`;
+              case "absolute":
+                return `${(n / maxWorkforce) * 100}%`;
+              case "log":
+                return `${logPos(n)}%`;
+            }
+          };
           return (
             <div
               key={r.key}
@@ -403,7 +423,7 @@ function CompareAll({
                 {/* workforce envelope */}
                 <div
                   className="absolute inset-y-0 left-0 border border-foreground/40 bg-muted/20 transition-all duration-500"
-                  style={{ width: `${100 * rowSpan}%` }}
+                  style={{ width: frac(r.workforce) }}
                   title={`${r.label}: ${exact(r.workforce)} people employed${r.includesContractors ? " (incl. on-site contractors)" : ""}`}
                 />
                 {/* eligible */}
@@ -446,7 +466,9 @@ function CompareAll({
       <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">
         {scale === "relative"
           ? "Each row is scaled to its own workforce, so the shapes compare: how far AI reaches into each agency, regardless of size. Switch to the shared scale to see where the actual seats are."
-          : "One shared scale: bar length is actual people, so the seats concentrate where the bars are long. Small agencies render as honest slivers — switch to per-agency scale to read their proportions."}{" "}
+          : scale === "absolute"
+            ? "One shared scale: bar length is actual people, so the seats concentrate where the bars are long. Small agencies render as honest slivers — switch to per-agency scale to read their proportions."
+            : "One shared logarithmic scale: every power of ten gets equal width, so a 200-person agency's structure is readable next to VA's 451,000. Read positions as orders of magnitude, not proportional counts — visual gaps are compressed by design; use the other two scales for proportions."}{" "}
         Click an agency for its step-by-step reasoning.
       </p>
     </div>
