@@ -223,6 +223,13 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
     let agency = byAgency.get(row.agency_id);
     if (!agency) {
       const w = workforce.get(row.agency_id);
+      // Occupation caps come from OPM civil-service series counts. They
+      // are only commensurable with an employees-only denominator: at an
+      // agency whose filed bands include on-site contractors (DOE's ~94k
+      // lab workforce), capping a stratum at the *federal* 2210/0905
+      // count would contradict the contractor-inclusive denominator, so
+      // caps are skipped there and the eligible workforce is the ceiling.
+      const capsCommensurable = w?.denominator_basis !== "incl_contractors";
       agency = {
         agency_id: row.agency_id,
         abbreviation: row.abbreviation,
@@ -233,7 +240,9 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
         denominator_basis: w?.denominator_basis ?? null,
         headcount_as_of: w?.headcount_as_of ?? null,
         headcount_source_url: w?.headcount_source_url ?? null,
-        stratum_caps: caps.get(row.agency_id) ?? {},
+        stratum_caps: capsCommensurable
+          ? (caps.get(row.agency_id) ?? {})
+          : {},
         reaches: [],
       };
       byAgency.set(row.agency_id, agency);
