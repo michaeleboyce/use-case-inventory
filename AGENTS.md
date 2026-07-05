@@ -34,21 +34,31 @@ route, promote it to `components/<feature>/` or `lib/`.
 
 ## Navigation discoverability
 
+**The single IA registry is `lib/nav.ts`** — sections, roman-numeral
+kickers, labels, hrefs, and dropdown children all live there.
+`components/navigation.tsx` renders whatever the registry declares;
+`components/breadcrumbs.tsx` derives parent trails from it via
+`breadcrumbTrail()`. Never hard-code a nav link or a section numeral in a
+component or page — read it from the registry (page masthead kickers should
+match the registry's numerals).
+
 **When you add a new static page under an existing nav parent** (e.g. a new
 file under `app/fedramp/coverage/`, `app/fedramp/marketplace/`, `app/readiness/`,
 or `app/compare-years/`), you MUST do two things — otherwise the page is
 reachable only by deep link or a stat-card click on the parent hub, and
 nobody using normal navigation will find it.
 
-1. **Add an entry to the relevant array in `components/navigation.tsx`**
-   (`FEDRAMP_SECTIONS`, `READINESS_SECTIONS`, `MORE`, etc.). Mark
+1. **Add an entry to the owning section's `children` array in `lib/nav.ts`**
+   (or `REFERENCE_LINKS` for reference surfaces). Mark
    `indent: true` if the item sits under a parent hub; the dropdown render
    honors the flag with a left padding so the hierarchy is visually clear.
 2. **Add it to the parent hub page's in-page sub-nav**. For
    `app/fedramp/coverage/page.tsx` that's the `COVERAGE_PANELS` array driving
    the `<nav aria-label="Coverage panels">` strip below the page header. For
    `app/fedramp/marketplace/page.tsx` that's the `NAV_CARDS` array of link
-   tiles. Apply the same pattern when introducing a new hub.
+   tiles. Apply the same pattern when introducing a new hub. (Hub arrays
+   keep local copy for their card prose, but their hrefs must match the
+   registry.)
 
 Dynamic `[slug]` pages are exempt — they're parameterized and don't fit a
 static nav. Per-page in-page sub-navs and breadcrumbs do not replace the top

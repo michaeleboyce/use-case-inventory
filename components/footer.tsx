@@ -40,7 +40,7 @@ export function SiteFooter({ lastUpdated }: { lastUpdated: string | null }) {
               <Link href="/about" className="hover:text-[var(--stamp)]">
                 Colophon
               </Link>
-              <Link href="/compare" className="hover:text-[var(--stamp)]">
+              <Link href="/agencies/compare" className="hover:text-[var(--stamp)]">
                 Compare
               </Link>
               <Link href="/analytics" className="hover:text-[var(--stamp)]">

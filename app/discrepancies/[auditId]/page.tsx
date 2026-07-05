@@ -10,6 +10,8 @@ import { notFound } from "next/navigation";
 import { getDiscrepancyDetail, getDiscrepancyRows } from "@/lib/discrepancies";
 import { canWriteResolutions } from "@/lib/resolutions";
 import { Section, MonoChip } from "@/components/editorial";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { PageMasthead } from "@/components/page-masthead";
 import { DiscrepancySideBySide } from "@/components/discrepancy/discrepancy-side-by-side";
 import { KeyboardShortcutHost } from "@/components/keyboard-shortcut-host";
@@ -47,8 +49,15 @@ export default async function DiscrepancyDetailPage({
     ? getDiscrepancyRows({ unresolvedOnly: true }).map((r) => r.audit_id)
     : [];
 
+  const leafName = audit.use_case_name ?? String(audit.audit_id);
+  const crumbLabel =
+    leafName.length > 70 ? leafName.slice(0, 69) + "…" : leafName;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/discrepancies"), { label: crumbLabel }]}
+      />
       <div className="mb-8 flex items-center justify-between gap-4">
         <Link
           href="/discrepancies"

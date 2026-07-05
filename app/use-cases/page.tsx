@@ -217,7 +217,7 @@ export default async function UseCasesPage({
       {/* ------------------------------------------------------------ */}
       <PageMasthead
         id="overview"
-        kicker="§ II · Use Cases"
+        kicker="§ III · Use Cases"
         meta={
           <div className="space-y-3">
             <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">

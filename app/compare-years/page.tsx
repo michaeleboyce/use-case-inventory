@@ -78,7 +78,7 @@ export default async function CompareYearsPage() {
       <PageMasthead
         id="overview"
         italicTitle={false}
-        kicker="§ Cycle Comparison"
+        kicker="§ V · Year over year"
         metaLines={["Two-Cycle Analysis", "2024 → 2025 · M-25-21"]}
         meta={
           <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">

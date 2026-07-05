@@ -16,6 +16,8 @@ import { getAgencyById } from "@/lib/db";
 import { getOrganizationBySlugOrAbbr } from "@/lib/hierarchy";
 import { getAgencyReadinessByAbbr } from "@/lib/readiness";
 import { AgencyScorecardCard } from "@/components/agency/agency-scorecard-card";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { PrintButton } from "./print-button";
 
 export async function generateMetadata({
@@ -52,6 +54,17 @@ export default async function ScorecardPrintPage({
 
   return (
     <main className="max-w-3xl mx-auto p-8 print:p-4 print:max-w-none">
+      <Breadcrumbs
+        className="mb-6 print:hidden"
+        trail={[
+          ...breadcrumbTrail("/agencies"),
+          {
+            href: `/agencies/${slug}`,
+            label: agency.abbreviation ?? agency.name,
+          },
+          { label: "Scorecard" },
+        ]}
+      />
       <nav className="mb-4 print:hidden">
         <Link
           href={`/agencies/${slug}`}

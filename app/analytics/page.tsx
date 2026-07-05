@@ -46,7 +46,7 @@ export default async function AnalyticsPage() {
       {/* HERO — nameplate + drop-cap lede                              */}
       {/* ------------------------------------------------------------ */}
       <PageMasthead
-        kicker="§ Analytics / Volume I"
+        kicker="§ V · Analytics"
         metaLines={["Data Supplement", "Cycle 2025 · Ten Figures"]}
         meta={
           <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">

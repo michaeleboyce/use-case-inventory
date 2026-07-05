@@ -23,6 +23,8 @@ import type {
 import { RawJsonViewer } from "@/components/raw-json-viewer";
 import { TagDefinitionList } from "@/components/tag-definition-list";
 import { RelatedUseCases } from "@/components/related-use-cases";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { BackLink as ReferrerBackLink } from "@/components/back-link";
 import {
   Section,
@@ -123,8 +125,16 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       ? getOrganizationById(data.bureau_organization_id)
       : null;
 
+  const crumbLabel =
+    data.use_case_name.length > 70
+      ? data.use_case_name.slice(0, 69) + "…"
+      : data.use_case_name;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/use-cases"), { label: crumbLabel }]}
+      />
       {/* Editorial hero */}
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14">
         <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
@@ -679,8 +689,15 @@ function ConsolidatedDetail({ data }: { data: ConsolidatedWithTags }) {
     : null;
   const linkedProducts = getProductsForConsolidatedUseCase(data.id);
   const externalEvidence = getExternalEvidenceForConsolidated(data.id);
+  const crumbLabel =
+    data.ai_use_case.length > 70
+      ? data.ai_use_case.slice(0, 69) + "…"
+      : data.ai_use_case;
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/use-cases"), { label: crumbLabel }]}
+      />
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14">
         <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-3">

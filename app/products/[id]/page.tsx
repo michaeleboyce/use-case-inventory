@@ -13,6 +13,8 @@ import {
 } from "@/lib/db";
 import { ProductCard } from "@/components/product/product-card";
 import { BackLink } from "@/components/back-link";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { Section, MonoChip, Eyebrow, SourceLegend } from "@/components/editorial";
 import { Badge } from "@/components/ui/badge";
 import { FedrampCoverageBadge } from "@/components/fedramp/coverage-badge";
@@ -78,8 +80,16 @@ export default async function ProductDetailPage(props: ProductPageProps) {
     authorizations: authsByFedrampId.get(fp.fedramp_id) ?? [],
   }));
 
+  const crumbLabel =
+    product.canonical_name.length > 70
+      ? product.canonical_name.slice(0, 69) + "…"
+      : product.canonical_name;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/products"), { label: crumbLabel }]}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6">
         <BackLink fallbackHref="/products" fallbackLabel="All products" />

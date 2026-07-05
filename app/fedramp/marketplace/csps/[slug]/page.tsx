@@ -12,6 +12,8 @@ import {
   getFedrampProductsByCsp,
 } from "@/lib/db";
 import { Section, Eyebrow, MonoChip } from "@/components/editorial";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { EmptyState } from "@/components/empty-state";
 import { StatTile } from "@/components/stat-tile";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
@@ -41,8 +43,17 @@ export default async function MarketplaceCspDetailPage({ params }: PageProps) {
 
   const products = getFedrampProductsByCsp(slug);
 
+  const crumbLabel =
+    detail.csp.length > 70 ? detail.csp.slice(0, 69) + "…" : detail.csp;
+
   return (
     <div>
+      <Breadcrumbs
+        trail={[
+          ...breadcrumbTrail("/fedramp/marketplace/csps"),
+          { label: crumbLabel },
+        ]}
+      />
       <nav className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
         <Link
           href="/fedramp/marketplace/csps"

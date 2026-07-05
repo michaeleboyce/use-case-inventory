@@ -86,7 +86,8 @@ export default async function ExperiencePage() {
       {/* Header */}
       <div className="mt-10">
         <PageMasthead
-          kicker="Before and after the AI Action Plan · 2024–2025"
+          kicker="§ VI · Features"
+          metaLines={["Before and after the AI Action Plan · 2024–2025"]}
           title="The AI experience of an average civil servant"
           lede={
             <>

@@ -64,9 +64,9 @@ const QUICK_LINKS: Array<{
   { href: "/use-cases", label: "Use Cases", icon: ListFilter },
   { href: "/products", label: "Products", icon: Box },
   { href: "/templates", label: "Templates", icon: ScrollText },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/analytics", label: "Inventory Analytics", icon: BarChart3 },
   { href: "/policy", label: "Policy", icon: FileText },
-  { href: "/compare", label: "Compare Agencies", icon: SplitSquareHorizontal },
+  { href: "/agencies/compare", label: "Compare Agencies", icon: SplitSquareHorizontal },
   { href: "/compare-years", label: "Compare Years (2024 ↔ 2025)", icon: GitCompareArrows },
   {
     href: "/compare-years/silently-dropped",
@@ -82,7 +82,7 @@ const QUICK_LINKS: Array<{
     icon: ShieldCheck,
   },
   { href: "/discrepancies", label: "Discrepancies", icon: FileText },
-  { href: "/about", label: "About", icon: FileText },
+  { href: "/about", label: "Methods & Sources", icon: FileText },
 ];
 
 /** Reader-facing names for the dimension slugs in the palette index. */

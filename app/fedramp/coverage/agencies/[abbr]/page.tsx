@@ -15,6 +15,8 @@ import type {
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section, MonoChip } from "@/components/editorial";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { EmptyState } from "@/components/empty-state";
 import { MentionedWithoutAtoTable } from "./_sections/mentioned-without-ato-table";
 
@@ -95,6 +97,12 @@ export default async function FedrampCoverageAgencyDrillPage({
   if (!drill) {
     return (
       <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+        <Breadcrumbs
+          trail={[
+            ...breadcrumbTrail("/fedramp/coverage/agencies"),
+            { label: abbr.toUpperCase() },
+          ]}
+        />
         <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
           <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
             <div className="sticky top-32 space-y-2">
@@ -185,8 +193,17 @@ export default async function FedrampCoverageAgencyDrillPage({
       _totalUseCases: p.use_case_count,
     }));
 
+  const crumbLabel =
+    agency.name.length > 70 ? agency.name.slice(0, 69) + "…" : agency.name;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+      <Breadcrumbs
+        trail={[
+          ...breadcrumbTrail("/fedramp/coverage/agencies"),
+          { label: crumbLabel },
+        ]}
+      />
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
         <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
           <div className="sticky top-32 space-y-2">

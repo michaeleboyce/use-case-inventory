@@ -29,7 +29,7 @@ export default async function PolicyPage({
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       <PageMasthead
-        kicker="§ VI · Policy"
+        kicker="§ VI · Features · Policy"
         metaLines={[
           "M-25-21 Compliance",
           `Last refreshed ${formatDate(vm.stats.last_refreshed)}`,

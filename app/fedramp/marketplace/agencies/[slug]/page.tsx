@@ -14,6 +14,8 @@ import {
   getFedrampAuthorizationsForAgency,
 } from "@/lib/db";
 import { Section, Eyebrow, MonoChip } from "@/components/editorial";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { EmptyState } from "@/components/empty-state";
 import { StatTile } from "@/components/stat-tile";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
@@ -66,8 +68,19 @@ export default async function MarketplaceAgencyDetailPage({
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) => b.count - a.count);
 
+  const crumbLabel =
+    agency.parent_agency.length > 70
+      ? agency.parent_agency.slice(0, 69) + "…"
+      : agency.parent_agency;
+
   return (
     <div>
+      <Breadcrumbs
+        trail={[
+          ...breadcrumbTrail("/fedramp/marketplace/agencies"),
+          { label: crumbLabel },
+        ]}
+      />
       <nav className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
         <Link
           href="/fedramp/marketplace/agencies"

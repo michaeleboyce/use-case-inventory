@@ -7,6 +7,8 @@ import {
   getTemplateById,
 } from "@/lib/db";
 import { Section, MonoChip } from "@/components/editorial";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { EmptyState } from "@/components/empty-state";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
 import {
@@ -39,8 +41,15 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
 
   const entries = getEntriesForTemplate(idNum);
 
+  const leafName = template.short_name ?? `Template #${template.id}`;
+  const crumbLabel =
+    leafName.length > 70 ? leafName.slice(0, 69) + "…" : leafName;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/templates"), { label: crumbLabel }]}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
         <Link

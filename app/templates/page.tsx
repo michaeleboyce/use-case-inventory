@@ -24,7 +24,7 @@ export default async function TemplatesPage() {
       {/* HERO — editorial nameplate                                   */}
       {/* ------------------------------------------------------------ */}
       <PageMasthead
-        kicker="No. 003 · Compendium"
+        kicker="§ III · Templates"
         metaLines={["OMB Appendix B", "Boilerplate language"]}
         meta={
           <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">

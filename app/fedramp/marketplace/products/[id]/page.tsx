@@ -27,6 +27,8 @@ import {
   getServicesInScopeForProduct,
 } from "@/lib/db";
 import { Section, MonoChip, Eyebrow, Figure } from "@/components/editorial";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { StatTile } from "@/components/stat-tile";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
 import { ImpactBadge } from "@/components/fedramp/impact-badge";
@@ -105,8 +107,17 @@ export default async function MarketplaceProductDetailPage({
   const authorizationsNum = nextSection();
   const colophonNum = nextSection();
 
+  const crumbLabel =
+    product.cso.length > 70 ? product.cso.slice(0, 69) + "…" : product.cso;
+
   return (
     <div>
+      <Breadcrumbs
+        trail={[
+          ...breadcrumbTrail("/fedramp/marketplace/products"),
+          { label: crumbLabel },
+        ]}
+      />
       <nav className="mb-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
         <Link
           href="/fedramp/marketplace/products"

@@ -2,78 +2,22 @@
  * Editorial masthead. Big italic nameplate, hairline-ruled navigation, and a
  * small command-palette chip on the right. Designed to sit directly below
  * the Dateline strip so the two together read like a newspaper flag.
+ *
+ * The rail is driven entirely by the IA registry in lib/nav.ts — sections,
+ * kickers, children, and the Reference overflow all come from there. To add
+ * a page to the nav, register it in lib/nav.ts (see AGENTS.md "Navigation
+ * discoverability"); do not hard-code links here.
+ *
+ * Dropdowns are CSS-only (hover/focus-within) — no JS state, so they work
+ * without client-side hydration. All menus share the named group `menu`;
+ * the wrappers are siblings, so nearest-ancestor resolution keeps them
+ * independent.
  */
 
 import Link from "next/link";
 import { NavLink } from "./nav-link";
 import { CommandPaletteHint } from "./command-palette";
-
-// Primary nav: the high-frequency surfaces. Kept inline on the section rail.
-// FedRAMP promoted from "More" — it's a real sub-area with its own
-// marketplace / coverage / curate routes and readers go there often.
-// Non-menu primary surfaces. Readiness (kicker II) renders as a dropdown
-// between Agencies and Use Cases — see ReadinessMenu / the nav body.
-const PRIMARY: Array<{ href: string; label: string; kicker: string }> = [
-  { href: "/agencies", label: "Agencies", kicker: "I" },
-  { href: "/use-cases", label: "Use Cases", kicker: "III" },
-  { href: "/products", label: "Products", kicker: "IV" },
-  { href: "/analytics", label: "Analytics", kicker: "V" },
-  { href: "/policy", label: "Policy", kicker: "VI" },
-];
-
-// Readiness is its own sub-area with an overview + two named surfaces;
-// expose them as a hover/focus dropdown the same way FedRAMP works.
-const READINESS_SECTIONS: Array<{ href: string; label: string }> = [
-  { href: "/readiness", label: "Overview" },
-  { href: "/readiness/access", label: "AI Access & Scale" },
-  { href: "/experience", label: "AI Experience" },
-  { href: "/stories", label: "Stories: 2024 → 2025" },
-  { href: "/readiness/methodology", label: "Methodology" },
-];
-
-// FedRAMP is its own sub-area with an overview + three named surfaces. Each
-// of Marketplace and Coverage has its own static drill-downs, so the dropdown
-// lists them inline (marked `indent: true`) instead of leaving them only
-// reachable via in-page cards. See AGENTS.md "Navigation discoverability".
-const FEDRAMP_SECTIONS: Array<{ href: string; label: string; indent?: boolean }> = [
-  { href: "/fedramp", label: "Overview" },
-  { href: "/fedramp/marketplace", label: "Marketplace" },
-  { href: "/fedramp/marketplace/products", label: "Products", indent: true },
-  { href: "/fedramp/marketplace/csps", label: "Providers", indent: true },
-  { href: "/fedramp/marketplace/agencies", label: "Agencies", indent: true },
-  { href: "/fedramp/marketplace/assessors", label: "3PAOs", indent: true },
-  { href: "/fedramp/marketplace/analytics", label: "Analytics", indent: true },
-  { href: "/fedramp/marketplace/compare", label: "Compare", indent: true },
-  { href: "/fedramp/marketplace/about", label: "About", indent: true },
-  { href: "/fedramp/coverage", label: "Coverage" },
-  { href: "/fedramp/coverage/vendors", label: "Vendor coverage", indent: true },
-  { href: "/fedramp/coverage/products", label: "Unused authorizations", indent: true },
-  { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations", indent: true },
-  { href: "/fedramp/coverage/unlinked-ai", label: "Unlinked AI products", indent: true },
-  { href: "/fedramp/coverage/spread", label: "Authorization vs adoption", indent: true },
-  { href: "/fedramp/coverage/fit", label: "Authorization fit", indent: true },
-  { href: "/fedramp/coverage/agencies", label: "Agency gaps", indent: true },
-  { href: "/fedramp/curate", label: "Curate" },
-];
-
-// Lower-frequency surfaces, collapsed into a "More" dropdown.
-const MORE: Array<{ href: string; label: string; indent?: boolean }> = [
-  { href: "/compare", label: "Compare" },
-  { href: "/compare-years", label: "Compare Years" },
-  { href: "/compare-years/silently-dropped", label: "Silently dropped", indent: true },
-  { href: "/templates", label: "Templates" },
-  { href: "/discrepancies", label: "Discrepancies" },
-  { href: "/about", label: "Colophon" },
-];
-
-const BROWSE_DIMENSIONS: Array<{ slug: string; label: string }> = [
-  { slug: "sophistication", label: "AI sophistication" },
-  { slug: "high-impact", label: "High-impact" },
-  { slug: "topic-area", label: "Topic area" },
-  { slug: "vendor", label: "Vendor" },
-  { slug: "category", label: "Product category" },
-  { slug: "category-topic", label: "Category × Topic" },
-];
+import { NAV_SECTIONS, REFERENCE_LINKS, type NavChild } from "@/lib/nav";
 
 export function Navigation() {
   return (
@@ -104,42 +48,55 @@ export function Navigation() {
         {/* Section rail.
             NOTE: `overflow-x-auto` is intentionally absent. Adding it back
             creates a clipping ancestor that hides the absolute-positioned
-            BrowseMenu / MoreMenu dropdowns when they pop out below the nav
-            (overflow-x:auto implicitly sets overflow-y:auto in CSS). With
-            5 primary items + Browse + More + a wide masthead the rail
-            still fits without horizontal scroll on typical viewports;
-            on very narrow mobile widths the items wrap, which is fine. */}
+            dropdowns when they pop out below the nav (overflow-x:auto
+            implicitly sets overflow-y:auto in CSS). The rail wraps on very
+            narrow viewports, which is fine — see
+            docs/TODO-2026-07-05-mobile-nav.md for the deferred mobile menu. */}
         <nav className="mt-1 flex flex-wrap items-stretch gap-0 border-t border-border/70 text-sm">
-          {/* Agencies (I) */}
-          {PRIMARY.slice(0, 1).map((link) => (
-            <PrimaryNavLink key={link.href} link={link} />
-          ))}
-          {/* Readiness (II) — dropdown */}
-          <ReadinessMenu />
-          {/* Use Cases (III), Products (IV), Analytics (V) */}
-          {PRIMARY.slice(1).map((link) => (
-            <PrimaryNavLink key={link.href} link={link} />
-          ))}
-          <FedrampMenu />
-          <BrowseMenu />
-          <MoreMenu />
+          {NAV_SECTIONS.map((section) =>
+            section.children && section.children.length > 0 ? (
+              <SectionMenu
+                key={section.href}
+                kicker={section.kicker}
+                label={section.label}
+                href={section.href}
+                items={section.children}
+              />
+            ) : (
+              <PrimaryNavLink
+                key={section.href}
+                link={{
+                  href: section.href,
+                  label: section.label,
+                  kicker: section.kicker,
+                }}
+              />
+            ),
+          )}
+          <ReferenceMenu />
         </nav>
       </div>
     </header>
   );
 }
 
-/** A single numbered primary nav link (Agencies, Use Cases, …). */
+const TRIGGER_CLASS =
+  "group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4";
+
+const ITEM_CLASS =
+  "block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+
+const INDENTED_ITEM_CLASS =
+  "block whitespace-nowrap pl-7 pr-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/85 transition-colors hover:bg-accent hover:text-foreground";
+
+/** A single numbered primary nav link (no dropdown). */
 function PrimaryNavLink({
   link,
 }: {
   link: { href: string; label: string; kicker: string };
 }) {
   return (
-    <NavLink
-      href={link.href}
-      className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
-    >
+    <NavLink href={link.href} className={TRIGGER_CLASS}>
       <span
         aria-hidden
         className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
@@ -152,43 +109,47 @@ function PrimaryNavLink({
 }
 
 /**
- * "Readiness" sub-area menu. Same CSS-only hover/focus-within pattern as
- * FedrampMenu. The trigger NavLink points to /readiness (the scorecard)
- * and shows active state for any `/readiness/*` path, so readers can click
- * the trigger to land on the scorecard or hover to jump straight to AI
- * Access & Scale / Methodology. Keeps roman kicker II so the numbered
- * section sequence (I · II · III · IV · V) stays intact.
+ * A numbered section with a CSS-only dropdown. The trigger NavLink points
+ * at the section hub (still useful with no JS) and shows active state for
+ * the section's path prefix; hover/focus-within opens the child list.
  */
-function ReadinessMenu() {
+function SectionMenu({
+  kicker,
+  label,
+  href,
+  items,
+}: {
+  kicker: string;
+  label: string;
+  href: string;
+  items: NavChild[];
+}) {
   return (
-    <div className="group/readiness relative -mt-px flex items-stretch">
-      <NavLink
-        href="/readiness"
-        className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
-      >
+    <div className="group/menu relative -mt-px flex items-stretch">
+      <NavLink href={href} className={TRIGGER_CLASS}>
         <span
           aria-hidden
           className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
         >
-          II
+          {kicker}
         </span>
-        Readiness
+        {label}
         <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
           ▾
         </span>
       </NavLink>
       <div
         role="menu"
-        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[14rem] border border-border bg-background py-1 shadow-md group-hover/readiness:block group-focus-within/readiness:block"
+        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[15rem] border border-border bg-background py-1 shadow-md group-hover/menu:block group-focus-within/menu:block"
       >
-        {READINESS_SECTIONS.map((s) => (
+        {items.map((item) => (
           <Link
-            key={s.href}
-            href={s.href}
+            key={item.href}
+            href={item.href}
             role="menuitem"
-            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className={item.indent ? INDENTED_ITEM_CLASS : ITEM_CLASS}
           >
-            {s.label}
+            {item.label}
           </Link>
         ))}
       </div>
@@ -197,136 +158,37 @@ function ReadinessMenu() {
 }
 
 /**
- * "More" overflow menu — same CSS-only hover/focus-within pattern as
- * BrowseMenu. Holds the lower-frequency surfaces (FedRAMP, Compare,
- * Templates, Colophon) so the primary section rail doesn't overflow.
- * The trigger has no destination of its own — keyboard users tab into
- * it and the dropdown opens on focus-within.
+ * "Reference" overflow menu — methods, audits, provenance. Unnumbered and
+ * right-aligned; the trigger is a real <button> so keyboard users can open
+ * the dropdown without navigating anywhere.
  */
-function MoreMenu() {
+function ReferenceMenu() {
   return (
-    <div className="group/more relative -mt-px flex items-stretch">
-      {/* Use a real <button> with tabIndex so keyboard users can open the
-          dropdown without a destination link they don't want to navigate to. */}
+    <div className="group/menu relative -mt-px ml-auto flex items-stretch">
       <button
         type="button"
         className="group flex cursor-default items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:text-foreground md:px-4"
       >
         <span aria-hidden className="text-[9px] font-normal text-muted-foreground/70">
-          ⋯
+          §
         </span>
-        More
+        Reference
         <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
           ▾
         </span>
       </button>
       <div
         role="menu"
-        className="absolute right-0 top-full z-50 mt-0 hidden min-w-[14rem] border border-border bg-background py-1 shadow-md group-hover/more:block group-focus-within/more:block"
+        className="absolute right-0 top-full z-50 mt-0 hidden min-w-[15rem] border border-border bg-background py-1 shadow-md group-hover/menu:block group-focus-within/menu:block"
       >
-        {MORE.map((link) => (
+        {REFERENCE_LINKS.map((item) => (
           <Link
-            key={link.href}
-            href={link.href}
+            key={item.href}
+            href={item.href}
             role="menuitem"
-            className={
-              link.indent
-                ? "block whitespace-nowrap pl-7 pr-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/85 transition-colors hover:bg-accent hover:text-foreground"
-                : "block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            }
+            className={item.indent ? INDENTED_ITEM_CLASS : ITEM_CLASS}
           >
-            {link.label}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * "Browse" cross-cut menu. CSS-only dropdown — no JS state — opens on
- * hover/focus-within so it works without client-side hydration. Mirrors
- * the styling of a NavLink but routes the trigger to /browse/sophistication
- * (the first dimension) so it's still useful with no JS.
- */
-function BrowseMenu() {
-  return (
-    <div className="group/browse relative -mt-px flex items-stretch">
-      <NavLink
-        href="/browse/sophistication"
-        className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
-      >
-        <span
-          aria-hidden
-          className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
-        >
-          ⊞
-        </span>
-        Browse
-        <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
-          ▾
-        </span>
-      </NavLink>
-      <div
-        role="menu"
-        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[14rem] border border-border bg-background py-1 shadow-md group-hover/browse:block group-focus-within/browse:block"
-      >
-        {BROWSE_DIMENSIONS.map((d) => (
-          <Link
-            key={d.slug}
-            href={`/browse/${d.slug}`}
-            role="menuitem"
-            className="block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            {d.label}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * "FedRAMP" sub-area menu. Same CSS-only hover/focus-within pattern as
- * BrowseMenu and MoreMenu. The trigger NavLink points to /fedramp (the
- * overview page) and shows active state for any `/fedramp/*` path, so
- * readers can either click the trigger to land on the overview or hover
- * to jump straight into Marketplace / Coverage / Curate.
- */
-function FedrampMenu() {
-  return (
-    <div className="group/fedramp relative -mt-px flex items-stretch">
-      <NavLink
-        href="/fedramp"
-        className="group relative -mt-px flex items-baseline gap-2 whitespace-nowrap border-t-2 border-transparent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground data-[active=true]:border-[var(--stamp)] data-[active=true]:text-foreground md:px-4"
-      >
-        <span
-          aria-hidden
-          className="text-[9px] font-normal text-muted-foreground/70 group-data-[active=true]:text-[var(--stamp)]"
-        >
-          VII
-        </span>
-        FedRAMP
-        <span aria-hidden className="ml-0.5 text-[9px] text-muted-foreground/70">
-          ▾
-        </span>
-      </NavLink>
-      <div
-        role="menu"
-        className="absolute left-0 top-full z-50 mt-0 hidden min-w-[17rem] border border-border bg-background py-1 shadow-md group-hover/fedramp:block group-focus-within/fedramp:block"
-      >
-        {FEDRAMP_SECTIONS.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            role="menuitem"
-            className={
-              s.indent
-                ? "block whitespace-nowrap pl-7 pr-3 py-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/85 transition-colors hover:bg-accent hover:text-foreground"
-                : "block whitespace-nowrap px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            }
-          >
-            {s.label}
+            {item.label}
           </Link>
         ))}
       </div>

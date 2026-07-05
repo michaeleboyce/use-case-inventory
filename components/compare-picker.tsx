@@ -55,7 +55,7 @@ export function ComparePicker({
       const params = new URLSearchParams(searchParams.toString());
       params.delete("a");
       for (const abbr of next) params.append("a", abbr);
-      router.push(`/compare?${params.toString()}`);
+      router.push(`/agencies/compare?${params.toString()}`);
     },
     [router, searchParams],
   );

@@ -22,6 +22,8 @@ import {
   getMaturityForOrg,
 } from "@/lib/hierarchy";
 import { HierarchyBreadcrumbs } from "@/components/hierarchy";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { breadcrumbTrail } from "@/lib/nav";
 import { BackLink } from "@/components/back-link";
 import type {
   FederalOrganization,
@@ -154,8 +156,14 @@ function TopLevelOrgPage({
     (maturity?.total_use_cases ?? individual.length) +
     (maturity?.total_consolidated_entries ?? consolidated.length);
 
+  const crumbLabel =
+    agency.name.length > 70 ? agency.name.slice(0, 69) + "…" : agency.name;
+
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/agencies"), { label: crumbLabel }]}
+      />
       <BackLink
         fallbackHref="/agencies"
         fallbackLabel="All agencies"
@@ -549,9 +557,14 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
   const useCases: UseCaseWithTags[] = getUseCasesForOrgSubtree(org.id);
   const childOrgs = getChildOrgRollups(org.id);
   const orgMaturity = getMaturityForOrg(org.id);
+  const crumbLabel =
+    org.name.length > 70 ? org.name.slice(0, 69) + "…" : org.name;
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+      <Breadcrumbs
+        trail={[...breadcrumbTrail("/agencies"), { label: crumbLabel }]}
+      />
       <BackLink
         fallbackHref="/agencies"
         fallbackLabel="All agencies"

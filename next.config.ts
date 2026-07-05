@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**/*": ["./data/federal_ai_inventory_2025.db"],
   },
+
+  // July 2026 IA restructure. Temporary (307) so a bad move is reversible;
+  // flip to permanent: true after a release cycle with no complaints.
+  async redirects() {
+    return [
+      {
+        source: "/compare",
+        destination: "/agencies/compare",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

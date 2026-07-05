@@ -300,7 +300,7 @@ export default async function ComparePage({
       {/* Editorial masthead                                                */}
       {/* ---------------------------------------------------------------- */}
       <PageMasthead
-        kicker="§ II · Compare"
+        kicker="§ I · Compare agencies"
         metaLines={[
           "Cross-section · Up to 4",
           selected.length === 0
@@ -573,13 +573,13 @@ function CompareEmptyState() {
           in a single grid.
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-3">
-          <QuickStart href="/compare?a=HHS&a=DHS" primary>
+          <QuickStart href="/agencies/compare?a=HHS&a=DHS" primary>
             Compare HHS vs DHS
           </QuickStart>
-          <QuickStart href="/compare?a=VA&a=USDA&a=DOJ">
+          <QuickStart href="/agencies/compare?a=VA&a=USDA&a=DOJ">
             VA · USDA · DOJ
           </QuickStart>
-          <QuickStart href="/compare?a=NASA&a=DOE&a=NSF&a=Commerce">
+          <QuickStart href="/agencies/compare?a=NASA&a=DOE&a=NSF&a=Commerce">
             NASA · DOE · NSF · Commerce
           </QuickStart>
         </div>

@@ -76,7 +76,8 @@ export default async function StoriesPage() {
       {/* Header */}
       <div className="mt-10">
         <PageMasthead
-          kicker="Six archetypes · fourteen agencies · every claim sourced"
+          kicker="§ VI · Features"
+          metaLines={["Six archetypes · fourteen agencies · every claim sourced"]}
           title="Opening the laptop"
           lede={
             <>
