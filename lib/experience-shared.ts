@@ -358,6 +358,7 @@ export interface AgencySeatModel {
   name: string;
   eligible: number | null;
   total_headcount: number | null;
+  contractor_headcount: number | null;
   denominator_basis: string | null;
   headcount_as_of: string | null;
   headcount_source_url: string | null;

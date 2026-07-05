@@ -30,6 +30,7 @@ import { SeatWaterfallChart } from "@/components/experience/seat-waterfall-chart
 import { buildSeatNarrative } from "@/lib/seat-narrative";
 import { EstimatorScatter } from "@/components/experience/estimator-scatter";
 import { SensitivityRange } from "@/components/experience/sensitivity-range";
+import { PopulationTelescope } from "@/components/experience/population-telescope";
 import { DefinitionEuler } from "@/components/experience/definition-euler";
 import { PageNav } from "@/components/experience/page-nav";
 import {
@@ -439,7 +440,22 @@ export default async function ExperiencePage() {
           </div>
         </div>
 
-        <p className="mt-8 max-w-prose text-sm leading-relaxed text-foreground/85">
+        <div className="mt-8 border-t border-border pt-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            The three populations, to scale
+          </p>
+          <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+            Everyone employed at these agencies, the subset whose jobs could
+            use an AI tool, and the subset we estimate actually has one — all
+            on one scale, so the containment is the arithmetic. Pick an agency
+            to see its proportions.
+          </p>
+          <div className="mt-5">
+            <PopulationTelescope agencies={seatModel.agencies} />
+          </div>
+        </div>
+
+        <p className="mt-10 max-w-prose border-t border-border pt-6 text-sm leading-relaxed text-foreground/85">
           The waterfall starts from the naive sum of every filed band — the
           number this page used to publish — and applies each correction as an
           explicit, labeled step: remove non-people units, count each

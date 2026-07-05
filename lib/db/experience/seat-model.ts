@@ -99,6 +99,7 @@ export function computeAgencySeatModel(
     name: input.name,
     eligible: input.eligible,
     total_headcount: input.total_headcount,
+    contractor_headcount: input.contractor_headcount,
     denominator_basis: input.denominator_basis,
     headcount_as_of: input.headcount_as_of,
     headcount_source_url: input.headcount_source_url,
