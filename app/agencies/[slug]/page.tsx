@@ -14,6 +14,8 @@ import {
   getEntryTypeBreakdown,
   getAISophisticationBreakdown,
   getDeploymentScopeBreakdown,
+  getStratifiedSeatInputs,
+  computeSeatModel,
 } from "@/lib/db";
 import {
   getOrganizationBySlugOrAbbr,
@@ -142,6 +144,15 @@ function TopLevelOrgPage({
   ).length;
   const childOrgs = getChildOrgRollups(org.id);
   const breadcrumbs = getOrganizationBreadcrumbs(org.id);
+  // If this agency is one of the modeled agencies in the /experience seat
+  // model, offer a link across to its per-agency seat breakdown.
+  const seatModelAgency = computeSeatModel(
+    getStratifiedSeatInputs().inputs,
+  ).agencies.find(
+    (a) =>
+      a.modeled &&
+      a.abbreviation.toLowerCase() === agency.abbreviation.toLowerCase(),
+  );
   // The agency_readiness table is populated by `scripts/compute_agency_readiness.py`
   // upstream; if the dashboard's DB copy hasn't been resynced after a fresh
   // schema/table add (or in older test fixtures), this will throw. We swallow
@@ -175,6 +186,19 @@ function TopLevelOrgPage({
       <AgencyHeader agency={agency} />
 
       <SourceLegend />
+
+      {seatModelAgency ? (
+        <Link
+          href={`/experience/seats/${agency.abbreviation.toLowerCase()}`}
+          className="mt-4 inline-flex items-baseline gap-2 border border-border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:border-[var(--stamp)] hover:text-[var(--stamp)]"
+        >
+          <span className="text-foreground">Seat model</span>
+          <span className="tabular-nums">
+            ~{formatNumber(seatModelAgency.central ?? 0)} with an AI tool
+          </span>
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
 
       {/* § 0 · Readiness scorecard — the published rubric view. Rendered only
           when this agency has a row in `agency_readiness`. Wrapped in a div

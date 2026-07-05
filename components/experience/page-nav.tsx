@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 
 /**
  * Sticky in-page navigation for /experience. A horizontal strip pinned just
- * below the page-header dateline, with anchor links to each numbered section.
- * Lets readers jump between the five sections without scrolling — the page
- * is ~6 viewports tall on a 1440 monitor.
+ * below the page-header dateline, with anchor links to each numbered section
+ * plus a trailing link out to the separate seat-methodology page. Lets readers
+ * jump between the seven sections without scrolling — the page is ~7 viewports
+ * tall on a 1440 monitor.
  */
 type NavItem = { href: string; label: string; kicker: string };
 
@@ -14,9 +16,10 @@ const ITEMS: NavItem[] = [
   { href: "#section-01", label: "How much GenAI", kicker: "01" },
   { href: "#section-02", label: "When did it land", kicker: "02" },
   { href: "#section-03", label: "Who has what", kicker: "03" },
-  { href: "#section-04", label: "Estimated seats", kicker: "04" },
-  { href: "#section-05", label: "Capability ladder", kicker: "05" },
-  { href: "#section-06", label: "What's missing", kicker: "06" },
+  { href: "#section-04", label: "How many people", kicker: "04" },
+  { href: "#section-05", label: "Uncorrected filings", kicker: "05" },
+  { href: "#section-06", label: "Capability ladder", kicker: "06" },
+  { href: "#section-07", label: "What's missing", kicker: "07" },
 ];
 
 export function PageNav() {
@@ -80,6 +83,20 @@ export function PageNav() {
             </li>
           );
         })}
+        {/* Trailing link out to the separate seat-methodology page. Rendered
+            as a styled sibling — PageNav's active-state observer only tracks
+            in-page #anchors, so this stays a plain navigation link. */}
+        <li className="ml-auto">
+          <Link
+            href="/experience/methodology"
+            className="group flex items-baseline gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)] md:px-4"
+          >
+            <span aria-hidden className="text-[9px] text-muted-foreground/70">
+              §
+            </span>
+            <span>Methodology →</span>
+          </Link>
+        </li>
       </ol>
     </nav>
   );

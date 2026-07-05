@@ -62,6 +62,24 @@ export async function buildExperienceViewModel() {
     return { label, ...totals };
   });
 
+  // Estimator scatter: each modeled agency's naive filed-band midpoint sum
+  // (from the uncorrected `seats` rows, matched by agency_id) against the
+  // stratified-overlap model's central estimate. Only modeled agencies —
+  // an agency needs a workforce denominator to have a model central.
+  const naiveByAgency = new Map(seats.map((s) => [s.agency_id, s.midpoint]));
+  const scatter = seatModel.agencies
+    .filter(
+      (a): a is typeof a & { central: number; eligible: number } =>
+        a.modeled && a.central != null && a.eligible != null,
+    )
+    .map((a) => ({
+      abbreviation: a.abbreviation,
+      name: a.name,
+      naive: naiveByAgency.get(a.agency_id) ?? 0,
+      model: a.central,
+      eligible: a.eligible,
+    }));
+
   return {
     headlines,
     crosstab,
@@ -79,6 +97,7 @@ export async function buildExperienceViewModel() {
     waterfall,
     provenance,
     sensitivity,
+    scatter,
   };
 }
 

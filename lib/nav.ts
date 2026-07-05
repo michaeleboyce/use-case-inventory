@@ -117,6 +117,7 @@ export const NAV_SECTIONS: NavSection[] = [
       "The essays and crosswalks that carry the argument — read these first.",
     children: [
       { href: "/experience", label: "The AI Experience" },
+      { href: "/experience/methodology", label: "Seat methodology", indent: true },
       { href: "/stories", label: "Stories: 2024 → 2025" },
       { href: "/policy", label: "Policy crosswalk" },
     ],

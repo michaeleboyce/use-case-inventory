@@ -8,7 +8,9 @@
  *   - When did each deployed GenAI use case go live (and was the AI
  *     Action Plan a turning point or a ratification)?
  *   - Which agencies have which LLM tools, and at roughly what seat count?
- *   - What is the rough total workforce-AI seat count we can extrapolate?
+ *   - How many federal employees actually have at least one AI tool, once
+ *     the filed bands are corrected for repetition, non-people units, and
+ *     workforce ceilings (the stratified-overlap model)?
  *
  * Designed to support an IFP essay on federal LLM access.
  */
@@ -24,11 +26,19 @@ import { AgencyToolMatrix } from "@/components/experience/agency-tool-matrix";
 import { SeatsByAgencyChart } from "@/components/experience/seats-by-agency-chart";
 import { SeatsHeadcountChart } from "@/components/experience/seats-headcount-chart";
 import { SeatsAgencyDetails } from "@/components/experience/seats-agency-details";
+import { SeatWaterfallChart } from "@/components/experience/seat-waterfall-chart";
+import { EstimatorScatter } from "@/components/experience/estimator-scatter";
+import { SensitivityRange } from "@/components/experience/sensitivity-range";
+import { DefinitionEuler } from "@/components/experience/definition-euler";
 import { PageNav } from "@/components/experience/page-nav";
 import {
   CapabilityLadder,
   CapabilityLadderFootnote,
 } from "@/components/experience/capability-ladder";
+import {
+  EXCLUDED_AGENCY_ABBRS,
+  type GenAiDefinition,
+} from "@/lib/experience-shared";
 import { buildExperienceViewModel } from "./_view-model";
 
 export const metadata: Metadata = {
@@ -40,6 +50,14 @@ export const metadata: Metadata = {
 function fmt(n: number): string {
   return n.toLocaleString();
 }
+
+/** Human phrase naming each headline definition inside prose. */
+const DEFINITION_PHRASE: Record<GenAiDefinition, string> = {
+  omb: "OMB's own filed classification",
+  ifp_genai: "IFP's narrative re-tag",
+  ifp_llm_access: "general LLM access",
+  ifp_enterprise: "enterprise-wide LLM access",
+};
 
 export default async function ExperiencePage() {
   const vm = await buildExperienceViewModel();
@@ -55,14 +73,40 @@ export default async function ExperiencePage() {
     totalSeatsMidpoint,
     totalSeatsLower,
     totalSeatsUpper,
+    seatModel,
+    waterfall,
+    sensitivity,
+    scatter,
   } = vm;
 
   const ombHeadline = headlines.find((h) => h.definition === "omb");
   const ifpHeadline = headlines.find((h) => h.definition === "ifp_genai");
-  const llmHeadline = headlines.find((h) => h.definition === "ifp_llm_access");
   const enterpriseHeadline = headlines.find(
     (h) => h.definition === "ifp_enterprise",
   );
+
+  // Min / max over ALL four headline definitions, with the definition that
+  // produced each end named — the honest "it depends on your definition"
+  // range for the lede.
+  // Range spans the three FULL definitions; enterprise is a subset of
+  // LLM access and gets its own sentence, so including it here would make
+  // the lede's "Of those, roughly N are enterprise-wide" redundant.
+  const fullDefinitions = headlines.filter(
+    (h) => h.definition !== "ifp_enterprise",
+  );
+  const headlineMin = fullDefinitions.reduce((a, h) =>
+    h.total < a.total ? h : a,
+  );
+  const headlineMax = fullDefinitions.reduce((a, h) =>
+    h.total > a.total ? h : a,
+  );
+
+  const totals = seatModel.totals;
+
+  // Top modeled agencies for the drill-in grid (already sorted by central).
+  const topModeled = seatModel.agencies
+    .filter((a) => a.modeled && a.central != null)
+    .slice(0, 12);
 
   return (
     <main className="mx-auto max-w-[1400px] px-4 pb-24 md:px-8">
@@ -95,17 +139,31 @@ export default async function ExperiencePage() {
               <strong>{fmt(yearCompare.count_2024_tagged)}</strong> IFP-tagged
               generative-AI use cases across {fmt(yearCompare.total_2024)} total.
               The 2025 inventory lists between{" "}
-              <strong>{fmt(ombHeadline?.total ?? 0)}</strong>{" "}
-              and <strong>{fmt(llmHeadline?.total ?? 0)}</strong> — depending on
-              whose definition of &ldquo;Generative AI&rdquo; you trust. Of those,
-              roughly <strong>{fmt(enterpriseHeadline?.total ?? 0)}</strong> are
-              tagged as enterprise-wide LLM access — a working-day chat surface
-              available to a whole agency&apos;s staff. Beneath those use-case
-              counts sit somewhere between{" "}
-              <strong>{fmt(totalSeatsLower)}</strong> and{" "}
-              <strong>{fmt(totalSeatsUpper)}</strong> employee seats with some
-              form of AI tool, extrapolated from the license bands agencies filed
-              in their consolidated inventory.
+              <strong>{fmt(headlineMin.total)}</strong> (
+              {DEFINITION_PHRASE[headlineMin.definition]}) and{" "}
+              <strong>{fmt(headlineMax.total)}</strong> (
+              {DEFINITION_PHRASE[headlineMax.definition]}) generative-AI use
+              cases — depending on whose definition of &ldquo;Generative
+              AI&rdquo; you trust. Of those, roughly{" "}
+              <strong>{fmt(enterpriseHeadline?.total ?? 0)}</strong> are tagged
+              as enterprise-wide LLM access — a working-day chat surface
+              available to a whole agency&apos;s staff. Beneath the use-case
+              counts, the corrected seat model puts between{" "}
+              <strong>{fmt(totals.floor)}</strong> and{" "}
+              <strong>{fmt(totals.ceiling)}</strong> federal employees — a
+              central estimate of <strong>{fmt(totals.central)}</strong> of the{" "}
+              <strong>{fmt(totals.eligible_total)}</strong> AI-eligible staff in{" "}
+              {fmt(totals.agencies_modeled)} agencies — with at least one AI
+              tool. That replaces the older uncorrected sum of{" "}
+              {fmt(totalSeatsMidpoint)} seats, which double-counted people
+              across tools and task rows;{" "}
+              <a
+                href="#section-04"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                see the seat methodology
+              </a>
+              .
             </>
           }
         />
@@ -128,22 +186,30 @@ export default async function ExperiencePage() {
           three derived definitions.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-foreground">
-          <strong>&ldquo;Estimated seats&rdquo;</strong> comes in two
-          flavors, displayed side-by-side. <strong>Filed bands</strong> sums
-          the license-band midpoints agencies self-reported in the
-          consolidated inventory. <strong>Headcount-derived</strong>{" "}
-          multiplies each agency&apos;s workforce by an IFP-researched
-          AI-eligible share (excluding e.g. VHA clinical staff, USPS letter
-          carriers, TSA screeners) and the share-of-eligible per tool from
-          the{" "}
+          <strong>&ldquo;How many people have AI&rdquo;</strong> is not the same
+          as summing the filed license bands. Agencies file one band per task
+          row, count devices and members of the public alongside employees, and
+          license several overlapping tools to the same staff. §04 walks the{" "}
           <Link
-            href="/readiness/access"
+            href="/experience/methodology"
             className="underline-offset-2 hover:underline"
           >
-            AI Access &amp; Scale
+            stratified-overlap model
           </Link>{" "}
-          evidence. Neither replaces the other.
+          that corrects for all three; the older uncorrected band sum is kept
+          on the page, explicitly labeled, for comparison.
         </p>
+      </aside>
+
+      {/* Scope aside — the two agencies absent from the inventory by policy. */}
+      <aside className="mt-4 max-w-3xl border-l-2 border-border bg-background px-5 py-3 font-mono text-[11px] leading-relaxed text-muted-foreground">
+        <span className="uppercase tracking-[0.14em] text-foreground">
+          Scope ·{" "}
+        </span>
+        {EXCLUDED_AGENCY_ABBRS.join(" and ")} are absent from the M-25-21
+        inventory by policy — the Department of Defense (~770,000 civilians) and
+        the U.S. Postal Service file separately. Every count and seat estimate
+        on this page excludes them.
       </aside>
 
       {/* In-page section navigation. Sticky just below the masthead. */}
@@ -164,43 +230,9 @@ export default async function ExperiencePage() {
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
               OMB &times; IFP disagreement
             </p>
-            <table className="mt-3 w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th className="py-1.5"></th>
-                  <th className="py-1.5 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    IFP says GenAI
-                  </th>
-                  <th className="py-1.5 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    IFP says not
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-border/50">
-                  <td className="py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                    OMB says GenAI
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {fmt(crosstab.omb_genai_ifp_genai)}
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {fmt(crosstab.omb_genai_ifp_not)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                    OMB says not
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {fmt(crosstab.omb_not_ifp_genai)}
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {fmt(crosstab.omb_not_ifp_not)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="mt-3">
+              <DefinitionEuler crosstab={crosstab} headlines={headlines} />
+            </div>
             <p className="mt-3 text-xs text-muted-foreground">
               The two off-diagonal cells {" "}
               <strong>
@@ -306,46 +338,140 @@ export default async function ExperiencePage() {
         <AgencyToolMatrix rows={matrix} />
       </Section>
 
-      {/* § 04 — Seat extrapolation: two parallel estimates */}
+      {/* § 04 — The corrected seat model */}
       <div id="section-04" className="scroll-mt-24" />
       <Section
         number="04"
-        title="Estimated seats, top agencies"
+        title="How many people actually have AI?"
+        source="derived"
+        lede="Filed license bands can't be summed — the same employees repeat across task rows and tools, and some bands count devices or the public. The stratified-overlap model corrects for all three and caps every agency at its own eligible workforce."
+      >
+        <p className="max-w-prose text-sm leading-relaxed text-foreground/85">
+          The waterfall starts from the naive sum of every filed band — the
+          number this page used to publish — and applies each correction as an
+          explicit, labeled step: remove non-people units, count each
+          population once (the largest band per role stratum stands in), then
+          combine strata by independence and cap at the AI-eligible workforce.
+          Nothing is silently dropped.
+        </p>
+        <div className="mt-6">
+          <SeatWaterfallChart steps={waterfall} />
+        </div>
+
+        <div className="mt-10 border-t border-border pt-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Naive filed sum vs. corrected model, per agency
+          </p>
+          <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+            Each point is one modeled agency: the uncorrected band-midpoint sum
+            on one axis, the model&apos;s central estimate on the other. Points
+            far below the diagonal are where the naive sum most overcounts.
+          </p>
+          <div className="mt-5">
+            <EstimatorScatter rows={scatter} />
+          </div>
+        </div>
+
+        <div className="mt-10 border-t border-border pt-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            How much the answer moves
+          </p>
+          <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+            The central estimate under alternative scenarios — band ends,
+            dropping low-confidence labels, excluding the clinical stratum.
+          </p>
+          <div className="mt-5">
+            <SensitivityRange scenarios={sensitivity} />
+          </div>
+        </div>
+
+        {topModeled.length > 0 ? (
+          <div className="mt-10 border-t border-border pt-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Per-agency seat model · floor – central – ceiling
+            </p>
+            <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              The {topModeled.length} largest modeled agencies by central
+              estimate. Click through for the full stratum breakdown, the
+              workforce denominator, and the labeled band evidence.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {topModeled.map((a) => (
+                <Link
+                  key={a.agency_id}
+                  href={`/experience/seats/${a.abbreviation.toLowerCase()}`}
+                  className="group flex items-baseline justify-between gap-3 border border-border px-3 py-2 hover:border-[var(--stamp)]"
+                >
+                  <span className="min-w-0">
+                    <span className="font-mono text-xs font-semibold text-foreground group-hover:text-[var(--stamp)]">
+                      {a.abbreviation}
+                    </span>
+                    <span className="ml-2 truncate text-[11px] text-muted-foreground">
+                      {a.name}
+                    </span>
+                  </span>
+                  <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-muted-foreground">
+                    {fmt(a.floor ?? 0)}
+                    <span className="text-muted-foreground/50"> · </span>
+                    <span className="text-foreground">{fmt(a.central ?? 0)}</span>
+                    <span className="text-muted-foreground/50"> · </span>
+                    {fmt(a.ceiling ?? 0)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-6">
+          <Link
+            href="/experience/methodology"
+            className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground hover:text-[var(--stamp)]"
+          >
+            Full seat methodology →
+          </Link>
+        </div>
+      </Section>
+
+      {/* § 05 — Uncorrected filings view (the two launch estimates, relabeled) */}
+      <div id="section-05" className="scroll-mt-24" />
+      <Section
+        number="05"
+        title="What the raw filings imply (uncorrected)"
         source="omb-derived"
-        lede="Two estimates, neither replacing the other. Filed bands come from the consolidated inventory's self-reported license bands. Headcount-derived multiplies each agency's workforce by an IFP-researched eligible share and the share-of-eligible per tool."
+        lede="The two seat estimates this page shipped at launch, kept visible and relabeled. Both are what the raw filings imply before the overlap and ceiling corrections — neither is the headline anymore."
       >
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
           <div>
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              Filed bands · OMB-self-reported
+              Filed bands · OMB self-reported (uncorrected)
             </p>
             <SeatsByAgencyChart rows={seats} />
           </div>
           <div>
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
-              Headcount-derived · IFP-researched
+              Headcount-derived · IFP-researched (uncorrected)
             </p>
             <SeatsHeadcountChart rows={matrix} />
           </div>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           Across all {seats.length} agencies with at least one license band on
-          file, the midpoint sum is{" "}
-          <strong>{fmt(totalSeatsMidpoint)}</strong> seats, with defensible
-          bounds of {fmt(totalSeatsLower)} (lower-bound) to{" "}
-          {fmt(totalSeatsUpper)} (upper-bound). The federal civilian workforce
-          is roughly 2.1 million people, so the midpoint implies the average
-          covered employee has 1–2 tool entitlements; the upper bound implies
-          considerable overlap (Copilot + ChatGPT + Gemini, etc.).
+          file, the uncorrected midpoint sum is{" "}
+          <strong>{fmt(totalSeatsMidpoint)}</strong> seats (bounds{" "}
+          {fmt(totalSeatsLower)}–{fmt(totalSeatsUpper)}). The corrected model in
+          §04 brings that to a central <strong>{fmt(totals.central)}</strong>{" "}
+          people once repetition, non-people units, and workforce ceilings are
+          removed.
         </p>
 
         <SeatsAgencyDetails rows={matrix} />
       </Section>
 
-      {/* § 05 — The capability ladder */}
-      <div id="section-05" className="scroll-mt-24" />
+      {/* § 06 — The capability ladder */}
+      <div id="section-06" className="scroll-mt-24" />
       <Section
-        number="05"
+        number="06"
         title="The capability ladder"
         source="derived"
         lede="Adoption climbed one rung. A chat assistant is now the normal federal experience; a coding assistant is still the exception; AI on real agency data barely registers in the inventory at all."
@@ -354,10 +480,10 @@ export default async function ExperiencePage() {
         <CapabilityLadderFootnote />
       </Section>
 
-      {/* § 06 — What the inventory can't tell you */}
-      <div id="section-06" className="scroll-mt-24" />
+      {/* § 07 — What the inventory can't tell you */}
+      <div id="section-07" className="scroll-mt-24" />
       <Section
-        number="06"
+        number="07"
         title="What the inventory still won't tell you"
         source="derived"
         lede="The use-case inventory is a tool ledger, not a workforce-access ledger. These are the gaps an essay should name explicitly."
@@ -409,9 +535,9 @@ export default async function ExperiencePage() {
         <ul className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
-              href: "/readiness",
-              label: "Readiness scorecard",
-              note: "the scored rubric behind these agencies",
+              href: "/experience/methodology",
+              label: "Seat methodology",
+              note: "how the corrected seat model is built",
             },
             {
               href: "/readiness/access",
@@ -450,7 +576,10 @@ export default async function ExperiencePage() {
           {fmt(yearCompare.total_2024)} in 2024 · OMB classifies{" "}
           {fmt(ombHeadline?.total ?? 0)} as GenAI · IFP tags{" "}
           {fmt(ifpHeadline?.total ?? 0)} as GenAI ·{" "}
-          {fmt(enterpriseHeadline?.total ?? 0)} flagged enterprise-wide LLM.
+          {fmt(enterpriseHeadline?.total ?? 0)} flagged enterprise-wide LLM ·
+          corrected seat model central {fmt(totals.central)} (
+          {fmt(totals.floor)}–{fmt(totals.ceiling)}) across{" "}
+          {fmt(totals.agencies_modeled)} agencies.
         </p>
         <p className="mt-2">
           Built for the Institute for Progress. ·{" "}
