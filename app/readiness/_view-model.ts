@@ -166,7 +166,9 @@ export async function buildReadinessViewModel(): Promise<ReadinessViewModel> {
     reporting,
     totalScored: headline.total_agencies_scored,
     fedrampPct: Math.round(headline.fedramp_coverage_pct),
-    internalBuildPct: Math.round(headline.internal_build_pct),
+    // One decimal everywhere internal_build_pct is shown (home, here, the
+    // methodology page) so readers never see two values for one statistic.
+    internalBuildPct: Number(headline.internal_build_pct.toFixed(1)),
     productionPct: Math.round(headline.production_rate_pct),
     complianceGapPct: Math.round(headline.hi_no_risk_docs_pct),
     aiAccess,

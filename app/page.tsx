@@ -4,6 +4,7 @@ import {
   formatNumber,
   formatWholePercent,
   humanizeCategory,
+  numberToWords,
 } from "@/lib/formatting";
 import { MaturityTierCard } from "@/components/maturity-tier-card";
 import { TopProductsChart } from "@/components/charts/top-products-chart";
@@ -35,8 +36,10 @@ export default async function HomePage() {
     tags2024,
     topCategories,
     topProductsData,
-    totalEntries,
+    productDeployments,
   } = await buildHomeViewModel();
+
+  const agenciesWithDataWord = numberToWords(stats.total_agencies_with_data);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
@@ -143,9 +146,9 @@ export default async function HomePage() {
           <div className="mt-10 grid grid-cols-12 gap-x-6 gap-y-6">
             <p className="col-span-12 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85 md:col-span-7">
               <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
-                F
+                {agenciesWithDataWord.charAt(0)}
               </span>
-              orty-four federal agencies filed{" "}
+              {agenciesWithDataWord.slice(1)} federal agencies filed{" "}
               <span className="font-medium text-foreground">
                 {formatNumber(stats.total_use_cases)} individual use cases
               </span>{" "}
@@ -191,7 +194,21 @@ export default async function HomePage() {
                         href="/products"
                         className="transition-colors hover:text-[var(--stamp)]"
                       >
-                        {distinctProducts}
+                        {formatNumber(distinctProducts)}
+                      </Link>
+                    </dd>
+                  </div>
+                  <div
+                    className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5"
+                    title="Agency×product pairs — a product run by twelve agencies counts twelve times"
+                  >
+                    <dt className="text-muted-foreground">Deployments</dt>
+                    <dd className="tabular-nums text-foreground">
+                      <Link
+                        href="/products"
+                        className="transition-colors hover:text-[var(--stamp)]"
+                      >
+                        {formatNumber(productDeployments)}
                       </Link>
                     </dd>
                   </div>
@@ -304,27 +321,28 @@ export default async function HomePage() {
         <div className="space-y-10">
           <div>
             <div className="mb-3 eyebrow">
-              Entry mix · of {formatNumber(totalEntries)} reported AI uses (individual + consolidated)
+              Entry mix · of {formatNumber(stats.total_use_cases)} individually
+              filed use cases (consolidated entries are untagged)
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
               <StatGlance
                 label="Coding assistants"
                 count={stats.total_coding_entries}
-                pct={formatWholePercent(stats.total_coding_entries, totalEntries)}
+                pct={formatWholePercent(stats.total_coding_entries, stats.total_use_cases)}
                 href={buildUseCasesUrl({ isCodingTool: true, entryKind: "all" })}
                 accent="verified"
               />
               <StatGlance
                 label="Generative AI"
                 count={genAIEntries}
-                pct={formatWholePercent(genAIEntries, totalEntries)}
+                pct={formatWholePercent(genAIEntries, stats.total_use_cases)}
                 href={buildUseCasesUrl({ isGenAI: true, entryKind: "all" })}
                 accent="stamp"
               />
               <StatGlance
                 label="Agentic AI"
                 count={agenticEntries}
-                pct={formatWholePercent(agenticEntries, totalEntries)}
+                pct={formatWholePercent(agenticEntries, stats.total_use_cases)}
                 href={buildUseCasesUrl({
                   aiSophistications: ["agentic"],
                   entryKind: "all",
@@ -333,13 +351,24 @@ export default async function HomePage() {
               <StatGlance
                 label="High-impact"
                 count={stats.total_high_impact_entries}
-                pct={formatWholePercent(stats.total_high_impact_entries, totalEntries)}
+                pct={formatWholePercent(stats.total_high_impact_entries, stats.total_use_cases)}
                 href={buildUseCasesUrl({
                   highImpactDesignations: ["high_impact"],
                   entryKind: "all",
                 })}
               />
             </div>
+            <p className="mt-3 max-w-prose font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/80">
+              GenAI counts use the IFP tag; the 2024 comparison and Experience
+              pages apply different definitions —{" "}
+              <Link
+                href="/about"
+                className="underline decoration-dotted underline-offset-2 transition-colors hover:text-[var(--stamp)]"
+              >
+                see methods
+              </Link>
+              .
+            </p>
 
             {/* 2024 baseline — the prior cycle's IFP-tagged GenAI numbers,
                 shown alongside (not replacing) the 2025 entry mix above so the
@@ -452,7 +481,7 @@ export default async function HomePage() {
         source="derived"
       >
         <ReadinessHeadlineStat
-          value={Math.round(readinessHeadline.internal_build_pct)}
+          value={Number(readinessHeadline.internal_build_pct.toFixed(1))}
           unit="%"
           label="of federal AI is built in-house — the rest is purchased commercial tooling"
           caption={`Computed across all reported use cases · ${readinessHeadline.total_agencies_scored} agencies scored against the v1.1 capacity-first rubric`}

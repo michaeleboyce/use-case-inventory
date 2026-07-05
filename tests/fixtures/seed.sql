@@ -177,3 +177,14 @@ UPDATE use_cases SET stage_normalized = CASE
       THEN 'pre_deployment'
     ELSE 'unknown'
 END;
+
+-- 2024 cycle rows (minimal) — exercise use_case_tags_2024_canonical, the
+-- best-wave view behind getTags2024Headlines() on the home page.
+INSERT INTO use_cases_2024 (id, agency_id, source_file, slug, use_case_name) VALUES
+  (9001, 1, '2024/va.csv',  'va-2024-chatbot',  '2024 VA chatbot'),
+  (9002, 2, '2024/dhs.csv', 'dhs-2024-triage',  '2024 DHS triage model');
+
+INSERT INTO use_case_tags_2024 (use_case_id_2024, is_generative_ai, is_enterprise_wide, wave) VALUES
+  (9001, 1, 1, '1'),
+  (9001, 1, 1, '3'),   -- later wave wins in the canonical view (dedup check)
+  (9002, 0, 0, '2a');

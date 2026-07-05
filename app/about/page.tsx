@@ -95,7 +95,7 @@ export default function AboutPage() {
       <Section
         number="I"
         title="How the data was collected"
-        lede="Browser-saved CSV / XLSX downloads from 44 agency inventory pages, parsed verbatim and retagged."
+        lede={`Browser-saved CSV / XLSX downloads from ${stats.total_agencies_with_data} agency inventory pages, parsed verbatim and retagged.`}
       >
         <div className="max-w-prose space-y-5 font-body text-[1rem] leading-[1.6] text-foreground/90">
           <p>
@@ -251,7 +251,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* § IV · Data sources — full ranked list of 44 agencies */}
+      {/* § IV · Data sources — full ranked list of reporting agencies */}
       <Section
         number="IV"
         title="Sources"

@@ -232,7 +232,7 @@ export default function MethodologyPage() {
           >
             <div className="flex items-baseline gap-3">
               <span className="font-mono tabular-nums text-3xl font-semibold text-foreground">
-                {headline.internal_build_pct.toFixed(1)}%
+                {Number(headline.internal_build_pct.toFixed(1))}%
               </span>
               <MonoChip tone="stamp" size="xs">
                 Featured on homepage

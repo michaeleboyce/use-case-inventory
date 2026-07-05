@@ -54,3 +54,27 @@ describe("vendorColor", () => {
     expect(vendorColor("Wholly Unknown Vendor")).toBe("#64748b");
   });
 });
+
+describe("numberToWords", () => {
+  it("spells out small numbers with a capitalized first letter", async () => {
+    const { numberToWords } = await import("@/lib/formatting");
+    expect(numberToWords(44)).toBe("Forty-four");
+    expect(numberToWords(19)).toBe("Nineteen");
+    expect(numberToWords(70)).toBe("Seventy");
+    expect(numberToWords(0)).toBe("Zero");
+  });
+  it("falls back to the numeral outside 0–99", async () => {
+    const { numberToWords } = await import("@/lib/formatting");
+    expect(numberToWords(212)).toBe("212");
+    expect(numberToWords(-3)).toBe("-3");
+    expect(numberToWords(4.5)).toBe("4.5");
+  });
+});
+
+describe("humanize aliases", () => {
+  it("humanize and humanizeCategory match titleCase on snake_case", async () => {
+    const { humanize, humanizeCategory } = await import("@/lib/formatting");
+    expect(humanize("general_llm")).toBe(titleCase("general_llm"));
+    expect(humanizeCategory("general_llm")).toBe("General Llm");
+  });
+});

@@ -856,3 +856,100 @@ CREATE TABLE agency_ai_policy_compliance (
                 gaps TEXT,
                 notes TEXT
             );
+
+-- 2024 IFP tagging pass (base table + canonical best-wave view) — required by
+-- lib/db/year-comparison.ts getTags2024Headlines(), used on the home page.
+CREATE TABLE use_case_tags_2024 (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                use_case_id_2024 INTEGER NOT NULL REFERENCES use_cases_2024(id),
+
+                -- What the entry represents
+                entry_type TEXT,
+                is_product_capability_entry INTEGER DEFAULT 0,
+                product_capability TEXT,
+
+                -- Tool categorization
+                is_general_llm_access INTEGER,
+                is_coding_tool INTEGER,
+                is_cots_commercial INTEGER,
+                tool_product_name TEXT,
+                tool_vendor TEXT,
+
+                -- Sophistication
+                ai_sophistication TEXT,
+                is_generative_ai INTEGER,
+                is_frontier_model INTEGER,
+
+                -- Deployment scope
+                deployment_scope TEXT,
+                scope_detail TEXT,
+                is_enterprise_wide INTEGER,
+                estimated_user_count TEXT,
+
+                -- Architecture
+                architecture_type TEXT,
+                has_model_training INTEGER,
+
+                -- Product detail
+                cots_product_name TEXT,
+                cots_vendor TEXT,
+                is_microsoft_copilot INTEGER,
+                is_openai INTEGER,
+                is_anthropic INTEGER,
+                is_google INTEGER,
+                is_github_copilot INTEGER,
+                is_aws_ai INTEGER,
+
+                -- Mission characterization
+                use_type TEXT,
+                is_public_facing INTEGER,
+
+                -- Governance
+                has_meaningful_risk_docs INTEGER,
+                high_impact_designation TEXT,
+                deployment_environment TEXT,
+                has_ato_or_fedramp INTEGER,
+
+                -- Provenance (new for the 2024 multi-wave backfill)
+                wave TEXT NOT NULL,
+                tagged_by_agent TEXT,
+                reasoning TEXT,
+                quality_flags_json TEXT,
+                confidence TEXT,
+
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT,
+
+                UNIQUE (use_case_id_2024, wave, tagged_by_agent)
+            );
+CREATE INDEX idx_uct2024_use_case ON use_case_tags_2024(use_case_id_2024);
+CREATE INDEX idx_uct2024_wave ON use_case_tags_2024(wave);
+CREATE INDEX idx_uct2024_is_gen_ai ON use_case_tags_2024(is_generative_ai);
+CREATE INDEX idx_uct2024_scope ON use_case_tags_2024(deployment_scope);
+CREATE INDEX idx_uct2024_entry_type ON use_case_tags_2024(entry_type);
+CREATE INDEX idx_uct2024_uc_wave ON use_case_tags_2024(use_case_id_2024, wave);
+CREATE VIEW use_case_tags_2024_canonical AS
+        WITH ranked AS (
+            SELECT
+                t.*,
+                CASE wave
+                    WHEN '3'  THEN 3
+                    WHEN '2a' THEN 2
+                    WHEN '2b' THEN 2
+                    WHEN '1'  THEN 1
+                    ELSE 0
+                END AS wave_rank
+            FROM use_case_tags_2024 t
+            WHERE wave IN ('1', '2a', '2b', '3')
+        ),
+        best AS (
+            SELECT use_case_id_2024, MAX(wave_rank) AS max_rank
+            FROM ranked
+            GROUP BY use_case_id_2024
+        )
+        SELECT r.*
+        FROM ranked r
+        JOIN best b
+          ON b.use_case_id_2024 = r.use_case_id_2024
+         AND b.max_rank = r.wave_rank
+/* use_case_tags_2024_canonical(id,use_case_id_2024,entry_type,is_product_capability_entry,product_capability,is_general_llm_access,is_coding_tool,is_cots_commercial,tool_product_name,tool_vendor,ai_sophistication,is_generative_ai,is_frontier_model,deployment_scope,scope_detail,is_enterprise_wide,estimated_user_count,architecture_type,has_model_training,cots_product_name,cots_vendor,is_microsoft_copilot,is_openai,is_anthropic,is_google,is_github_copilot,is_aws_ai,use_type,is_public_facing,has_meaningful_risk_docs,high_impact_designation,deployment_environment,has_ato_or_fedramp,wave,tagged_by_agent,reasoning,quality_flags_json,confidence,created_at,updated_at,wave_rank) */;

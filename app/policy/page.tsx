@@ -1,5 +1,6 @@
 // app/policy/page.tsx — top-level /policy section.
 
+import { formatDate, formatNumber } from "@/lib/formatting";
 import { buildPolicyViewModel } from "./_view-model";
 import { ComplianceScorecard } from "./_sections/compliance-scorecard";
 import { PagesByAgencyChart } from "./_sections/pages-by-agency-chart";
@@ -33,14 +34,14 @@ export default async function PolicyPage({
         </h1>
         <p className="mt-2 max-w-[60ch] text-sm text-foreground/70">
           M-25-21 compliance · {vm.stats.total_agencies} agencies · last
-          refreshed {vm.stats.last_refreshed}
+          refreshed {formatDate(vm.stats.last_refreshed)}
         </p>
       </header>
 
       <section className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
           label="Pages of policy"
-          value={vm.stats.total_pages.toLocaleString()}
+          value={formatNumber(vm.stats.total_pages)}
           hint="agency-issued only"
         />
         <StatCard

@@ -40,7 +40,12 @@ export interface HomeViewModel {
   agencyTypeData: AgencyType;
   recent: Recent;
   readinessHeadline: ReadinessHeadline;
+  /** Canonical product count — COUNT(*) FROM products (= stats.total_products). */
   distinctProducts: number;
+  /** Agency×product deployment pairs — the sum of each agency's distinct
+   *  products. A product run by 12 agencies counts 12 times, so this is
+   *  NOT a product count; label it "deployments" wherever rendered. */
+  productDeployments: number;
   codingEntries: number;
   agenticEntries: number;
   genAIEntries: number;
@@ -77,6 +82,15 @@ export async function buildHomeViewModel(): Promise<HomeViewModel> {
   const reportingAgencies = maturity.length;
   const totalEntries = stats.total_use_cases + stats.total_consolidated;
 
+  if (
+    process.env.NODE_ENV !== "production" &&
+    reportingAgencies !== stats.total_agencies_with_data
+  ) {
+    console.warn(
+      `[home view-model] maturity rows (${reportingAgencies}) != agencies with inventory data (${stats.total_agencies_with_data}); prose uses total_agencies_with_data`,
+    );
+  }
+
   return {
     stats,
     maturity,
@@ -84,7 +98,8 @@ export async function buildHomeViewModel(): Promise<HomeViewModel> {
     agencyTypeData,
     recent,
     readinessHeadline,
-    distinctProducts: maturity.reduce(
+    distinctProducts: stats.total_products,
+    productDeployments: maturity.reduce(
       (acc, row) => acc + (row.maturity?.distinct_products_deployed ?? 0),
       0,
     ),

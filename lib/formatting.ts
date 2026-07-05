@@ -72,13 +72,34 @@ export function collapseWhitespace(s: string | null | undefined): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
-/** snake_case → Title Case with spaces. Used for chart legend labels. */
+/** snake_case → Title Case with spaces. Used for chart legend labels.
+ *  Same transform as `titleCase`; kept as a named alias for call-site clarity. */
 export function humanize(s: string | null | undefined): string {
-  if (!s) return "";
-  return s
-    .split("_")
-    .map((p) => (p ? p.charAt(0).toUpperCase() + p.slice(1) : ""))
-    .join(" ");
+  return titleCase(s);
+}
+
+const ONES = [
+  "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+  "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+  "sixteen", "seventeen", "eighteen", "nineteen",
+];
+const TENS = [
+  "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy",
+  "eighty", "ninety",
+];
+
+/**
+ * Spell out a small whole number for editorial prose ("Forty-four federal
+ * agencies filed …"). Capitalized first letter so the caller can split off
+ * a drop-cap. Falls back to the numeral outside 0–99.
+ */
+export function numberToWords(n: number): string {
+  if (!Number.isInteger(n) || n < 0 || n > 99) return String(n);
+  const word =
+    n < 20
+      ? ONES[n]
+      : TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
+  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 /** Human label for the `agency_type` enum stored in the DB. */
@@ -142,11 +163,10 @@ export function formatBoolFlag(v: number | null | undefined): string {
   return "—";
 }
 
-/** snake_case category key → Title-Cased label (e.g. "general_llm" → "General Llm"). */
+/** snake_case category key → Title-Cased label (e.g. "general_llm" → "General Llm").
+ *  Same transform as `titleCase`; kept as a named alias for call-site clarity. */
 export function humanizeCategory(category: string): string {
-  return category
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (match) => match.toUpperCase());
+  return titleCase(category);
 }
 
 /** Round numerator/denominator into a whole-percent string. "—" if denom 0. */
