@@ -35,6 +35,7 @@ export default async function CompareYearsPage() {
   const vm = await buildCompareYearsViewModel();
   const {
     total,
+    cycleAgencies,
     stageRows,
     agencyRows,
     lineage,
@@ -210,14 +211,16 @@ export default async function CompareYearsPage() {
             value={formatNumber(total.count_2024)}
             accent="ink"
             headline={<>Individual use cases in the 2024 inventory.</>}
-            sublabel="The prior-cycle baseline, across 41 reporting agencies."
+            sublabel={`The prior-cycle baseline, across ${cycleAgencies.agencies_2024} agencies filing individual use cases.`}
+            href="#by-agency"
           />
           <StatTile variant="boxed"
             kicker="B · 2025 cycle"
             value={formatNumber(total.count_2025)}
             accent="ink"
             headline={<>Individual use cases in the 2025 inventory.</>}
-            sublabel="The current cycle, across 36 reporting agencies — a smaller agency set covering more use cases."
+            sublabel={`The current cycle, across ${cycleAgencies.agencies_2025} agencies filing individual use cases — a smaller agency set covering more use cases. (More agencies appear via consolidated entries; the analytics page counts those too.)`}
+            href="/use-cases"
           />
           <StatTile variant="boxed"
             kicker="C · Net change"

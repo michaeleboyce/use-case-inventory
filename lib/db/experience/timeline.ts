@@ -7,6 +7,7 @@ import { STAGE_BUCKET_SQL } from "../shared/sql-fragments";
 import {
   GENAI_DEFINITIONS,
   type AgencyGenAiRow,
+  type GenAiEarlyTailRow,
   type GenAiTimelinePoint,
 } from "../../experience-shared";
 import { genaiPredicate } from "./shared";
@@ -44,12 +45,19 @@ const OPERATIONAL_YEAR_SQL = `
 `;
 
 export function getGenAiTimeline(): GenAiTimelinePoint[] {
-  // One query per definition; merge into year-keyed rows.
+  // One query per definition; merge into year-keyed rows. `declared` is
+  // the subset the agency itself filed as Generative/Agentic AI — the
+  // provenance toggle on the chart stacks counts into declared vs
+  // IFP-tagged-beyond-declaration.
   const byYear = new Map<string, GenAiTimelinePoint>();
   for (const def of GENAI_DEFINITIONS) {
     const rows = getDb()
-      .prepare<[], { yr: string; n: number }>(`
-        SELECT ${OPERATIONAL_YEAR_SQL} AS yr, COUNT(*) AS n
+      .prepare<[], { yr: string; n: number; declared: number }>(`
+        SELECT ${OPERATIONAL_YEAR_SQL} AS yr,
+               COUNT(*) AS n,
+               SUM(CASE WHEN uc.ai_classification_normalized
+                          IN ('Generative AI','Agentic AI')
+                        THEN 1 ELSE 0 END) AS declared
           FROM use_cases uc
           LEFT JOIN use_case_tags t ON t.use_case_id = uc.id
          WHERE ${genaiPredicate(def)}
@@ -62,9 +70,11 @@ export function getGenAiTimeline(): GenAiTimelinePoint[] {
         byYear.set(r.yr, {
           year: r.yr,
           counts: { omb: 0, ifp_genai: 0, ifp_llm_access: 0, ifp_enterprise: 0 },
+          declared: { omb: 0, ifp_genai: 0, ifp_llm_access: 0, ifp_enterprise: 0 },
         });
       }
       byYear.get(r.yr)!.counts[def] = r.n;
+      byYear.get(r.yr)!.declared[def] = r.declared;
     }
   }
   // Sort: numeric years ascending, "unknown" last.
@@ -73,6 +83,37 @@ export function getGenAiTimeline(): GenAiTimelinePoint[] {
     if (b.year === "unknown") return -1;
     return Number(a.year) - Number(b.year);
   });
+}
+
+/**
+ * The pre-2023 tail of the deployed-GenAI timeline, itemized: every
+ * IFP-GenAI-tagged deployed use case whose operational year parses to
+ * before `cutoffYear`. Renders as the collapsed "why is this here?" list
+ * under the § 02 chart — these rows are a mix of genuinely-generative
+ * pre-LLM tech (NLG, TTS, translation), systems that retrofitted GenAI
+ * after go-live, and (pre-review) keyword over-tags.
+ */
+export function getGenAiEarlyTail(cutoffYear = 2023): GenAiEarlyTailRow[] {
+  const rows = getDb()
+    .prepare<[], GenAiEarlyTailRow & { year: string }>(`
+      SELECT a.abbreviation AS agency_abbreviation,
+             uc.use_case_name,
+             uc.slug,
+             ${OPERATIONAL_YEAR_SQL} AS year,
+             COALESCE(uc.ai_classification_normalized, 'Unspecified')
+               AS declared_classification,
+             uc.system_name
+        FROM use_cases uc
+        LEFT JOIN use_case_tags t ON t.use_case_id = uc.id
+        JOIN agencies a ON a.id = uc.agency_id
+       WHERE ${genaiPredicate("ifp_genai")}
+         AND ${STAGE_BUCKET_SQL} = 'deployed'
+       ORDER BY year ASC, a.abbreviation ASC
+    `)
+    .all();
+  return rows.filter(
+    (r) => r.year !== "unknown" && Number(r.year) < cutoffYear,
+  );
 }
 
 export function getAgencyGenAiCounts(): AgencyGenAiRow[] {

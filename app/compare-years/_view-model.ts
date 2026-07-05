@@ -11,6 +11,7 @@
  */
 
 import {
+  getCycleAgencyCounts,
   getLineageBreakdown,
   getPerAgencyLineage,
   getRetiredBreakdown,
@@ -42,6 +43,8 @@ const ZERO_LINEAGE: LineageCounts = {
 export interface CompareYearsViewModel {
   /** The dimension=`total` row — the headline 2024 vs 2025 numbers. */
   total: YearComparisonRow;
+  /** Live distinct-agency counts per cycle (previously hard-coded prose). */
+  cycleAgencies: ReturnType<typeof getCycleAgencyCounts>;
   /** dimension=`stage` rows (lossy — taxonomies differ across cycles). */
   stageRows: YearComparisonRow[];
   /** dimension=`dev_method` rows (lossy). */
@@ -83,6 +86,7 @@ const EMPTY_TOTAL: YearComparisonRow = {
 };
 
 export async function buildCompareYearsViewModel(): Promise<CompareYearsViewModel> {
+  const cycleAgencies = getCycleAgencyCounts();
   const aggregates = getYearComparisonAggregates();
   const lineageRows = getLineageBreakdown();
   const perAgency = getPerAgencyLineage();
@@ -113,6 +117,7 @@ export async function buildCompareYearsViewModel(): Promise<CompareYearsViewMode
 
   return {
     total,
+    cycleAgencies,
     stageRows,
     devMethodRows,
     agencyRows,

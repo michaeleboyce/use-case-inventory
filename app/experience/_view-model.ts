@@ -6,6 +6,7 @@ import {
   getCapabilityLadder,
   getEnterpriseTierRollup,
   getGenAiHeadlines,
+  getGenAiEarlyTail,
   getGenAiTimeline,
   getOmbIfpCrosstab,
   getSeatExtrapolationByAgency,
@@ -42,6 +43,7 @@ export async function buildExperienceViewModel() {
   const headlines = getGenAiHeadlines();
   const crosstab = getOmbIfpCrosstab();
   const timeline = getGenAiTimeline();
+  const earlyTail = getGenAiEarlyTail();
   const seats = getSeatExtrapolationByAgency();
   const matrix = getAgencyToolMatrix();
   const yearCompare = getYearCompareGenAi();
@@ -103,6 +105,7 @@ export async function buildExperienceViewModel() {
     headlines,
     crosstab,
     timeline,
+    earlyTail,
     seats,
     matrix,
     yearCompare,

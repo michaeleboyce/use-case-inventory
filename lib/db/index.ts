@@ -175,6 +175,7 @@ export {
   getGenAiHeadlines,
   getOmbIfpCrosstab,
   getGenAiTimeline,
+  getGenAiEarlyTail,
   getAgencyGenAiCounts,
   getSeatExtrapolationByAgency,
   getAgencyToolMatrix,
@@ -215,6 +216,7 @@ export type {
 } from "./experience";
 export {
   getYearComparisonAggregates,
+  getCycleAgencyCounts,
   getLineageBreakdown,
   getPerAgencyLineage,
   getRetiredBreakdown,

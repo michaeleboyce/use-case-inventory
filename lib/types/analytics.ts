@@ -7,6 +7,10 @@ export interface GlobalStats {
   total_consolidated: number;
   total_agencies: number;
   total_agencies_with_data: number;
+  /** Agencies with rows in `use_cases` (individual filings). Smaller than
+   *  total_agencies_with_data, which also counts agencies present only via
+   *  consolidated entries — pair THIS with total_use_cases. */
+  agencies_filing_use_cases: number;
   total_products: number;
   total_templates: number;
   total_coding_entries: number;

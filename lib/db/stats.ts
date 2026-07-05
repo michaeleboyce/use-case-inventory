@@ -32,6 +32,11 @@ export function getGlobalStats(): GlobalStats {
       )
       .get() as { c: number }
   ).c;
+  const agencies_filing_use_cases = (
+    db
+      .prepare(`SELECT COUNT(DISTINCT agency_id) AS c FROM use_cases`)
+      .get() as { c: number }
+  ).c;
   const total_products = (
     db.prepare(`SELECT COUNT(*) AS c FROM products`).get() as { c: number }
   ).c;
@@ -81,6 +86,7 @@ export function getGlobalStats(): GlobalStats {
     total_consolidated,
     total_agencies,
     total_agencies_with_data,
+    agencies_filing_use_cases,
     total_products,
     total_templates,
     total_coding_entries,

@@ -75,6 +75,22 @@ export interface OmbIfpCrosstab {
 export interface GenAiTimelinePoint {
   year: string;
   counts: Record<GenAiDefinition, number>;
+  /** Of `counts[def]`, how many the agency ITSELF filed as Generative AI
+   *  or Agentic AI (`ai_classification_normalized`). The remainder is
+   *  IFP-tagged beyond the agency's own declaration — the wedge that
+   *  explains the pre-2023 tail. Equal to counts for the `omb`
+   *  definition by construction. */
+  declared: Record<GenAiDefinition, number>;
+}
+
+/** One pre-2023 deployed GenAI-tagged row — the early tail, itemized. */
+export interface GenAiEarlyTailRow {
+  agency_abbreviation: string;
+  use_case_name: string;
+  slug: string | null;
+  year: string;
+  declared_classification: string;
+  system_name: string | null;
 }
 
 export interface AgencyGenAiRow {

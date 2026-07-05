@@ -67,6 +67,7 @@ export default async function ExperiencePage() {
     headlines,
     crosstab,
     timeline,
+    earlyTail,
     seats,
     matrix,
     yearCompare,
@@ -325,9 +326,55 @@ export default async function ExperiencePage() {
         number="02"
         title="When did the wave land?"
         source="omb-derived"
-        lede="Operational-date year of deployed GenAI use cases, with the AI Action Plan release marked. The curve was bending before July 2025."
+        lede="Operational-date year of deployed GenAI use cases, with the AI Action Plan release marked. The curve was bending before July 2025 — and the pre-2023 tail is mostly definitional, not early adoption."
       >
         <GenAiTimelineChart data={timeline} />
+        {earlyTail.length > 0 ? (
+          <details className="mt-4 border border-border bg-background px-4 py-3">
+            <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:text-[var(--stamp)]">
+              The pre-2023 tail, itemized — {earlyTail.length} deployed
+              entries with a pre-2023 go-live
+            </summary>
+            <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              Why these exist: <code>operational_date</code> is the{" "}
+              <em>system&apos;s</em> go-live, so several are older systems
+              that added GenAI later; some are pre-LLM generative tech
+              (report generation, speech synthesis, translation); the rest
+              carry an IFP tag beyond the agency&apos;s own classification —
+              the right column shows what the agency filed.
+            </p>
+            <ul className="mt-3 divide-y divide-border/60">
+              {earlyTail.map((r) => (
+                <li
+                  key={`${r.agency_abbreviation}-${r.use_case_name}-${r.year}`}
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-1.5 text-xs"
+                >
+                  <span className="w-10 font-mono tabular-nums text-muted-foreground">
+                    {r.year}
+                  </span>
+                  <span className="w-14 font-mono text-muted-foreground">
+                    {r.agency_abbreviation}
+                  </span>
+                  {r.slug ? (
+                    <Link
+                      href={`/use-cases/${r.slug}`}
+                      className="flex-1 basis-52 text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                    >
+                      {r.use_case_name}
+                    </Link>
+                  ) : (
+                    <span className="flex-1 basis-52 text-foreground">
+                      {r.use_case_name}
+                    </span>
+                  )}
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                    filed: {r.declared_classification}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
       </Section>
 
       {/* § 03 — Tool matrix */}

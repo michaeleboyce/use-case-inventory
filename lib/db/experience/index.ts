@@ -28,7 +28,11 @@
  */
 
 export { getGenAiHeadlines, getOmbIfpCrosstab } from "./headlines";
-export { getGenAiTimeline, getAgencyGenAiCounts } from "./timeline";
+export {
+  getGenAiTimeline,
+  getGenAiEarlyTail,
+  getAgencyGenAiCounts,
+} from "./timeline";
 export { getSeatExtrapolationByAgency } from "./seats";
 export { getAgencyToolMatrix } from "./tool-matrix";
 export {

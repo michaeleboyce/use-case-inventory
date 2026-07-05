@@ -26,6 +26,7 @@ export const metadata = {
 export default async function AnalyticsPage() {
   const {
     globalStats,
+    cycleAgencies,
     insights,
     yoy,
     vendorShare,
@@ -63,8 +64,14 @@ export default async function AnalyticsPage() {
                 </Link>
                 {" · "}
                 <Link href="/agencies" className="hover:text-[var(--stamp)]">
-                  {globalStats.total_agencies_with_data} ag
+                  {globalStats.agencies_filing_use_cases} ag
                 </Link>
+              </div>
+              <div className="mt-0.5 text-[9px] normal-case tracking-normal text-muted-foreground/70">
+                +
+                {globalStats.total_agencies_with_data -
+                  globalStats.agencies_filing_use_cases}{" "}
+                agencies via consolidated entries only
               </div>
             </div>
             <div>
@@ -103,9 +110,15 @@ export default async function AnalyticsPage() {
             </span>{" "}
             from{" "}
             <span className="font-medium text-foreground">
-              {formatNumber(globalStats.total_agencies_with_data)} agencies
-            </span>
-            , reduced to patterns you can actually reason about. Charts are
+              {formatNumber(globalStats.agencies_filing_use_cases)} agencies
+            </span>{" "}
+            (plus{" "}
+            {formatNumber(
+              globalStats.total_agencies_with_data -
+                globalStats.agencies_filing_use_cases,
+            )}{" "}
+            more reporting only consolidated entries), reduced to patterns
+            you can actually reason about. Charts are
             interactive — hover for tooltips, click through to filtered
             use-case lists, toggle between views. The four themes below move
             from <em className="italic">what is deployed</em> through{" "}
@@ -242,7 +255,7 @@ export default async function AnalyticsPage() {
             }
             accent="stamp"
             headline={<>NASA&apos;s year-over-year growth in reported use cases.</>}
-            sublabel="The largest outlier in the dataset — see Fig. 02 and Fig. 05."
+            sublabel="The largest outlier in the dataset — see Fig. 02 and Fig. 05 below, or the year-over-year deep dive under § V · Year over year."
             href="/agencies/NASA"
           />
           <StatTile
@@ -273,7 +286,14 @@ export default async function AnalyticsPage() {
           id="architecture-note"
           className="mt-14 max-w-prose text-xs text-muted-foreground"
         >
-          Architecture inferences require explicit source evidence. ~70% are marked &quot;unknown&quot; to preserve uncertainty.
+          Architecture inferences require explicit source evidence.{" "}
+          {(() => {
+            const total = architecture.reduce((a, r) => a + r.count, 0);
+            const unknown =
+              architecture.find((r) => r.label === "unknown")?.count ?? 0;
+            return total > 0 ? Math.round((unknown / total) * 100) : 0;
+          })()}
+          % are marked &quot;unknown&quot; to preserve uncertainty.
         </p>
         <div
           id="architecture"
@@ -358,7 +378,10 @@ export default async function AnalyticsPage() {
                 "Vendor unspecified" slice. Same SQL bucketing as the
                 donut (see getLLMVendorVisibilityByAgency), so the
                 stacked-bar story carries directly across. */}
-            <div className="mt-2 border-t border-border/60 pt-8">
+            <div
+              id="llm-visibility"
+              className="scroll-mt-36 mt-2 border-t border-border/60 pt-8"
+            >
               <div className="grid gap-x-6 gap-y-3 md:grid-cols-[200px_1fr]">
                 <div>
                   <div className="eyebrow !text-[var(--stamp)]">
@@ -400,7 +423,16 @@ export default async function AnalyticsPage() {
                 Change in reported use cases, 2024 → 2025. Each bar is an
                 agency; bars tinted vermilion exceed +500%. NASA&apos;s bar is off
                 the scale. Source:{" "}
-                <code>agency_ai_maturity.year_over_year_growth</code>.
+                <code>agency_ai_maturity.year_over_year_growth</code>. Not
+                shown: {cycleAgencies.full_attrition_agencies} agencies that
+                filed in 2024 and reported zero use cases in 2025 — see the{" "}
+                <Link
+                  href="/compare-years#by-agency"
+                  className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                >
+                  per-agency ledger
+                </Link>{" "}
+                for the full attrition picture.
               </>
             }
           >
@@ -424,6 +456,12 @@ export default async function AnalyticsPage() {
             </MonoChip>
             <MonoChip href="/agencies/NASA" title="NASA detail page">
               NASA outlier
+            </MonoChip>
+            <MonoChip
+              href="/compare-years"
+              title="Full 2024 → 2025 comparison: lineage, silently-dropped, stage mix"
+            >
+              Year-over-year deep dive
             </MonoChip>
           </div>
 

@@ -87,6 +87,40 @@ export function getYearComparisonAggregates(): YearComparisonRow[] {
     .all();
 }
 
+/**
+ * Distinct filing-agency counts per cycle, plus the number of agencies that
+ * went to zero (full attrition, pct_change = -100 in `year_comparison`).
+ * Backs the live "N reporting agencies" sublabels on /compare-years and the
+ * survivor-bias caption on the analytics Fig. 02 — these used to be
+ * hard-coded prose that drifted from the data.
+ */
+export function getCycleAgencyCounts(): {
+  agencies_2024: number;
+  agencies_2025: number;
+  full_attrition_agencies: number;
+} {
+  const db = getDb();
+  const agencies_2024 = (
+    db
+      .prepare(`SELECT COUNT(DISTINCT agency_id) AS c FROM use_cases_2024`)
+      .get() as { c: number }
+  ).c;
+  const agencies_2025 = (
+    db
+      .prepare(`SELECT COUNT(DISTINCT agency_id) AS c FROM use_cases`)
+      .get() as { c: number }
+  ).c;
+  const full_attrition_agencies = (
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM year_comparison
+          WHERE dimension = 'agency' AND pct_change = -100`,
+      )
+      .get() as { c: number }
+  ).c;
+  return { agencies_2024, agencies_2025, full_attrition_agencies };
+}
+
 /** The five lineage_status counts across all of `use_case_year_links`. */
 export function getLineageBreakdown(): LineageStatusCount[] {
   return getDb()

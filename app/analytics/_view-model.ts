@@ -14,6 +14,7 @@ import {
   getAnalyticsInsights,
   getArchitectureDistribution,
   getCodingToolAgencies,
+  getCycleAgencyCounts,
   getEnterpriseLLMAgencies,
   getEntryTypeMixByAgency,
   getGlobalStats,
@@ -39,6 +40,7 @@ export const ANALYTICS_FIGURES: Array<{
   { num: "05", id: "scatter", title: "Maturity × growth × scale", section: "Growth" },
   { num: "06", id: "architecture", title: "Architecture distribution", section: "Adoption" },
   { num: "07", id: "llm-vendors", title: "LLM vendor share", section: "Market share" },
+  { num: "07a", id: "llm-visibility", title: "LLM visibility gap", section: "Market share" },
   { num: "08", id: "coding", title: "Coding tool adoption", section: "Reach" },
   { num: "09", id: "enterprise-llm", title: "Enterprise LLM access", section: "Reach" },
   { num: "10", id: "entry-mix", title: "Entry-type mix", section: "Adoption" },
@@ -89,6 +91,7 @@ function sumCounts(rows: Array<{ count: number }>): number {
 
 export interface AnalyticsViewModel {
   globalStats: ReturnType<typeof getGlobalStats>;
+  cycleAgencies: ReturnType<typeof getCycleAgencyCounts>;
   insights: ReturnType<typeof getAnalyticsInsights>;
   yoy: ReturnType<typeof getYoYGrowthData>;
   vendorShare: ReturnType<typeof getVendorMarketShare>;
@@ -105,6 +108,7 @@ export interface AnalyticsViewModel {
 
 export async function buildAnalyticsViewModel(): Promise<AnalyticsViewModel> {
   const globalStats = getGlobalStats();
+  const cycleAgencies = getCycleAgencyCounts();
   const insights = getAnalyticsInsights();
   const yoy = getYoYGrowthData();
   const vendorShare = getVendorMarketShare();
@@ -125,6 +129,7 @@ export async function buildAnalyticsViewModel(): Promise<AnalyticsViewModel> {
 
   return {
     globalStats,
+    cycleAgencies,
     insights,
     yoy,
     vendorShare,
