@@ -230,3 +230,179 @@ export interface EnterpriseTierRollupRow {
   tier: EnterpriseTier;
   n: number;
 }
+
+/* ------------------------------------------------------------------ */
+/* Stratified-overlap seat model (band_labels_2026-07 pass)            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Agencies absent from the inventory by policy. Single source of truth for
+ * query WHERE clauses, the scope banner, and methodology copy.
+ */
+export const EXCLUDED_AGENCY_ABBRS = ["DoD", "USPS"] as const;
+
+/** Population strata that count toward person-seats. */
+export const STRATA = [
+  "general",
+  "technical",
+  "legal",
+  "investigative",
+  "comms",
+  "clinical",
+] as const;
+
+export type Stratum = (typeof STRATA)[number];
+
+/** What consolidated_band_labels.stratum can hold (superset of STRATA). */
+export type BandLabelStratum = Stratum | "excluded_not_seats";
+
+export const STRATUM_LABELS: Record<Stratum, string> = {
+  general: "General office AI (chat, drafting, M365/Gemini)",
+  technical: "Developers & data (coding assistants, ML platforms)",
+  legal: "Legal (research, eDiscovery)",
+  investigative: "Investigative (case data, forensics)",
+  comms: "Communications (media analysis, social listening)",
+  clinical: "Clinical (ambient scribes, decision support)",
+};
+
+export const UNIT_COUNTED_VALUES = [
+  "employees",
+  "employees_and_contractors",
+  "devices_endpoints",
+  "public_users",
+  "applicants_cases",
+  "unknown",
+] as const;
+
+export type UnitCounted = (typeof UNIT_COUNTED_VALUES)[number];
+
+export const UNIT_COUNTED_LABELS: Record<UnitCounted, string> = {
+  employees: "Employee seats",
+  employees_and_contractors: "Employees + contractors",
+  devices_endpoints: "Devices / endpoints",
+  public_users: "Members of the public",
+  applicants_cases: "Applications / cases",
+  unknown: "Unclear",
+};
+
+export type LabelConfidence = "high" | "medium" | "low";
+
+/** One banded row's contribution to an agency's stratum, post-labeling. */
+export interface StratumReachInput {
+  slug: string;
+  stratum: Stratum;
+  /** Canonical family (top-level parent product), or a per-row fallback. */
+  family: string;
+  band_label: string;
+  band_lower: number;
+  band_mid: number;
+  band_upper: number;
+  unit_counted: UnitCounted;
+  confidence: LabelConfidence;
+  audited: boolean;
+  title: string;
+}
+
+/** Per-agency model inputs assembled by lib/db/experience/strata.ts. */
+export interface AgencySeatModelInput {
+  agency_id: number;
+  abbreviation: string;
+  name: string;
+  /** headcount × ai_eligible_share; null when no workforce denominator. */
+  eligible: number | null;
+  total_headcount: number | null;
+  contractor_headcount: number | null;
+  denominator_basis: string | null;
+  headcount_as_of: string | null;
+  headcount_source_url: string | null;
+  /** FedScope occupational caps per role stratum (agency_occupation_counts). */
+  stratum_caps: Partial<Record<Stratum, number>>;
+  reaches: StratumReachInput[];
+}
+
+export interface SeatModelScenario {
+  /** Which end of each band feeds the central estimate. */
+  band: "lower" | "mid" | "upper";
+  /** Drop rows the labelers marked low-confidence? */
+  dropLowConfidence: boolean;
+  /** Count the clinical stratum toward the union? */
+  includeClinical: boolean;
+}
+
+export const DEFAULT_SCENARIO: SeatModelScenario = {
+  band: "mid",
+  dropLowConfidence: false,
+  includeClinical: true,
+};
+
+export interface StratumResult {
+  stratum: Stratum;
+  /** MAX across the stratum's rows at the scenario band (same population). */
+  reach: number;
+  /** min(eligible, occupation cap) — the stratum's population ceiling. */
+  cap: number;
+  /** min(reach, cap) / eligible — this stratum's coverage share. */
+  share: number;
+  /** Filed band meets/exceeds the population ceiling. */
+  saturated: boolean;
+  /** Family and row that set the stratum's reach (for drill-down links). */
+  winning_family: string;
+  winning_slug: string;
+  winning_band_label: string;
+  rows: number;
+}
+
+export interface AgencySeatModel {
+  agency_id: number;
+  abbreviation: string;
+  name: string;
+  eligible: number | null;
+  total_headcount: number | null;
+  denominator_basis: string | null;
+  headcount_as_of: string | null;
+  headcount_source_url: string | null;
+  /** False when no workforce denominator — bands shown, union not modeled. */
+  modeled: boolean;
+  strata: StratumResult[];
+  /** Largest single stratum at band-lower (perfect-nesting assumption). */
+  floor: number | null;
+  /** Independence union at the scenario band. */
+  central: number | null;
+  /** min(Σ capped stratum uppers, eligible) (fully-disjoint assumption). */
+  ceiling: number | null;
+  /** central / eligible. */
+  coverage_share: number | null;
+  /** Raw band range for unmodeled agencies (max lower .. Σ upper). */
+  raw_band_lower: number;
+  raw_band_upper: number;
+}
+
+export interface SeatModelTotals {
+  agencies_total: number;
+  agencies_modeled: number;
+  eligible_total: number;
+  floor: number;
+  central: number;
+  ceiling: number;
+}
+
+export type WaterfallStepKind = "start" | "deduction" | "result";
+
+export interface WaterfallStep {
+  key: string;
+  label: string;
+  /** Running total AFTER this step. */
+  value: number;
+  /** Change applied by this step (negative for deductions). */
+  delta: number;
+  kind: WaterfallStepKind;
+  note: string;
+}
+
+export interface ProvenanceSlice {
+  key: string;
+  label: string;
+  /** Band-midpoint seat mass in this slice. */
+  seats_mass: number;
+  rows: number;
+}

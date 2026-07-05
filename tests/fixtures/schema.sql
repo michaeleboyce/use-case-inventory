@@ -271,15 +271,6 @@ CREATE TABLE review_queue_scope (
 );
 CREATE INDEX idx_rqs_question ON review_queue_scope(question_type);
 CREATE INDEX idx_rqs_confidence ON review_queue_scope(llm_confidence);
-CREATE TABLE use_case_products (
-                use_case_id INTEGER NOT NULL REFERENCES use_cases(id),
-                product_id INTEGER NOT NULL REFERENCES products(id),
-                evidence_text TEXT,
-                confidence TEXT CHECK(confidence IN ('strong', 'inferred')),
-                PRIMARY KEY (use_case_id, product_id)
-            );
-CREATE INDEX idx_ucp_use_case ON use_case_products(use_case_id);
-CREATE INDEX idx_ucp_product ON use_case_products(product_id);
 CREATE TABLE review_queue_products (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 use_case_id INTEGER REFERENCES use_cases(id),
@@ -294,15 +285,6 @@ CREATE TABLE review_queue_products (
                 created_at TEXT DEFAULT (datetime('now'))
             );
 CREATE INDEX idx_rqp_use_case ON review_queue_products(use_case_id);
-CREATE TABLE consolidated_use_case_products (
-  consolidated_use_case_id INTEGER NOT NULL REFERENCES consolidated_use_cases(id),
-  product_id INTEGER NOT NULL REFERENCES products(id),
-  evidence_text TEXT,
-  confidence TEXT CHECK(confidence IN ('strong', 'inferred')),
-  PRIMARY KEY (consolidated_use_case_id, product_id)
-);
-CREATE INDEX idx_cucp_cuc ON consolidated_use_case_products(consolidated_use_case_id);
-CREATE INDEX idx_cucp_product ON consolidated_use_case_products(product_id);
 CREATE TABLE use_case_external_evidence (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     use_case_id INTEGER REFERENCES use_cases(id),
@@ -527,46 +509,6 @@ SELECT
     1 AS is_consolidated
 FROM consolidated_use_cases
 /* inventory_entries(entry_kind,entry_id,agency_id,organization_id,bureau_organization_id,template_id,slug,title,source_file,is_consolidated) */;
-CREATE VIEW entry_product_edges AS
-SELECT
-    'use_case' AS entry_kind,
-    ucp.use_case_id AS entry_id,
-    uc.agency_id,
-    uc.organization_id,
-    uc.bureau_organization_id,
-    ucp.product_id,
-    ucp.evidence_text,
-    ucp.confidence
-FROM use_case_products ucp
-JOIN use_cases uc ON uc.id = ucp.use_case_id
-UNION ALL
-SELECT
-    'consolidated' AS entry_kind,
-    cucp.consolidated_use_case_id AS entry_id,
-    c.agency_id,
-    c.organization_id,
-    c.bureau_organization_id,
-    cucp.product_id,
-    cucp.evidence_text,
-    cucp.confidence
-FROM consolidated_use_case_products cucp
-JOIN consolidated_use_cases c ON c.id = cucp.consolidated_use_case_id
-/* entry_product_edges(entry_kind,entry_id,agency_id,organization_id,bureau_organization_id,product_id,evidence_text,confidence) */;
-CREATE VIEW agency_rollups AS
-SELECT
-    a.id AS agency_id,
-    COUNT(DISTINCT CASE WHEN ie.entry_kind = 'use_case' THEN ie.entry_id END) AS total_use_cases,
-    COUNT(DISTINCT CASE WHEN ie.entry_kind = 'consolidated' THEN ie.entry_id END) AS total_consolidated_entries,
-    COUNT(DISTINCT epe.product_id) AS distinct_products_deployed,
-    COUNT(epe.product_id) AS product_edge_count
-FROM agencies a
-LEFT JOIN inventory_entries ie ON ie.agency_id = a.id
-LEFT JOIN entry_product_edges epe
-  ON epe.agency_id = a.id
- AND epe.entry_kind = ie.entry_kind
- AND epe.entry_id = ie.entry_id
-GROUP BY a.id
-/* agency_rollups(agency_id,total_use_cases,total_consolidated_entries,distinct_products_deployed,product_edge_count) */;
 CREATE TABLE fedramp_link_evidence (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     link_id INTEGER NOT NULL REFERENCES fedramp_product_links(id) ON DELETE CASCADE,
@@ -667,13 +609,6 @@ CREATE TABLE fedramp_service_models (
 );
 CREATE INDEX idx_fsm_fedramp_id ON fedramp_service_models(fedramp_id);
 CREATE INDEX idx_fsm_model      ON fedramp_service_models(model);
-CREATE TABLE fedramp_authorized_services (
-    fedramp_id TEXT NOT NULL,
-    service    TEXT NOT NULL,
-    recency    TEXT NOT NULL
-);
-CREATE INDEX idx_fauthsvc_fedramp_id ON fedramp_authorized_services(fedramp_id);
-CREATE INDEX idx_fauthsvc_service    ON fedramp_authorized_services(service);
 CREATE INDEX idx_omb_match_audit_consolidated ON omb_match_audit(consolidated_into_omb_id);
 CREATE TABLE agency_readiness (
             agency_id INTEGER PRIMARY KEY REFERENCES agencies(id),
@@ -708,7 +643,7 @@ CREATE TABLE agency_ai_access_evidence (
                 notes TEXT,
                 captured_at TEXT NOT NULL,
                 captured_by TEXT
-            );
+            , estimated_share_of_eligible REAL, share_rationale TEXT, matrix_product_key TEXT);
 CREATE INDEX idx_ai_access_evidence_agency ON agency_ai_access_evidence(agency_abbreviation);
 CREATE TABLE use_cases_2024 (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -856,9 +791,28 @@ CREATE TABLE agency_ai_policy_compliance (
                 gaps TEXT,
                 notes TEXT
             );
-
--- 2024 IFP tagging pass (base table + canonical best-wave view) — required by
--- lib/db/year-comparison.ts getTags2024Headlines(), used on the home page.
+CREATE TABLE agency_workforce_profile (
+                organization_id        INTEGER PRIMARY KEY
+                                       REFERENCES federal_organizations(id),
+                agency_id              INTEGER REFERENCES agencies(id),
+                level                  TEXT NOT NULL,
+                total_headcount        INTEGER,
+                headcount_as_of        TEXT,
+                headcount_source_url   TEXT,
+                headcount_source_title TEXT,
+                headcount_quote        TEXT,
+                ai_eligible_share      REAL,
+                ai_eligible_rationale  TEXT,
+                ai_eligible_source_url TEXT,
+                confidence             TEXT,
+                wave                   TEXT,
+                tagged_by_agent        TEXT,
+                notes                  TEXT,
+                captured_at            TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at             TEXT
+            , contractor_headcount INTEGER, denominator_basis TEXT);
+CREATE INDEX idx_awp_agency ON agency_workforce_profile(agency_id);
+CREATE INDEX idx_awp_level ON agency_workforce_profile(level);
 CREATE TABLE use_case_tags_2024 (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 use_case_id_2024 INTEGER NOT NULL REFERENCES use_cases_2024(id),
@@ -953,3 +907,156 @@ CREATE VIEW use_case_tags_2024_canonical AS
           ON b.use_case_id_2024 = r.use_case_id_2024
          AND b.max_rank = r.wave_rank
 /* use_case_tags_2024_canonical(id,use_case_id_2024,entry_type,is_product_capability_entry,product_capability,is_general_llm_access,is_coding_tool,is_cots_commercial,tool_product_name,tool_vendor,ai_sophistication,is_generative_ai,is_frontier_model,deployment_scope,scope_detail,is_enterprise_wide,estimated_user_count,architecture_type,has_model_training,cots_product_name,cots_vendor,is_microsoft_copilot,is_openai,is_anthropic,is_google,is_github_copilot,is_aws_ai,use_type,is_public_facing,has_meaningful_risk_docs,high_impact_designation,deployment_environment,has_ato_or_fedramp,wave,tagged_by_agent,reasoning,quality_flags_json,confidence,created_at,updated_at,wave_rank) */;
+CREATE TABLE IF NOT EXISTS "use_case_products" (
+    use_case_id INTEGER NOT NULL
+        REFERENCES use_cases(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    product_id INTEGER NOT NULL
+        REFERENCES products(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    evidence_text TEXT,
+    confidence TEXT CHECK(confidence IN ('strong', 'inferred')),
+    PRIMARY KEY (use_case_id, product_id)
+);
+CREATE INDEX idx_ucp_use_case ON use_case_products(use_case_id);
+CREATE INDEX idx_ucp_product ON use_case_products(product_id);
+CREATE TABLE IF NOT EXISTS "consolidated_use_case_products" (
+    consolidated_use_case_id INTEGER NOT NULL
+        REFERENCES consolidated_use_cases(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    product_id INTEGER NOT NULL
+        REFERENCES products(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    evidence_text TEXT,
+    confidence TEXT CHECK(confidence IN ('strong', 'inferred')),
+    PRIMARY KEY (consolidated_use_case_id, product_id)
+);
+CREATE INDEX idx_cucp_cuc ON consolidated_use_case_products(consolidated_use_case_id);
+CREATE INDEX idx_cucp_product ON consolidated_use_case_products(product_id);
+CREATE VIEW entry_product_edges AS
+SELECT
+    'use_case' AS entry_kind,
+    ucp.use_case_id AS entry_id,
+    uc.agency_id,
+    uc.organization_id,
+    uc.bureau_organization_id,
+    ucp.product_id,
+    ucp.evidence_text,
+    ucp.confidence
+FROM use_case_products ucp
+JOIN use_cases uc ON uc.id = ucp.use_case_id
+UNION ALL
+SELECT
+    'consolidated' AS entry_kind,
+    cucp.consolidated_use_case_id AS entry_id,
+    c.agency_id,
+    c.organization_id,
+    c.bureau_organization_id,
+    cucp.product_id,
+    cucp.evidence_text,
+    cucp.confidence
+FROM consolidated_use_case_products cucp
+JOIN consolidated_use_cases c ON c.id = cucp.consolidated_use_case_id
+/* entry_product_edges(entry_kind,entry_id,agency_id,organization_id,bureau_organization_id,product_id,evidence_text,confidence) */;
+CREATE VIEW agency_rollups AS
+SELECT
+    a.id AS agency_id,
+    COUNT(DISTINCT CASE WHEN ie.entry_kind = 'use_case' THEN ie.entry_id END) AS total_use_cases,
+    COUNT(DISTINCT CASE WHEN ie.entry_kind = 'consolidated' THEN ie.entry_id END) AS total_consolidated_entries,
+    COUNT(DISTINCT epe.product_id) AS distinct_products_deployed,
+    COUNT(epe.product_id) AS product_edge_count
+FROM agencies a
+LEFT JOIN inventory_entries ie ON ie.agency_id = a.id
+LEFT JOIN entry_product_edges epe
+  ON epe.agency_id = a.id
+ AND epe.entry_kind = ie.entry_kind
+ AND epe.entry_id = ie.entry_id
+GROUP BY a.id
+/* agency_rollups(agency_id,total_use_cases,total_consolidated_entries,distinct_products_deployed,product_edge_count) */;
+CREATE INDEX idx_use_cases_stage_norm ON use_cases(stage_normalized);
+CREATE INDEX idx_use_cases_ai_class_norm ON use_cases(ai_classification_normalized);
+CREATE TABLE enterprise_genai_tier_rollup (
+                   year INTEGER NOT NULL,
+                   tier TEXT NOT NULL CHECK (tier IN
+                       ('permission','embedded_cots','tenanted','operated_build')),
+                   n INTEGER NOT NULL,
+                   PRIMARY KEY (year, tier)
+               );
+CREATE TABLE fedramp_ai_classification (
+    fedramp_id    TEXT PRIMARY KEY,
+    category      TEXT NOT NULL CHECK (category IN ('core_ai','ai_featured','not_ai')),
+    confidence    TEXT NOT NULL CHECK (confidence IN ('high','medium','low')),
+    reasoning     TEXT NOT NULL,
+    signals       TEXT,
+    model         TEXT NOT NULL,
+    input_hash    TEXT NOT NULL,
+    classified_at TEXT NOT NULL,
+    source        TEXT NOT NULL DEFAULT 'llm'
+                  CHECK (source IN ('llm','manual_override'))
+);
+CREATE INDEX idx_fac_category
+    ON fedramp_ai_classification(category);
+CREATE TABLE fedramp_authorized_services (
+    fedramp_id TEXT NOT NULL,
+    service    TEXT NOT NULL,
+    recency    TEXT NOT NULL
+);
+CREATE INDEX idx_fauthsvc_fedramp_id ON fedramp_authorized_services(fedramp_id);
+CREATE INDEX idx_fauthsvc_service    ON fedramp_authorized_services(service);
+CREATE TABLE fedramp_ai_service_classification (
+    service       TEXT PRIMARY KEY,
+    category      TEXT NOT NULL CHECK (category IN ('core_ai','ai_featured','not_ai')),
+    confidence    TEXT NOT NULL CHECK (confidence IN ('high','medium','low')),
+    reasoning     TEXT NOT NULL,
+    signals       TEXT,
+    model         TEXT NOT NULL,
+    input_hash    TEXT NOT NULL,
+    classified_at TEXT NOT NULL,
+    source        TEXT NOT NULL DEFAULT 'llm'
+                  CHECK (source IN ('llm','qc_confirmed','qc_corrected',
+                                    'adjudicated','manual_override'))
+);
+CREATE INDEX idx_fasc_category
+    ON fedramp_ai_service_classification(category);
+CREATE TABLE consolidated_band_labels (
+                consolidated_use_case_id INTEGER PRIMARY KEY
+                    REFERENCES consolidated_use_cases(id)
+                    ON DELETE CASCADE ON UPDATE CASCADE,
+                slug          TEXT NOT NULL UNIQUE,
+                unit_counted  TEXT NOT NULL CHECK(unit_counted IN
+                    ('employees','employees_and_contractors',
+                     'devices_endpoints','public_users',
+                     'applicants_cases','unknown')),
+                population    TEXT NOT NULL,
+                org_scope     TEXT NOT NULL CHECK(org_scope IN
+                    ('enterprise','component','unknown')),
+                stratum       TEXT NOT NULL CHECK(stratum IN
+                    ('general','technical','legal','investigative',
+                     'comms','clinical','excluded_not_seats')),
+                confidence    TEXT NOT NULL CHECK(confidence IN
+                    ('high','medium','low')),
+                reasoning     TEXT,
+                labeler       TEXT NOT NULL,
+                audited       INTEGER NOT NULL DEFAULT 0,
+                audit_verdict TEXT CHECK(audit_verdict IN
+                    ('agree','override','escalated')
+                    OR audit_verdict IS NULL),
+                audit_reasoning TEXT,
+                captured_at   TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+CREATE INDEX idx_cbl_stratum ON consolidated_band_labels(stratum);
+CREATE INDEX idx_cbl_unit ON consolidated_band_labels(unit_counted);
+CREATE TABLE agency_occupation_counts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                agency_id         INTEGER REFERENCES agencies(id),
+                organization_slug TEXT NOT NULL,
+                occ_series        TEXT NOT NULL,
+                occ_label         TEXT NOT NULL,
+                stratum           TEXT NOT NULL CHECK(stratum IN
+                    ('general','technical','legal','investigative',
+                     'comms','clinical')),
+                headcount         INTEGER NOT NULL,
+                as_of             TEXT NOT NULL,
+                source_url        TEXT NOT NULL,
+                source_title      TEXT,
+                notes             TEXT,
+                captured_at       TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(organization_slug, occ_series, as_of)
+            );
+CREATE INDEX idx_aoc_agency ON agency_occupation_counts(agency_id);
