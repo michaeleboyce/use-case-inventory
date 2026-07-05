@@ -1,13 +1,18 @@
 import Link from "next/link";
 import {
   getAgenciesHoldingAto,
+  getAiServiceShelfCounts,
+  getAiServicesInScope,
   getAuthorizedCoreAiSpread,
   getFedrampSnapshot,
   getFrontierTrioStatus,
   getSpreadCounts,
   hasAiClassification,
+  hasServiceClassification,
 } from "@/lib/db";
 import type {
+  AiServiceInScopeRow,
+  AiServiceShelfCounts,
   CoreAiSpreadRow,
   FedrampSnapshot,
   FrontierProductStatus,
@@ -17,6 +22,10 @@ import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
 import { SpreadTable, type SpreadTableRow } from "./_sections/spread-table";
+import {
+  ServicesInScopeTable,
+  type ServiceInScopeTableRow,
+} from "./_sections/services-table";
 import { Fn, FootnoteList } from "./_sections/footnotes";
 
 export const metadata = {
@@ -47,15 +56,34 @@ export default function SpreadPage() {
   let rows: CoreAiSpreadRow[] = [];
   let counts: SpreadCounts | null = null;
   let trio: FrontierProductStatus[] = [];
+  let services: AiServiceInScopeRow[] = [];
+  let shelf: AiServiceShelfCounts | null = null;
   let error: string | null = null;
   try {
     rows = getAuthorizedCoreAiSpread();
     counts = getSpreadCounts();
     trio = getFrontierTrioStatus();
+    if (hasServiceClassification()) {
+      services = getAiServicesInScope();
+      shelf = getAiServiceShelfCounts();
+    }
   } catch (err) {
     error = err instanceof Error ? err.message : "Unknown error.";
   }
   const snapshot = safeSnapshot();
+
+  // Prefetch host-package ATO holders once per distinct host (a service can
+  // repeat across hosts, and hosts repeat across services).
+  const hostAgencies = new Map<string, ReturnType<typeof getAgenciesHoldingAto>>();
+  for (const s of services) {
+    if (!hostAgencies.has(s.host_fedramp_id)) {
+      hostAgencies.set(s.host_fedramp_id, getAgenciesHoldingAto(s.host_fedramp_id));
+    }
+  }
+  const serviceRows: ServiceInScopeTableRow[] = services.map((s) => ({
+    ...s,
+    _agencies: hostAgencies.get(s.host_fedramp_id) ?? [],
+  }));
 
   const buckets = [
     {
@@ -248,8 +276,59 @@ export default function SpreadPage() {
             </p>
           </Section>
 
+          {shelf && serviceRows.length > 0 ? (
+            <Section
+              number={"IV"}
+              title="The shelf inside the shelf"
+              id="services"
+              lede="FedRAMP publishes which services are in scope of each authorized package — down to Amazon Bedrock inside the AWS packages — but tracks adoption only at the package level. These are the core-AI services already inside packages agencies hold ATOs for."
+            >
+              <div className="border-t-2 border-foreground pt-4">
+                <div className="mb-6 grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
+                  <StatTile
+                    value={formatNumber(shelf.core_ai_services)}
+                    label="Core-AI services in scope"
+                  />
+                  <StatTile
+                    value={formatNumber(shelf.host_packages)}
+                    label="Packages hosting them"
+                  />
+                  <StatTile
+                    value={formatNumber(shelf.agencies_in_reach)}
+                    label="Agencies holding ≥1 such package"
+                    accent
+                    title="Distinct inventory-mapped agencies with an ATO on at least one package containing a core-AI service. In scope of the package's authorization — not necessarily enabled or available to staff."
+                  />
+                  <StatTile
+                    value={formatNumber(shelf.ai_featured_services)}
+                    label="AI-featured services (context)"
+                  />
+                </div>
+
+                <p className="mb-5 max-w-prose text-[0.95rem] leading-[1.55] text-foreground/85">
+                  This is the ledger&rsquo;s blind spot made visible: Amazon
+                  Bedrock has been in scope at Moderate{" "}
+                  <span className="text-muted-foreground">(AWS US East/West)</span>{" "}
+                  and High{" "}
+                  <span className="text-muted-foreground">(AWS GovCloud)</span>{" "}
+                  the entire time the standalone 20x listings above sat at zero
+                  recorded reuse. A service being in scope means the security
+                  authorization already covers it — it does{" "}
+                  <span className="font-medium text-foreground">not</span> mean
+                  any agency has enabled it or put it in front of staff. That
+                  gap between &ldquo;legally in reach&rdquo; and &ldquo;on an
+                  employee&rsquo;s screen&rdquo; is precisely what the
+                  inventories and coverage estimates elsewhere on this site
+                  measure.
+                </p>
+
+                <ServicesInScopeTable rows={serviceRows} />
+              </div>
+            </Section>
+          ) : null}
+
           <Section
-            number="IV"
+            number={shelf && serviceRows.length > 0 ? "V" : "IV"}
             title="Where adoption actually shows up"
             lede="If the ledger says nobody adopted these products, the procurement record says otherwise. The channels just don't write back to the marketplace."
           >
@@ -298,8 +377,22 @@ export default function SpreadPage() {
               marketplace ledger measures the{" "}
               <span className="font-medium text-foreground">old</span> adoption
               channel (agency-by-agency ATO reuse), and the new channels —
-              OneGov pricing, shared platforms, tenancy on already-authorized
-              clouds — bypass it. Zero recorded reuse is real evidence that
+              OneGov pricing, shared platforms, and{" "}
+              {shelf ? (
+                <>
+                  tenancy on already-authorized clouds (
+                  <a href="#services" className="text-[var(--stamp)] underline underline-offset-2">
+                    {formatNumber(shelf.core_ai_services)} core-AI services in
+                    scope across {formatNumber(shelf.host_packages)} packages,
+                    within reach of {formatNumber(shelf.agencies_in_reach)}{" "}
+                    agencies
+                  </a>
+                  )
+                </>
+              ) : (
+                "tenancy on already-authorized clouds"
+              )}{" "}
+              — bypass it. Zero recorded reuse is real evidence that
               per-agency authorization isn&rsquo;t spreading; it is{" "}
               <span className="font-medium text-foreground">not</span> evidence
               that nobody is using the tools. The truth for most products on
@@ -309,7 +402,7 @@ export default function SpreadPage() {
           </Section>
 
           <Section
-            number="V"
+            number={shelf && serviceRows.length > 0 ? "VI" : "V"}
             title="Sources & method"
             lede="Ledger numbers are computed live from the FedRAMP snapshot; the adoption record is cited below. Every URL was fetched and verified against its claim on July 3, 2026."
           >
@@ -325,6 +418,11 @@ export default function SpreadPage() {
                 ledger; reuse counts are the marketplace&rsquo;s own tally. Both
                 under-record adoption that happens off-ledger — that asymmetry
                 is this page&rsquo;s subject, not a footnote to it.
+                Services-in-scope rows come from the marketplace export&rsquo;s
+                own per-package service catalogs; each service name carries an
+                independent LLM classification in which every core-AI and
+                AI-featured label was adversarially reviewed by a
+                frontier-model QC pass (the provenance chip on each row).
               </p>
             </div>
           </Section>

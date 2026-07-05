@@ -667,6 +667,13 @@ CREATE TABLE fedramp_service_models (
 );
 CREATE INDEX idx_fsm_fedramp_id ON fedramp_service_models(fedramp_id);
 CREATE INDEX idx_fsm_model      ON fedramp_service_models(model);
+CREATE TABLE fedramp_authorized_services (
+    fedramp_id TEXT NOT NULL,
+    service    TEXT NOT NULL,
+    recency    TEXT NOT NULL
+);
+CREATE INDEX idx_fauthsvc_fedramp_id ON fedramp_authorized_services(fedramp_id);
+CREATE INDEX idx_fauthsvc_service    ON fedramp_authorized_services(service);
 CREATE INDEX idx_omb_match_audit_consolidated ON omb_match_audit(consolidated_into_omb_id);
 CREATE TABLE agency_readiness (
             agency_id INTEGER PRIMARY KEY REFERENCES agencies(id),

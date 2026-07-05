@@ -419,6 +419,37 @@ export interface SpreadCounts {
   ato_pairs_with_reported_use: number;
 }
 
+/**
+ * One (core-AI service × host package) pair from the services-in-scope
+ * catalog — the "shelf inside the shelf" table on /fedramp/coverage/spread.
+ */
+export interface AiServiceInScopeRow {
+  service: string;
+  confidence: "high" | "medium" | "low";
+  reasoning: string;
+  /** Label provenance: llm | qc_confirmed | qc_corrected | adjudicated | manual_override. */
+  source: string;
+  host_fedramp_id: string;
+  csp: string;
+  cso: string;
+  impact_level: string | null;
+  recency: string;
+  /** Distinct inventory-mapped agencies holding an ATO on the host package. */
+  agencies_with_host_ato: number;
+}
+
+/** Headline counts for the shelf-inside-the-shelf section and hub card. */
+export interface AiServiceShelfCounts {
+  /** Distinct core-AI services in scope of ≥1 marketplace package. */
+  core_ai_services: number;
+  /** Distinct AI-featured services in scope (context stat). */
+  ai_featured_services: number;
+  /** Distinct packages hosting ≥1 core-AI service. */
+  host_packages: number;
+  /** Distinct inventory agencies with an ATO on ≥1 core-AI-bearing package. */
+  agencies_in_reach: number;
+}
+
 /** Status snapshot for one named frontier product (resolved by cso name). */
 export interface FrontierProductStatus {
   fedramp_id: string;

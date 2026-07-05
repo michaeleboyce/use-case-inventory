@@ -20,7 +20,11 @@ import type {
 } from "../../types";
 import { getFedrampSnapshot } from "./marketplace";
 import { getAiClassificationCounts, hasAiClassification } from "./classification";
-import { getSpreadCounts } from "./spread";
+import {
+  getAiServiceShelfCounts,
+  getSpreadCounts,
+  hasServiceClassification,
+} from "./spread";
 
 /** Hub stats for /fedramp/coverage. */
 export function getCoverageHubStats(): CoverageStat[] {
@@ -114,6 +118,10 @@ export function getCoverageHubStats(): CoverageStat[] {
   // a second agency ATO. Backs the /fedramp/coverage/spread board.
   const spread = hasAiClassification() ? getSpreadCounts() : null;
 
+  // Shelf inside the shelf: core-AI services in scope of authorized packages
+  // (per-service classification sidecar). Backs the spread page's §services.
+  const shelf = hasServiceClassification() ? getAiServiceShelfCounts() : null;
+
   const snapshot = getFedrampSnapshot();
 
   return [
@@ -172,6 +180,16 @@ export function getCoverageHubStats(): CoverageStat[] {
             denominator: spread.authorized_core_ai,
             description:
               "Fully authorized primary-purpose AI products whose marketplace ledger records at most one agency ATO — authorization that never spread.",
+          } satisfies CoverageStat,
+        ]
+      : []),
+    ...(shelf && shelf.core_ai_services > 0
+      ? [
+          {
+            key: "services_in_scope",
+            label: "Core-AI services in scope inside authorized packages",
+            value: shelf.core_ai_services,
+            description: `Primary-purpose AI services (Bedrock, Azure OpenAI, Gemini Enterprise, …) listed in the services-in-scope catalogs of ${shelf.host_packages} authorized packages; ${shelf.agencies_in_reach} agencies hold an ATO on at least one such package. In scope of an authorization the agency already holds — not necessarily enabled or available to staff.`,
           } satisfies CoverageStat,
         ]
       : []),

@@ -4,9 +4,12 @@ import {
   getFedrampSnapshot,
   hasAiClassification,
   getAiClassificationCounts,
+  hasServiceClassification,
+  getAiServiceShelfCounts,
 } from "@/lib/db";
 import type {
   AiClassificationCounts,
+  AiServiceShelfCounts,
   CoverageStat,
   FedrampSnapshot,
 } from "@/lib/types";
@@ -49,6 +52,7 @@ const BOARD_OF: Record<string, "ai_to_fedramp" | "fedramp_to_ai" | "agencies"> =
   sleeping_authorizations: "fedramp_to_ai",
   unlinked_ai: "fedramp_to_ai",
   spread: "fedramp_to_ai",
+  services_in_scope: "fedramp_to_ai",
   agencies_with_gaps: "agencies",
 };
 
@@ -63,6 +67,7 @@ const PANEL_HREF: Record<string, string> = {
   sleeping_authorizations: "/fedramp/coverage/sleeping",
   unlinked_ai: "/fedramp/coverage/unlinked-ai",
   spread: "/fedramp/coverage/spread",
+  services_in_scope: "/fedramp/coverage/spread#services",
 };
 
 const PANEL_LABEL_OVERRIDE: Record<string, string> = {
@@ -72,6 +77,7 @@ const PANEL_LABEL_OVERRIDE: Record<string, string> = {
   agencies_with_gaps: "Agencies with a FedRAMP × inventory delta",
   unlinked_ai: "FedRAMP AI products absent from the inventory",
   spread: "Authorized core-AI stuck at one ATO",
+  services_in_scope: "Core-AI services in scope inside authorized packages",
 };
 
 // Which definition of "AI-related" each card uses. "linkage" cards count only
@@ -86,6 +92,7 @@ const METHOD_OF: Record<string, "linkage" | "classification"> = {
   agencies_with_gaps: "linkage",
   unlinked_ai: "classification",
   spread: "classification",
+  services_in_scope: "classification",
 };
 
 // The four drill-down panels reachable from this hub. Mirrored in the
@@ -113,10 +120,19 @@ function safeAiCounts(): AiClassificationCounts | null {
   }
 }
 
+function safeShelfCounts(): AiServiceShelfCounts | null {
+  try {
+    return hasServiceClassification() ? getAiServiceShelfCounts() : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function FedrampCoverageHubPage() {
   const { stats, error } = safeStats();
   const snapshot = safeSnapshot();
   const aiCounts = safeAiCounts();
+  const shelfCounts = safeShelfCounts();
 
   const cards = stats.filter((s) => s.key !== "snapshot_date");
   const aiToFedramp = cards.filter((s) => BOARD_OF[s.key] === "ai_to_fedramp");
@@ -200,7 +216,9 @@ export default function FedrampCoverageHubPage() {
         ))}
       </nav>
 
-      {aiCounts ? <AiDefinitionBand counts={aiCounts} /> : null}
+      {aiCounts ? (
+        <AiDefinitionBand counts={aiCounts} serviceCounts={shelfCounts} />
+      ) : null}
 
       {error ? (
         <Section
@@ -308,10 +326,10 @@ export default function FedrampCoverageHubPage() {
 
           <Section
             number="IV"
-            title="How the two methods work"
-            lede="Coverage uses two independent definitions of “AI-related.” Most cards key on linkage; the absent-AI card keys on classification. They answer different questions and their numbers are not meant to match."
+            title={shelfCounts ? "How the three methods work" : "How the two methods work"}
+            lede="Coverage uses independent definitions of “AI-related.” Most cards key on linkage; the absent-AI card keys on per-listing classification; the services card keys on what's inside each package. They answer different questions and their numbers are not meant to match."
           >
-            <div className="border-t-2 border-foreground pt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className={`border-t-2 border-foreground pt-4 grid grid-cols-1 gap-6 ${shelfCounts ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
               <div className="space-y-3 text-[0.95rem] leading-[1.55] text-foreground/85">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                   Linkage · the “by linkage” cards
@@ -343,6 +361,25 @@ export default function FedrampCoverageHubPage() {
                   hundreds of authorized AI tools the linkage view cannot.
                 </p>
               </div>
+              {shelfCounts ? (
+                <div className="space-y-3 text-[0.95rem] leading-[1.55] text-foreground/85">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--stamp)]">
+                    Service scope · the services card
+                  </p>
+                  <p>
+                    The marketplace also publishes each package&rsquo;s{" "}
+                    <span className="font-medium text-foreground">
+                      services in scope
+                    </span>{" "}
+                    — the individual services its authorization covers. An
+                    independent per-service classification (frontier-QC&rsquo;d)
+                    finds the core-AI services riding inside broader packages:
+                    Bedrock inside AWS, Azure OpenAI inside Azure Commercial.
+                    Adoption still only resolves to the package, so a service
+                    being in scope never implies an agency enabled it.
+                  </p>
+                </div>
+              ) : null}
             </div>
             <p className="mt-4 max-w-prose text-[0.9rem] leading-[1.5] text-muted-foreground">
               Both read only data present in the inventory database; the FedRAMP
@@ -420,23 +457,34 @@ function StatCard({
   );
 }
 
-/** The "two ways to be AI" explainer band — mirrors the unlinked-ai page §I, with
- *  the live linked/absent/total numbers so the relationship is concrete. */
-function AiDefinitionBand({ counts }: { counts: AiClassificationCounts }) {
+/** The "ways to be AI" explainer band — mirrors the unlinked-ai page §I, with
+ *  the live numbers so the relationships are concrete. Renders three tiles
+ *  when the per-service classification is present, two otherwise. */
+function AiDefinitionBand({
+  counts,
+  serviceCounts,
+}: {
+  counts: AiClassificationCounts;
+  serviceCounts?: AiServiceShelfCounts | null;
+}) {
   const totalAi = counts.core_ai + counts.ai_featured;
+  const three = Boolean(serviceCounts && serviceCounts.core_ai_services > 0);
   return (
     <div className="mt-8 border border-border bg-muted/20 p-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
-          Two ways to be “AI” — read before the numbers
+          {three ? "Three" : "Two"} ways to be “AI” — read before the numbers
         </p>
         <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
           {formatNumber(counts.ai_linked)} linked ·{" "}
           {formatNumber(counts.ai_unlinked)} absent ·{" "}
           {formatNumber(totalAi)} classified AI
+          {three && serviceCounts
+            ? ` · ${formatNumber(serviceCounts.core_ai_services)} services in scope`
+            : ""}
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className={`grid grid-cols-1 gap-4 ${three ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         <div className="border border-border p-4">
           <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             AI by linkage · most cards
@@ -463,6 +511,24 @@ function AiDefinitionBand({ counts }: { counts: AiClassificationCounts }) {
             In&nbsp;Process).
           </p>
         </div>
+        {three && serviceCounts ? (
+          <div className="border border-foreground p-4">
+            <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--stamp)]">
+              AI by service scope · the shelf inside the shelf
+            </p>
+            <p className="text-[0.9rem] leading-[1.5] text-foreground/85">
+              A listing&rsquo;s services-in-scope catalog can contain AI a
+              package-level view never sees —{" "}
+              <span className="font-medium text-foreground">
+                {formatNumber(serviceCounts.core_ai_services)}
+              </span>{" "}
+              core-AI services (Bedrock, Azure OpenAI, …) inside{" "}
+              {formatNumber(serviceCounts.host_packages)} authorized packages.
+              In scope of an ATO an agency already holds — not necessarily
+              enabled for staff.
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );

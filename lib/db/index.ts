@@ -162,6 +162,9 @@ export {
   getAuthorizedCoreAiSpread,
   getSpreadCounts,
   getFrontierTrioStatus,
+  hasServiceClassification,
+  getAiServicesInScope,
+  getAiServiceShelfCounts,
 } from "./fedramp";
 export {
   getGenAiHeadlines,

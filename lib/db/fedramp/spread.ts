@@ -14,6 +14,8 @@
 import { getDb } from "../shared/init";
 import { hasAiClassification } from "./classification";
 import type {
+  AiServiceInScopeRow,
+  AiServiceShelfCounts,
   CoreAiSpreadRow,
   FrontierProductStatus,
   SpreadCounts,
@@ -129,6 +131,88 @@ export function getSpreadCounts(): SpreadCounts {
     ato_pairs: pairs.ato_pairs,
     ato_pairs_with_reported_use: pairs.with_use ?? 0,
   };
+}
+
+/**
+ * True iff the per-service AI classification sidecar is present in this DB
+ * build (ETL: scripts/apply_fedramp_service_classification.py). The
+ * services-in-scope mirror ships alongside it; guard on both before querying.
+ */
+export function hasServiceClassification(): boolean {
+  const db = getDb();
+  const has = (name: string) =>
+    Boolean(
+      db
+        .prepare(
+          `SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`,
+        )
+        .get(name),
+    );
+  return has("fedramp_ai_service_classification") && has("fedramp_authorized_services");
+}
+
+/**
+ * The "shelf inside the shelf": one row per (core-AI service × host package).
+ * FedRAMP scopes authorization to the service level, but tracks adoption only
+ * at the package level — these rows are the capability already inside
+ * packages agencies hold ATOs for.
+ */
+export function getAiServicesInScope(): AiServiceInScopeRow[] {
+  if (!hasServiceClassification()) return [];
+  return getDb()
+    .prepare<[], AiServiceInScopeRow>(
+      `SELECT s.service,
+              c.confidence,
+              c.reasoning,
+              c.source,
+              p.fedramp_id AS host_fedramp_id,
+              p.csp,
+              p.cso,
+              p.impact_level,
+              s.recency,
+              (SELECT COUNT(DISTINCT al.inventory_agency_id)
+                 FROM fedramp_authorizations a
+                 JOIN fedramp_agency_links al ON al.fedramp_agency_id = a.agency_id
+                WHERE a.fedramp_id = p.fedramp_id) AS agencies_with_host_ato
+         FROM fedramp_authorized_services s
+         JOIN fedramp_ai_service_classification c ON c.service = s.service
+         JOIN fedramp_products p ON p.fedramp_id = s.fedramp_id
+        WHERE c.category = 'core_ai'
+        ORDER BY agencies_with_host_ato DESC, s.service, p.cso`,
+    )
+    .all();
+}
+
+/** Headline counts behind the shelf section and the hub card. */
+export function getAiServiceShelfCounts(): AiServiceShelfCounts {
+  const empty: AiServiceShelfCounts = {
+    core_ai_services: 0,
+    ai_featured_services: 0,
+    host_packages: 0,
+    agencies_in_reach: 0,
+  };
+  if (!hasServiceClassification()) return empty;
+  const db = getDb();
+  const cats = db
+    .prepare<[], { core_ai_services: number; ai_featured_services: number; host_packages: number }>(
+      `SELECT COUNT(DISTINCT CASE WHEN c.category = 'core_ai' THEN s.service END) AS core_ai_services,
+              COUNT(DISTINCT CASE WHEN c.category = 'ai_featured' THEN s.service END) AS ai_featured_services,
+              COUNT(DISTINCT CASE WHEN c.category = 'core_ai' THEN s.fedramp_id END) AS host_packages
+         FROM fedramp_authorized_services s
+         JOIN fedramp_ai_service_classification c ON c.service = s.service`,
+    )
+    .get() ?? { core_ai_services: 0, ai_featured_services: 0, host_packages: 0 };
+  const reach = db
+    .prepare<[], { n: number }>(
+      `SELECT COUNT(DISTINCT al.inventory_agency_id) AS n
+         FROM fedramp_authorized_services s
+         JOIN fedramp_ai_service_classification c
+           ON c.service = s.service AND c.category = 'core_ai'
+         JOIN fedramp_authorizations a ON a.fedramp_id = s.fedramp_id
+         JOIN fedramp_agency_links al ON al.fedramp_agency_id = a.agency_id`,
+    )
+    .get() ?? { n: 0 };
+  return { ...cats, agencies_in_reach: reach.n };
 }
 
 /**
