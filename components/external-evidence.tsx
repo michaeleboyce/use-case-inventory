@@ -1,4 +1,5 @@
-import { CheckCircle2, FileSearch, ExternalLink, Search } from "lucide-react";
+import { CheckCircle2, FileSearch, Search } from "lucide-react";
+import { Citation } from "@/components/citation";
 import type {
   UseCaseExternalEvidence,
   ExternalEvidenceStatus,
@@ -144,18 +145,8 @@ function EvidenceRow({ row }: { row: UseCaseExternalEvidence }) {
       </div>
 
       {row.source_url && (
-        <p className="mt-1.5">
-          <a
-            href={row.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[13px] text-foreground hover:text-[var(--stamp)]"
-          >
-            <span className="break-all underline-offset-2 hover:underline">
-              {row.source_url}
-            </span>
-            <ExternalLink className="size-3 shrink-0" aria-hidden />
-          </a>
+        <p className="mt-1.5 text-[13px]">
+          <Citation url={row.source_url} accessed={row.captured_at} />
         </p>
       )}
 

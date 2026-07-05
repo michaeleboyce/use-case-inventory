@@ -103,6 +103,8 @@ export function computeAgencySeatModel(
     denominator_basis: input.denominator_basis,
     headcount_as_of: input.headcount_as_of,
     headcount_source_url: input.headcount_source_url,
+    headcount_source_title: input.headcount_source_title,
+    workforce_captured_at: input.workforce_captured_at,
     raw_band_lower: rawLower,
     raw_band_upper: rawUpper,
   };

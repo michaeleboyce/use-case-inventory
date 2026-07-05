@@ -331,6 +331,9 @@ export interface AgencySeatModelInput {
   denominator_basis: string | null;
   headcount_as_of: string | null;
   headcount_source_url: string | null;
+  headcount_source_title: string | null;
+  /** When the workforce-profile row was researched — MLA "Accessed" date. */
+  workforce_captured_at: string | null;
   /** Why this agency's AI-eligible share is what it is (researched). */
   ai_eligible_share: number | null;
   ai_eligible_rationale: string | null;
@@ -382,6 +385,9 @@ export interface AgencySeatModel {
   denominator_basis: string | null;
   headcount_as_of: string | null;
   headcount_source_url: string | null;
+  headcount_source_title: string | null;
+  /** When the workforce-profile row was researched — MLA "Accessed" date. */
+  workforce_captured_at: string | null;
   /** False when no workforce denominator — bands shown, union not modeled. */
   modeled: boolean;
   strata: StratumResult[];

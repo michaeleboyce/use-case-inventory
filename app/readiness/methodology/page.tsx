@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { PageSubnav } from "@/components/page-subnav";
 import { Section, MonoChip } from "@/components/editorial";
+import { CopyCitationButton } from "@/components/citation";
 import { PageMasthead } from "@/components/page-masthead";
 import { ReadinessRubricTable } from "@/components/readiness/readiness-rubric-table";
 import {
@@ -653,6 +654,11 @@ export default function MethodologyPage() {
             Index.&rdquo; Federal AI Use Case Inventory, accessed{" "}
             {accessDate}. https://use-case-inventory.vercel.app/readiness
           </blockquote>
+          <p className="mt-2">
+            <CopyCitationButton
+              text={`Institute for Progress. "Federal AI Readiness Index." Federal AI Use Case Inventory, accessed ${accessDate}. https://use-case-inventory.vercel.app/readiness`}
+            />
+          </p>
           <p className="mt-4 text-sm text-muted-foreground">
             Permalink to this methodology page:{" "}
             <Link

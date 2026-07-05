@@ -1,3 +1,4 @@
+import { Citation } from "@/components/citation";
 import type { AgencyAiAccessCoverage, AgencyAiAccessRow } from "@/lib/types";
 
 /**
@@ -99,18 +100,15 @@ export function AiAccessTable({ rows }: { rows: AgencyAiAccessRow[] }) {
               {/* Source line */}
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
                 {r.source_url ? (
-                  <a
-                    href={r.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
-                  >
-                    {r.source_title ?? r.source_url} &#8599;
-                  </a>
+                  <Citation
+                    url={r.source_url}
+                    title={r.source_title}
+                    date={r.source_date}
+                    accessed={r.captured_at}
+                  />
                 ) : (
                   <span className="text-muted-foreground/60">no source</span>
                 )}
-                {r.source_date ? <span>{r.source_date}</span> : null}
                 {r.confidence ? (
                   <span className="uppercase tracking-[0.1em]">
                     {CONFIDENCE_LABEL[r.confidence] ?? r.confidence}

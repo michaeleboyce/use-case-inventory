@@ -10,12 +10,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ExternalLink } from "lucide-react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { breadcrumbTrail } from "@/lib/nav";
 import { PageMasthead } from "@/components/page-masthead";
 import { Section, MonoChip } from "@/components/editorial";
+import { Citation } from "@/components/citation";
 import { StratumBar, StratumLegend } from "@/components/experience/stratum-bar";
 import {
   BandEvidenceTable,
@@ -178,15 +178,12 @@ export default async function AgencySeatPage({
           ) : null}
           {agency.headcount_source_url ? (
             <p>
-              <a
-                href={agency.headcount_source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
-              >
-                Headcount source
-                <ExternalLink className="h-3 w-3" aria-hidden />
-              </a>
+              <Citation
+                url={agency.headcount_source_url}
+                title={agency.headcount_source_title}
+                accessed={agency.workforce_captured_at}
+                label="Headcount source"
+              />
             </p>
           ) : null}
         </div>
@@ -204,16 +201,12 @@ export default async function AgencySeatPage({
               {linkifyUrls(input.ai_eligible_rationale)}
             </p>
             {input.ai_eligible_source_url ? (
-              <p className="mt-2">
-                <a
-                  href={input.ai_eligible_source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
-                >
-                  Eligible-share source
-                  <ExternalLink className="h-3 w-3" aria-hidden />
-                </a>
+              <p className="mt-2 text-sm">
+                <Citation
+                  url={input.ai_eligible_source_url}
+                  accessed={input.workforce_captured_at}
+                  label="Eligible-share source"
+                />
               </p>
             ) : null}
           </div>
@@ -293,16 +286,12 @@ export default async function AgencySeatPage({
                   <span className="text-foreground/85">
                     {c.occ_label} (series {c.occ_series})
                   </span>
-                  <a
-                    href={c.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
-                    title={c.source_title ?? undefined}
-                  >
-                    OPM Federal Workforce Data, {c.as_of}
-                    <ExternalLink className="h-3 w-3" aria-hidden />
-                  </a>
+                  <Citation
+                    url={c.source_url}
+                    title="OPM Federal Workforce Data"
+                    date={c.as_of}
+                    className="text-xs"
+                  />
                 </li>
               ))}
             </ul>

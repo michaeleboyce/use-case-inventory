@@ -172,9 +172,11 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
       denominator_basis: string | null;
       headcount_as_of: string | null;
       headcount_source_url: string | null;
+      headcount_source_title: string | null;
       ai_eligible_share: number | null;
       ai_eligible_rationale: string | null;
       ai_eligible_source_url: string | null;
+      workforce_captured_at: string | null;
     }
   >();
   for (const r of getDb()
@@ -190,11 +192,14 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
         ai_eligible_source_url: string | null;
         headcount_as_of: string | null;
         headcount_source_url: string | null;
+        headcount_source_title: string | null;
+        captured_at: string | null;
       }
     >(`
       SELECT agency_id, total_headcount, contractor_headcount,
              denominator_basis, ai_eligible_share, ai_eligible_rationale,
-             ai_eligible_source_url, headcount_as_of, headcount_source_url
+             ai_eligible_source_url, headcount_as_of, headcount_source_url,
+             headcount_source_title, captured_at
         FROM agency_workforce_profile
        WHERE level = 'agency'
          AND total_headcount IS NOT NULL
@@ -213,6 +218,8 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
       denominator_basis: r.denominator_basis,
       headcount_as_of: r.headcount_as_of,
       headcount_source_url: r.headcount_source_url,
+      headcount_source_title: r.headcount_source_title,
+      workforce_captured_at: r.captured_at,
       ai_eligible_share: r.ai_eligible_share,
       ai_eligible_rationale: r.ai_eligible_rationale,
       ai_eligible_source_url: r.ai_eligible_source_url,
@@ -275,6 +282,8 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
         denominator_basis: w?.denominator_basis ?? null,
         headcount_as_of: w?.headcount_as_of ?? null,
         headcount_source_url: w?.headcount_source_url ?? null,
+        headcount_source_title: w?.headcount_source_title ?? null,
+        workforce_captured_at: w?.workforce_captured_at ?? null,
         ai_eligible_share: w?.ai_eligible_share ?? null,
         ai_eligible_rationale: w?.ai_eligible_rationale ?? null,
         ai_eligible_source_url: w?.ai_eligible_source_url ?? null,
