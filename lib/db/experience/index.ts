@@ -40,6 +40,13 @@ export {
   getEnterpriseTierRollup,
   type CapabilityLadderData,
 } from "./capability";
+export {
+  getStratifiedSeatInputs,
+  type LabeledBandRow,
+  type SeatModelSourceData,
+} from "./strata";
+export { computeAgencySeatModel, computeSeatModel } from "./seat-model";
+export { buildProvenance, buildWaterfall, type ProvenanceRollup } from "./provenance";
 
 // Re-export the shared definitions/types for callers importing from
 // @/lib/db or @/lib/db/experience.

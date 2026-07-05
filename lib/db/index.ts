@@ -187,6 +187,11 @@ export {
   GENAI_DEFINITION_SHORT,
   GENAI_DEFINITION_SOURCE,
   MATRIX_PRODUCT_BUCKETS,
+  getStratifiedSeatInputs,
+  computeAgencySeatModel,
+  computeSeatModel,
+  buildProvenance,
+  buildWaterfall,
 } from "./experience";
 export type {
   GenAiDefinition,
@@ -202,6 +207,9 @@ export type {
   AgencyYearCompareGenAiRow,
   CapabilityLadderData,
   EnterpriseTierRollupRow,
+  LabeledBandRow,
+  SeatModelSourceData,
+  ProvenanceRollup,
 } from "./experience";
 export {
   getYearComparisonAggregates,
