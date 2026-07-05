@@ -21,8 +21,28 @@ import {
   getTopProducts,
   getTags2024Headlines,
 } from "@/lib/db";
+import {
+  getYearComparisonAggregates,
+  getSilentlyDroppedGenAiRows,
+} from "@/lib/db/year-comparison";
+import {
+  getAiClassificationCounts,
+  hasAiClassification,
+} from "@/lib/db/fedramp/classification";
 import { getHeadlineStats } from "@/lib/readiness";
 import type { Tags2024Headlines } from "@/lib/types";
+import type { AiClassificationCounts } from "@/lib/types/fedramp";
+
+/** 2024 ↔ 2025 headline deltas for the home front door (§ V teaser). */
+export interface YoyHeadline {
+  count2024: number;
+  count2025: number;
+  delta: number;
+  pctChange: number | null;
+  /** Distinct live-GenAI capabilities silently dropped from 2025 —
+   *  the honest headline count (see compare-years view-model). */
+  droppedGenAiDistinct: number;
+}
 
 type Maturity = ReturnType<typeof getAgencyMaturity>;
 type Tiers = ReturnType<typeof getMaturityTierSummary>;
@@ -58,6 +78,10 @@ export interface HomeViewModel {
   missingEnterpriseLLM: Array<{ id: number; abbr: string; name: string }>;
   missingCoding: Array<{ id: number; abbr: string; name: string }>;
   topCategories: Categories;
+  /** Null if the year_comparison table is absent (older DB snapshot). */
+  yoyHeadline: YoyHeadline | null;
+  /** Null if the FedRAMP AI-classification tables are absent. */
+  fedrampHeadline: AiClassificationCounts | null;
   topProductsData: Array<{
     id: number;
     name: string;
@@ -80,6 +104,38 @@ export async function buildHomeViewModel(): Promise<HomeViewModel> {
 
   const reportingAgencies = maturity.length;
   const totalEntries = stats.total_use_cases + stats.total_consolidated;
+
+  // Front-door teasers for § V (year over year) and § VII (FedRAMP).
+  // Both degrade to null on older DB snapshots rather than crashing home.
+  let yoyHeadline: YoyHeadline | null = null;
+  try {
+    const total = getYearComparisonAggregates().find(
+      (r) => r.dimension === "total",
+    );
+    if (total) {
+      const dropped = getSilentlyDroppedGenAiRows();
+      yoyHeadline = {
+        count2024: total.count_2024,
+        count2025: total.count_2025,
+        delta: total.delta,
+        pctChange: total.pct_change,
+        droppedGenAiDistinct: new Set(
+          dropped.map(
+            (r) => `${r.agency_abbreviation ?? "?"}|${r.use_case_name ?? "?"}`,
+          ),
+        ).size,
+      };
+    }
+  } catch {
+    yoyHeadline = null;
+  }
+
+  let fedrampHeadline: AiClassificationCounts | null = null;
+  try {
+    fedrampHeadline = hasAiClassification() ? getAiClassificationCounts() : null;
+  } catch {
+    fedrampHeadline = null;
+  }
 
   if (
     process.env.NODE_ENV !== "production" &&
@@ -143,6 +199,8 @@ export async function buildHomeViewModel(): Promise<HomeViewModel> {
     genAIEntries: stats.total_genai_entries,
     tags2024,
     topCategories: categories.slice(0, 6),
+    yoyHeadline,
+    fedrampHeadline,
     topProductsData: topProducts.map((product) => ({
       id: product.id,
       name: product.canonical_name,

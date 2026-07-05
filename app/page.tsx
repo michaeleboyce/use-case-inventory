@@ -1,3 +1,10 @@
+/**
+ * Home — the guided front door. After the hero and a "how to read this"
+ * band, the sections walk the site's seven numbered parts in nav order
+ * (§ numerals come from lib/nav.ts, so home and the rail can't drift),
+ * closing with a reference footband. Every major sub-area of the site
+ * has an entry point on this page.
+ */
 import Link from "next/link";
 import {
   formatDate,
@@ -12,7 +19,15 @@ import { AgencyTypeChart } from "@/components/charts/agency-type-chart";
 import { Section, Figure, MonoChip } from "@/components/editorial";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
 import { buildAgenciesUrl, buildUseCasesUrl } from "@/lib/urls";
+import { NAV_SECTIONS } from "@/lib/nav";
 import { buildHomeViewModel } from "./_view-model";
+import { HomeHero } from "./_sections/home-hero";
+import { HomeHowToRead } from "./_sections/home-how-to-read";
+import { HomeChangeSection } from "./_sections/home-change-section";
+import { HomeFeaturesSection } from "./_sections/home-features-section";
+import { HomeFedrampSection } from "./_sections/home-fedramp-section";
+import { HomeReferenceFootband } from "./_sections/home-reference-footband";
+import { CrossCutCard, GapList, StatGlance } from "./_sections/home-bits";
 
 export default async function HomePage() {
   const {
@@ -37,285 +52,206 @@ export default async function HomePage() {
     topCategories,
     topProductsData,
     productDeployments,
+    yoyHeadline,
+    fedrampHeadline,
   } = await buildHomeViewModel();
 
   const agenciesWithDataWord = numberToWords(stats.total_agencies_with_data);
+  // § numerals mirror the nav registry exactly — never hard-code them here.
+  const kickers = Object.fromEntries(
+    NAV_SECTIONS.map((s) => [s.label, s.kicker]),
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
-      {/* ------------------------------------------------------------ */}
-      {/* HERO — editorial nameplate + drop-cap lead                    */}
-      {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-14 md:pb-20">
-        {/* Left margin: filing meta */}
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
-            <div>
-              <div className="eyebrow mb-1.5 !text-[var(--stamp)]">
-                No. 001 · Filed
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Research Memorandum
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                OMB M-25-21 · Cycle 2025
-              </div>
-            </div>
+      <HomeHero
+        stats={stats}
+        distinctProducts={distinctProducts}
+        productDeployments={productDeployments}
+        codingEntries={codingEntries}
+        agenciesWithDataWord={agenciesWithDataWord}
+      />
 
-            <div className="relative inline-flex w-fit">
-              <div className="stamp">Preliminary</div>
-            </div>
-
-            <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
-              <div className="border-t border-border pt-3">
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Aggregate
-                </div>
-                <div className="text-foreground">
-                  <Link
-                    href={buildUseCasesUrl({})}
-                    className="transition-colors hover:text-[var(--stamp)]"
-                  >
-                    {formatNumber(stats.total_use_cases)} uc
-                  </Link>{" "}
-                  ·{" "}
-                  <Link
-                    href={buildUseCasesUrl({})}
-                    className="transition-colors hover:text-[var(--stamp)]"
-                  >
-                    {formatNumber(stats.total_consolidated)} cons
-                  </Link>
-                </div>
-              </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Coverage
-                </div>
-                <div className="text-foreground">
-                  <Link
-                    href="/agencies"
-                    className="transition-colors hover:text-[var(--stamp)]"
-                  >
-                    {stats.total_agencies_with_data}/{stats.total_agencies}{" "}
-                    agencies
-                  </Link>
-                </div>
-              </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Catalogue
-                </div>
-                <div className="text-foreground">
-                  <Link
-                    href="/products"
-                    className="transition-colors hover:text-[var(--stamp)]"
-                  >
-                    {stats.total_products} products
-                  </Link>{" "}
-                  ·{" "}
-                  <Link
-                    href="/templates"
-                    className="transition-colors hover:text-[var(--stamp)]"
-                  >
-                    {stats.total_templates} templates
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Headline column */}
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.8rem,7.5vw,6.4rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
-            An inventory of{" "}
-            <em className="inline font-normal italic">everything</em>{" "}
-            American
-            <br />
-            government says it is doing with
-            <br />
-            <span className="relative inline-block">
-              <span
-                aria-hidden
-                className="absolute inset-x-[-0.08em] bottom-[0.16em] h-[0.38em] bg-[var(--highlight)]/90"
-              />
-              <span className="relative">artificial&nbsp;intelligence.</span>
-            </span>
-          </h1>
-
-          <div className="mt-10 grid grid-cols-12 gap-x-6 gap-y-6">
-            <p className="col-span-12 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85 md:col-span-7">
-              <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
-                {agenciesWithDataWord.charAt(0)}
-              </span>
-              {agenciesWithDataWord.slice(1)} federal agencies filed{" "}
-              <span className="font-medium text-foreground">
-                {formatNumber(stats.total_use_cases)} individual use cases
-              </span>{" "}
-              and {formatNumber(stats.total_consolidated)} consolidated entries
-              to the Office of Management and Budget for the 2025 reporting
-              cycle. This inventory collects them all in one place, normalizes
-              the schema, tags each record for the questions that matter, and
-              lets you drill from an enterprise-wide rollout of Microsoft
-              Copilot at the Department of State down to a single line-item on
-              a rural-land classifier at the USDA.
-            </p>
-
-            <div className="col-span-12 md:col-span-4 md:col-start-9 md:self-end">
-              <div className="editorial-rule-left space-y-3">
-                <div className="eyebrow">By the numbers</div>
-                <dl className="space-y-2 font-mono text-sm">
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">Use cases</dt>
-                    <dd className="tabular-nums text-foreground">
-                      <Link
-                        href={buildUseCasesUrl({})}
-                        className="transition-colors hover:text-[var(--stamp)]"
-                      >
-                        {formatNumber(stats.total_use_cases)}
-                      </Link>
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">Agencies</dt>
-                    <dd className="tabular-nums text-foreground">
-                      <Link
-                        href="/agencies"
-                        className="transition-colors hover:text-[var(--stamp)]"
-                      >
-                        {stats.total_agencies_with_data}
-                      </Link>
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">Products</dt>
-                    <dd className="tabular-nums text-foreground">
-                      <Link
-                        href="/products"
-                        className="transition-colors hover:text-[var(--stamp)]"
-                      >
-                        {formatNumber(distinctProducts)}
-                      </Link>
-                    </dd>
-                  </div>
-                  <div
-                    className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5"
-                    title="Agency×product pairs — a product run by twelve agencies counts twelve times"
-                  >
-                    <dt className="text-muted-foreground">Deployments</dt>
-                    <dd className="tabular-nums text-foreground">
-                      <Link
-                        href="/products"
-                        className="transition-colors hover:text-[var(--stamp)]"
-                      >
-                        {formatNumber(productDeployments)}
-                      </Link>
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-muted-foreground">Coding entries</dt>
-                    <dd className="tabular-nums text-foreground">
-                      <Link
-                        href={buildUseCasesUrl({ isCodingTool: true })}
-                        className="transition-colors hover:text-[var(--stamp)]"
-                      >
-                        {formatNumber(codingEntries)}
-                      </Link>
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <HomeHowToRead stats={stats} />
 
       {/* ------------------------------------------------------------ */}
-      {/* CROSS-CUTS — entry points to /browse/[dimension]              */}
+      {/* § I — AGENCIES                                                */}
       {/* ------------------------------------------------------------ */}
       <Section
-        number="0"
-        title="Cross-cuts"
-        lede="Slice the entire inventory by one dimension at a time."
-        source="mixed"
+        number={kickers.Agencies}
+        title="The agencies"
+        lede="How the filers sort — a breadth-heuristic ledger, the capability gaps, and the freshest filings."
+        source="omb-derived"
       >
-        <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
-          <CrossCutCard
-            kicker="A"
-            href="/browse/sophistication"
-            label="Sophistication"
-            note="Browse by AI sophistication tier."
-            source="derived"
-          />
-          <CrossCutCard
-            kicker="B"
-            href="/browse/high-impact"
-            label="High-impact"
-            note="Browse by high-impact designation."
-            source="omb"
-          />
-          <CrossCutCard
-            kicker="C"
-            href="/browse/topic-area"
-            label="Topic area"
-            note="Browse by mission topic area."
-            source="omb"
-          />
-          <CrossCutCard
-            kicker="D"
-            href="/browse/vendor"
-            label="Vendor"
-            note="Browse by product vendor."
-            source="omb"
-          />
-        </div>
+        <div className="space-y-12">
+          <MaturityTierCard tiers={tiers} />
 
-        {/* Top categories — chip-row parallel to the cross-cut grid above.
-            Top 6 IFP product categories by use-case reach, each linking to
-            the products page filtered to that category. Trailing link goes
-            to the full /browse/category dimension page. */}
-        {topCategories.length > 0 ? (
-          <div className="mt-8 border-t border-dotted border-border pt-5">
-            <div className="mb-3 flex items-baseline justify-between gap-3">
-              <div className="eyebrow !text-[var(--stamp)]">
-                Top categories
-              </div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                IFP-derived · top 6 by use-case reach
-              </span>
+          <p className="max-w-prose font-display text-[1rem] italic leading-snug text-muted-foreground">
+            The ledger above groups agencies by an internal-heuristic maturity
+            tier; the readiness index in § {kickers.Readiness} scores them
+            against a published rubric — the two deliberately disagree.{" "}
+            <Link
+              href="/agencies"
+              className="underline decoration-dotted underline-offset-4 text-foreground hover:text-[var(--stamp)]"
+            >
+              All agencies →
+            </Link>{" "}
+            <Link
+              href="/agencies/compare"
+              className="underline decoration-dotted underline-offset-4 text-foreground hover:text-[var(--stamp)]"
+            >
+              Compare agencies →
+            </Link>
+          </p>
+
+          <div>
+            <div className="mb-3 eyebrow">
+              Agency coverage · of {reportingAgencies} reporting
             </div>
-            <ul className="flex flex-wrap items-center gap-1.5">
-              {topCategories.map((c) => (
-                <li key={c.category}>
-                  <MonoChip
-                    href={`/products?category=${encodeURIComponent(c.category)}`}
-                    tone="stamp"
-                    title={`${humanizeCategory(c.category)} · ${formatNumber(c.use_case_count)} use cases`}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
+              <StatGlance
+                label="With enterprise LLM"
+                count={agenciesWithEnterpriseLLM}
+                pct={formatWholePercent(agenciesWithEnterpriseLLM, reportingAgencies)}
+                href={buildAgenciesUrl({ hasEnterpriseLlm: true })}
+                accent="stamp"
+              />
+              <StatGlance
+                label="With coding assistants"
+                count={agenciesWithCoding}
+                pct={formatWholePercent(agenciesWithCoding, reportingAgencies)}
+                href={buildAgenciesUrl({ hasCoding: true })}
+                accent="verified"
+              />
+              <StatGlance
+                label="With agentic AI"
+                count={agenciesWithAgentic}
+                pct={formatWholePercent(agenciesWithAgentic, reportingAgencies)}
+                href={buildAgenciesUrl({ hasAgentic: true })}
+              />
+              <StatGlance
+                label="With custom AI"
+                count={agenciesWithCustom}
+                pct={formatWholePercent(agenciesWithCustom, reportingAgencies)}
+                href={buildAgenciesUrl({ hasCustom: true })}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-10 md:grid-cols-2">
+            <GapList
+              kicker="A"
+              title="Agencies without an enterprise LLM"
+              note={
+                <>
+                  <Link
+                    href={buildAgenciesUrl({ hasEnterpriseLlm: false })}
+                    className="font-medium text-foreground transition-colors hover:text-[var(--stamp)]"
                   >
-                    {humanizeCategory(c.category)} ({formatNumber(c.use_case_count)})
-                  </MonoChip>
+                    {missingEnterpriseLLM.length} of {maturity.length}
+                  </Link>{" "}
+                  reporting agencies do not list department- or
+                  enterprise-wide access to a general-purpose language model.
+                </>
+              }
+              items={missingEnterpriseLLM}
+              tone="stamp"
+            />
+            <GapList
+              kicker="B"
+              title="Agencies without coding assistants"
+              note={
+                <>
+                  <Link
+                    href={buildAgenciesUrl({ hasCoding: false })}
+                    className="font-medium text-foreground transition-colors hover:text-[var(--stamp)]"
+                  >
+                    {missingCoding.length} of {maturity.length}
+                  </Link>{" "}
+                  reporting agencies have no recorded deployment of GitHub
+                  Copilot, Claude Code, CodeWhisperer, or any coding tool.
+                </>
+              }
+              items={missingCoding}
+              tone="ink"
+            />
+          </div>
+
+          <div>
+            <div className="mb-3 eyebrow">Most recent filings</div>
+            <ul className="divide-y divide-border border-y-2 border-foreground">
+              {recent.map((a, i) => (
+                <li
+                  key={a.id}
+                  className="group grid grid-cols-[2.25rem_3.75rem_1fr_auto] items-baseline gap-x-3 py-3 text-[0.95rem] md:grid-cols-[2.75rem_5rem_1fr_auto] md:gap-x-5"
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <Link
+                    href={`/agencies/${a.abbreviation}`}
+                    className="font-mono text-sm font-semibold tracking-[0.04em] text-foreground hover:text-[var(--stamp)]"
+                  >
+                    {a.abbreviation}
+                  </Link>
+                  <Link
+                    href={`/agencies/${a.abbreviation}`}
+                    className="truncate font-display text-[1.08rem] italic text-foreground transition-[letter-spacing] group-hover:tracking-[-0.01em]"
+                  >
+                    {a.name}
+                  </Link>
+                  <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+                    {formatDate(a.last_modified)}
+                  </span>
                 </li>
               ))}
-              <li className="ml-1">
-                <Link
-                  href="/browse/category"
-                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
-                >
-                  → All categories
-                </Link>
-              </li>
+              {recent.length === 0 ? (
+                <li className="py-3 text-sm text-muted-foreground">
+                  No modification timestamps recorded.
+                </li>
+              ) : null}
             </ul>
           </div>
-        ) : null}
+        </div>
       </Section>
 
       {/* ------------------------------------------------------------ */}
-      {/* § I — AT A GLANCE                                             */}
+      {/* § II — READINESS                                              */}
       {/* ------------------------------------------------------------ */}
       <Section
-        number="I"
-        title="At a glance"
-        lede={`What ${reportingAgencies} reporting agencies collectively say about their AI.`}
+        number={kickers.Readiness}
+        title="Readiness"
+        lede="A published rubric for state-capacity readiness, scored against five dimensions."
+        source="derived"
+      >
+        <ReadinessHeadlineStat
+          value={Number(readinessHeadline.internal_build_pct.toFixed(1))}
+          unit="%"
+          label="of federal AI is built in-house — the rest is purchased commercial tooling"
+          caption={`Computed across all reported use cases · ${readinessHeadline.total_agencies_scored} agencies scored against the v1.1 capacity-first rubric`}
+          variant="big"
+          href="/readiness/methodology#internal-build"
+        />
+        <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          <Link href="/readiness" className="transition-colors hover:text-[var(--stamp)]">
+            → The league table
+          </Link>
+          <Link href="/readiness/access" className="transition-colors hover:text-[var(--stamp)]">
+            → AI Access &amp; Scale
+          </Link>
+          <Link href="/readiness/methodology" className="transition-colors hover:text-[var(--stamp)]">
+            → Methodology &amp; rubric
+          </Link>
+        </p>
+      </Section>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § III — USE CASES                                             */}
+      {/* ------------------------------------------------------------ */}
+      <Section
+        number={kickers["Use Cases"]}
+        title="The use cases"
+        lede={`What ${reportingAgencies} reporting agencies collectively say about their AI — and the cross-cuts to slice it by.`}
         source="mixed"
       >
         <div className="space-y-10">
@@ -372,8 +308,7 @@ export default async function HomePage() {
 
             {/* 2024 baseline — the prior cycle's IFP-tagged GenAI numbers,
                 shown alongside (not replacing) the 2025 entry mix above so the
-                year-over-year shift is visible at a glance. Links to the full
-                cross-year analysis. */}
+                year-over-year shift is visible at a glance. */}
             <div className="mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2 border-t border-dotted border-border pt-4">
               <span className="eyebrow !text-[var(--stamp)]">
                 2024 baseline
@@ -435,36 +370,39 @@ export default async function HomePage() {
             </div>
           </div>
 
+          {/* Cross-cuts — the browse dimensions, one slice at a time. */}
           <div>
             <div className="mb-3 eyebrow">
-              Agency coverage · of {reportingAgencies} reporting
+              Cross-cuts · slice the entire inventory by one dimension
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
-              <StatGlance
-                label="With enterprise LLM"
-                count={agenciesWithEnterpriseLLM}
-                pct={formatWholePercent(agenciesWithEnterpriseLLM, reportingAgencies)}
-                href={buildAgenciesUrl({ hasEnterpriseLlm: true })}
-                accent="stamp"
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-4">
+              <CrossCutCard
+                kicker="A"
+                href="/browse/sophistication"
+                label="Sophistication"
+                note="Browse by AI sophistication tier."
+                source="derived"
               />
-              <StatGlance
-                label="With coding assistants"
-                count={agenciesWithCoding}
-                pct={formatWholePercent(agenciesWithCoding, reportingAgencies)}
-                href={buildAgenciesUrl({ hasCoding: true })}
-                accent="verified"
+              <CrossCutCard
+                kicker="B"
+                href="/browse/high-impact"
+                label="High-impact"
+                note="Browse by high-impact designation."
+                source="omb"
               />
-              <StatGlance
-                label="With agentic AI"
-                count={agenciesWithAgentic}
-                pct={formatWholePercent(agenciesWithAgentic, reportingAgencies)}
-                href={buildAgenciesUrl({ hasAgentic: true })}
+              <CrossCutCard
+                kicker="C"
+                href="/browse/topic-area"
+                label="Topic area"
+                note="Browse by mission topic area."
+                source="omb"
               />
-              <StatGlance
-                label="With custom AI"
-                count={agenciesWithCustom}
-                pct={formatWholePercent(agenciesWithCustom, reportingAgencies)}
-                href={buildAgenciesUrl({ hasCustom: true })}
+              <CrossCutCard
+                kicker="D"
+                href="/browse/vendor"
+                label="Vendor"
+                note="Browse by product vendor."
+                source="omb"
               />
             </div>
           </div>
@@ -472,46 +410,10 @@ export default async function HomePage() {
       </Section>
 
       {/* ------------------------------------------------------------ */}
-      {/* § Ia — THE HEADLINE (Readiness Index)                          */}
+      {/* § IV — PRODUCTS                                               */}
       {/* ------------------------------------------------------------ */}
       <Section
-        number="Ia"
-        title="The headline"
-        lede="A published rubric for state-capacity readiness, scored against five dimensions."
-        source="derived"
-      >
-        <ReadinessHeadlineStat
-          value={Number(readinessHeadline.internal_build_pct.toFixed(1))}
-          unit="%"
-          label="of federal AI is built in-house — the rest is purchased commercial tooling"
-          caption={`Computed across all reported use cases · ${readinessHeadline.total_agencies_scored} agencies scored against the v1.1 capacity-first rubric`}
-          variant="big"
-          href="/readiness/methodology#internal-build"
-        />
-        <p className="mt-6 max-w-prose font-display text-[1rem] italic leading-snug text-muted-foreground">
-          The ledger below groups agencies by an internal-heuristic tier; the
-          readiness index above scores them against a published rubric.{" "}
-          <Link
-            href="/readiness"
-            className="underline decoration-dotted underline-offset-4 text-foreground hover:text-[var(--stamp)]"
-          >
-            See the league table →
-          </Link>
-        </p>
-      </Section>
-
-      {/* ------------------------------------------------------------ */}
-      {/* § II — MATURITY LEDGER                                        */}
-      {/* ------------------------------------------------------------ */}
-      <Section number="II" title="The ledger" lede="How agencies sort.">
-        <MaturityTierCard tiers={tiers} />
-      </Section>
-
-      {/* ------------------------------------------------------------ */}
-      {/* § II — ADOPTION                                               */}
-      {/* ------------------------------------------------------------ */}
-      <Section
-        number="III"
+        number={kickers.Products}
         title="What they run"
         lede="The ten most widely deployed AI products, weighted by agencies reporting them."
       >
@@ -522,9 +424,8 @@ export default async function HomePage() {
             caption={
               <>
                 Source: <span className="text-foreground">use_cases</span>{" "}
-                joined with{" "}
-                <span className="text-foreground">products</span>; top 10 by
-                distinct agencies.
+                joined with <span className="text-foreground">products</span>;
+                top 10 by distinct agencies.
               </>
             }
           >
@@ -538,244 +439,63 @@ export default async function HomePage() {
             <AgencyTypeChart data={agencyTypeData} />
           </Figure>
         </div>
-      </Section>
 
-      {/* ------------------------------------------------------------ */}
-      {/* § III — GAPS                                                  */}
-      {/* ------------------------------------------------------------ */}
-      <Section
-        number="IV"
-        title="What is missing"
-        lede="The absences tell a story the presences do not."
-      >
-        <div className="grid gap-x-8 gap-y-10 md:grid-cols-2">
-          <GapList
-            kicker="A"
-            title="Agencies without an enterprise LLM"
-            note={
-              <>
-                <Link
-                  href={buildAgenciesUrl({ hasEnterpriseLlm: false })}
-                  className="font-medium text-foreground transition-colors hover:text-[var(--stamp)]"
-                >
-                  {missingEnterpriseLLM.length} of {maturity.length}
-                </Link>{" "}
-                reporting agencies do not list department- or enterprise-wide
-                access to a general-purpose language model.
-              </>
-            }
-            items={missingEnterpriseLLM}
-            tone="stamp"
-          />
-          <GapList
-            kicker="B"
-            title="Agencies without coding assistants"
-            note={
-              <>
-                <Link
-                  href={buildAgenciesUrl({ hasCoding: false })}
-                  className="font-medium text-foreground transition-colors hover:text-[var(--stamp)]"
-                >
-                  {missingCoding.length} of {maturity.length}
-                </Link>{" "}
-                reporting agencies have no recorded deployment of GitHub
-                Copilot, Claude Code, CodeWhisperer, or any coding tool.
-              </>
-            }
-            items={missingCoding}
-            tone="ink"
-          />
-        </div>
-      </Section>
-
-      {/* ------------------------------------------------------------ */}
-      {/* § IV — LAST-MODIFIED                                          */}
-      {/* ------------------------------------------------------------ */}
-      <Section
-        number="V"
-        title="Most recent filings"
-        lede="Five agencies whose inventories have moved most recently."
-      >
-        <ul className="divide-y divide-border border-y-2 border-foreground">
-          {recent.map((a, i) => (
-            <li
-              key={a.id}
-              className="group grid grid-cols-[2.25rem_3.75rem_1fr_auto] items-baseline gap-x-3 py-3 text-[0.95rem] md:grid-cols-[2.75rem_5rem_1fr_auto] md:gap-x-5"
-            >
-              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                {String(i + 1).padStart(2, "0")}
+        {/* Top categories — IFP product categories by use-case reach. */}
+        {topCategories.length > 0 ? (
+          <div className="mt-8 border-t border-dotted border-border pt-5">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <div className="eyebrow !text-[var(--stamp)]">
+                Top categories
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                IFP-derived · top 6 by use-case reach
               </span>
-              <Link
-                href={`/agencies/${a.abbreviation}`}
-                className="font-mono text-sm font-semibold tracking-[0.04em] text-foreground hover:text-[var(--stamp)]"
-              >
-                {a.abbreviation}
-              </Link>
-              <Link
-                href={`/agencies/${a.abbreviation}`}
-                className="truncate font-display text-[1.08rem] italic text-foreground transition-[letter-spacing] group-hover:tracking-[-0.01em]"
-              >
-                {a.name}
-              </Link>
-              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-                {formatDate(a.last_modified)}
-              </span>
-            </li>
-          ))}
-          {recent.length === 0 ? (
-            <li className="py-3 text-sm text-muted-foreground">
-              No modification timestamps recorded.
-            </li>
-          ) : null}
-        </ul>
+            </div>
+            <ul className="flex flex-wrap items-center gap-1.5">
+              {topCategories.map((c) => (
+                <li key={c.category}>
+                  <MonoChip
+                    href={`/products?category=${encodeURIComponent(c.category)}`}
+                    tone="stamp"
+                    title={`${humanizeCategory(c.category)} · ${formatNumber(c.use_case_count)} use cases`}
+                  >
+                    {humanizeCategory(c.category)} ({formatNumber(c.use_case_count)})
+                  </MonoChip>
+                </li>
+              ))}
+              <li className="ml-1">
+                <Link
+                  href="/browse/category"
+                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+                >
+                  → All categories
+                </Link>
+              </li>
+            </ul>
+          </div>
+        ) : null}
       </Section>
-    </div>
-  );
-}
 
-function CrossCutCard({
-  kicker,
-  href,
-  label,
-  note,
-  source,
-}: {
-  kicker: string;
-  href: string;
-  label: string;
-  note: string;
-  /** Tag the dimension as OMB-filed or IFP-derived so readers don't
-   *  have to click through to /browse to see provenance. */
-  source: "omb" | "derived";
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex min-w-0 flex-col gap-2 border-t-2 border-foreground pt-2 transition-colors"
-    >
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--stamp)]">
-          {kicker}
-        </span>
-        <span className="font-display italic text-[1.5rem] leading-tight text-foreground transition-colors group-hover:text-[var(--stamp)]">
-          {label}
-        </span>
-        <span
-          className={`ml-auto font-mono text-[9px] tracking-[0.08em] ${
-            source === "derived"
-              ? "text-[var(--stamp)]"
-              : "text-muted-foreground"
-          }`}
-          title={
-            source === "derived"
-              ? "IFP-derived classification (auto_tag.py)"
-              : "OMB-filed by the agency"
-          }
-        >
-          {source === "derived" ? "IFP" : "OMB"}
-        </span>
-      </div>
-      <p className="text-sm leading-snug text-muted-foreground">{note}</p>
-      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors group-hover:text-[var(--stamp)]">
-        Browse →
-      </span>
-    </Link>
-  );
-}
-
-function GapList({
-  kicker,
-  title,
-  note,
-  items,
-  tone,
-}: {
-  kicker: string;
-  title: string;
-  note: React.ReactNode;
-  items: Array<{ id: number; abbr: string; name: string }>;
-  tone: "stamp" | "ink";
-}) {
-  return (
-    <div>
-      <div className="mb-3 flex items-baseline gap-3 border-t-2 border-foreground pt-3">
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--stamp)]">
-          {kicker}
-        </span>
-        <h3 className="font-display italic text-[1.35rem] leading-tight text-foreground md:text-[1.55rem]">
-          {title}
-        </h3>
-      </div>
-      <p className="mb-4 max-w-prose text-[0.95rem] leading-[1.55] text-muted-foreground">
-        {note}
-      </p>
-      <ul className="flex flex-wrap gap-1.5">
-        {items.length === 0 ? (
-          <li className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            None —
-          </li>
-        ) : (
-          items.map((a) => (
-            <li key={a.id}>
-              <MonoChip
-                href={`/agencies/${a.abbr}`}
-                title={a.name}
-                tone={tone}
-              >
-                {a.abbr}
-              </MonoChip>
-            </li>
-          ))
-        )}
-      </ul>
-    </div>
-  );
-}
-
-const ACCENT_COLOR: Record<string, string> = {
-  stamp: "text-[var(--stamp)]",
-  verified: "text-[var(--verified)]",
-  default: "text-foreground",
-};
-
-function StatGlance({
-  label,
-  count,
-  pct,
-  sublabel,
-  href,
-  accent = "default",
-}: {
-  label: string;
-  count: number | undefined;
-  pct: string | undefined;
-  sublabel?: string;
-  href: string;
-  accent?: keyof typeof ACCENT_COLOR;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex min-w-0 flex-col gap-1 border-t-2 border-foreground pt-2 transition-colors"
-    >
-      <div className="eyebrow truncate">{label}</div>
-      <div className="flex items-baseline gap-2">
-        <span
-          className={`font-display text-[2.4rem] italic leading-[0.95] tracking-[-0.02em] tabular-nums transition-colors group-hover:text-[var(--stamp)] ${ACCENT_COLOR[accent]}`}
-        >
-          {pct ?? "—"}
-        </span>
-        {count != null && (
-          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            {formatNumber(count)}
-          </span>
-        )}
-      </div>
-      {sublabel ? (
-        <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
-          {sublabel}
-        </div>
+      {/* ------------------------------------------------------------ */}
+      {/* § V — WHAT CHANGED (2024 ↔ 2025)                              */}
+      {/* ------------------------------------------------------------ */}
+      {yoyHeadline ? (
+        <HomeChangeSection kicker={kickers.Analytics} yoy={yoyHeadline} />
       ) : null}
-    </Link>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § VI — FEATURES                                               */}
+      {/* ------------------------------------------------------------ */}
+      <HomeFeaturesSection kicker={kickers.Features} />
+
+      {/* ------------------------------------------------------------ */}
+      {/* § VII — FEDRAMP                                               */}
+      {/* ------------------------------------------------------------ */}
+      {fedrampHeadline ? (
+        <HomeFedrampSection kicker={kickers.FedRAMP} counts={fedrampHeadline} />
+      ) : null}
+
+      <HomeReferenceFootband />
+    </div>
   );
 }
