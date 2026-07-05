@@ -450,6 +450,37 @@ export interface AiServiceShelfCounts {
   agencies_in_reach: number;
 }
 
+/** One in-scope service of a single package, with its AI label if present. */
+export interface AiServiceForProductRow {
+  service: string;
+  recency: string;
+  /** null when the per-service classification is absent from this build. */
+  category: FedrampAiCategory | null;
+  confidence: "high" | "medium" | "low" | null;
+  source: string | null;
+}
+
+/** One core-AI service in scope of a package a specific agency holds. */
+export interface AiServiceInReachRow {
+  service: string;
+  host_fedramp_id: string;
+  cso: string;
+  impact_level: string | null;
+  /** Latest ATO the agency holds on the host package. */
+  ato_issuance_date: string | null;
+  /** Label provenance of the service classification. */
+  source: string;
+}
+
+/** Per-agency frontier-reach rollup for the coverage agencies list. */
+export interface FrontierReachAgencyRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string;
+  core_ai_services_in_reach: number;
+  host_packages: number;
+}
+
 /** Status snapshot for one named frontier product (resolved by cso name). */
 export interface FrontierProductStatus {
   fedramp_id: string;

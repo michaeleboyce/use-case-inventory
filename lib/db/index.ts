@@ -50,6 +50,8 @@ export {
 export {
   getAgencyAiAccessEvidence,
   getAiAccessSummary,
+  getAgencyAccessTiers,
+  type AgencyAccessTier,
 } from "./agency-ai-access";
 export {
   getAllProducts,
@@ -165,6 +167,9 @@ export {
   hasServiceClassification,
   getAiServicesInScope,
   getAiServiceShelfCounts,
+  getServicesInScopeForProduct,
+  getAiServicesInReachForAgency,
+  getFrontierReachByAgency,
 } from "./fedramp";
 export {
   getGenAiHeadlines,

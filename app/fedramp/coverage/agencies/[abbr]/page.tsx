@@ -4,6 +4,9 @@ import {
   getFedrampSnapshot,
   getUseCasesForCoverageAgencyProduct,
   getUnlinkedAiProductsForAgency,
+  getAiServicesInReachForAgency,
+  getAgencyAccessTiers,
+  type AgencyAccessTier,
 } from "@/lib/db";
 import type {
   CoverageAgencyDrill,
@@ -137,6 +140,32 @@ export default async function FedrampCoverageAgencyDrillPage({
   // tools the inventory never named. Empty when classification isn't loaded.
   const unlinkedAiHeld = getUnlinkedAiProductsForAgency(agency.id);
 
+  // Additive: core-AI SERVICES in scope of packages this agency holds an ATO
+  // for (Bedrock inside AWS, Azure OpenAI inside Azure Commercial, …). In
+  // scope of an authorization the agency already holds — not evidence the
+  // agency enabled the service. Empty when the per-service labels aren't
+  // loaded.
+  const servicesInReach = getAiServicesInReachForAgency(agency.id);
+  let accessTier: AgencyAccessTier | null = null;
+  if (servicesInReach.length > 0) {
+    try {
+      accessTier = getAgencyAccessTiers()[agency.abbreviation] ?? null;
+    } catch {
+      accessTier = null;
+    }
+  }
+
+  // Roman-numeral counter — two fixed sections, then up to three conditional
+  // ones. Replaces the old hardcoded "IV"/"V-or-III" juggling.
+  const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+  let sectionIdx = 0;
+  const nextSection = () => ROMAN[sectionIdx++];
+  const authorizedNum = nextSection();
+  const mentionedNum = nextSection();
+  const unlinkedNum = unlinkedAiHeld.length > 0 ? nextSection() : null;
+  const reachNum = servicesInReach.length > 0 ? nextSection() : null;
+  const tokensNum = nextSection();
+
   // Attach top-10 use cases per "mentioned without ATO" row, server-side.
   // Cheap — each row's product is a single id lookup; rows are O(few-dozen).
   type MentionedRowWithDetail =
@@ -212,7 +241,7 @@ export default async function FedrampCoverageAgencyDrillPage({
       {/* § I — AUTHORIZED BUT UNREPORTED                               */}
       {/* ------------------------------------------------------------ */}
       <Section
-        number="I"
+        number={authorizedNum}
         title="Authorized AI products not mentioned"
         lede="AI-linked FedRAMP authorizations on file for this agency where no inventory use-case names the product. (Filtered to FedRAMP products with a row in fedramp_product_links.)"
       >
@@ -279,7 +308,7 @@ export default async function FedrampCoverageAgencyDrillPage({
       {/* § II — MENTIONED WITHOUT ATO                                  */}
       {/* ------------------------------------------------------------ */}
       <Section
-        number="II"
+        number={mentionedNum}
         title="Mentioned without an ATO on file"
         lede="Products this agency reports using whose FedRAMP listing isn&rsquo;t paired with an ATO at this agency. Click a row to see the actual use cases."
       >
@@ -304,7 +333,7 @@ export default async function FedrampCoverageAgencyDrillPage({
       {/* ------------------------------------------------------------ */}
       {unlinkedAiHeld.length > 0 ? (
         <Section
-          number="IV"
+          number={unlinkedNum!}
           title="AI ATOs absent from this agency's inventory"
           lede="FedRAMP products an independent LLM review judged to be AI/ML offerings that this agency holds an ATO for, yet names in no use case. Distinct from §II above, which is scoped to products already in the inventory's AI catalog — this catches AI tools the inventory never named."
         >
@@ -349,8 +378,85 @@ export default async function FedrampCoverageAgencyDrillPage({
         </Section>
       ) : null}
 
+      {servicesInReach.length > 0 ? (
+        <Section
+          number={reachNum!}
+          title="Frontier-adjacent services in reach"
+          source="mixed"
+          lede="Core-AI services listed in the scope catalogs of packages this agency holds an ATO for. In scope of an authorization the agency already holds — not evidence the agency enabled the service or made it available to staff."
+        >
+          {accessTier ? (
+            <p className="mb-4 flex flex-wrap items-baseline gap-2 text-sm text-foreground/85">
+              <MonoChip tone="stamp" size="xs" title="IFP web-corroborated assessment, not OMB data">
+                IFP
+              </MonoChip>
+              <span>
+                Estimated staff access to a general-purpose AI tool at this
+                agency:{" "}
+                <span className="font-medium text-foreground">
+                  {accessTier.tier}
+                </span>
+                {accessTier.share != null ? (
+                  <> (~{Math.round(accessTier.share * 100)}% of eligible staff)</>
+                ) : null}
+                . Capability in reach and staff access are different facts —
+                the gap between them is the story.
+              </span>
+            </p>
+          ) : null}
+
+          <table className="w-full border-t-2 border-foreground text-sm">
+            <thead>
+              <tr className="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <th className="py-2 pr-4">Service</th>
+                <th className="py-2 pr-4">Host package</th>
+                <th className="py-2 pr-4">Impact</th>
+                <th className="py-2">Agency ATO issued</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {servicesInReach.map((s) => (
+                <tr key={`${s.service}-${s.host_fedramp_id}`} className="hover:bg-muted/30">
+                  <td className="py-2.5 pr-4 font-medium text-foreground">
+                    {s.service}
+                  </td>
+                  <td className="py-2.5 pr-4">
+                    <MonoChip
+                      href={`/fedramp/marketplace/products/${s.host_fedramp_id}`}
+                      tone="stamp"
+                      size="xs"
+                    >
+                      {s.host_fedramp_id}
+                    </MonoChip>
+                    <span className="ml-2 text-[0.85rem] text-muted-foreground">
+                      {s.cso}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-4 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+                    {s.impact_level ?? "—"}
+                  </td>
+                  <td className="py-2.5 font-mono text-[11px] text-muted-foreground">
+                    {s.ato_issuance_date ? formatDate(s.ato_issuance_date) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-4 max-w-prose text-sm text-muted-foreground">
+            Cross-agency view:{" "}
+            <Link
+              href="/fedramp/coverage/spread#services"
+              className="text-foreground hover:text-[var(--stamp)] underline-offset-2 hover:underline"
+            >
+              the shelf inside the shelf
+            </Link>
+            .
+          </p>
+        </Section>
+      ) : null}
+
       <Section
-        number={unlinkedAiHeld.length > 0 ? "V" : "III"}
+        number={tokensNum}
         title="Unresolved inventory tokens"
         lede="Free-text vendor strings on this agency&rsquo;s use cases that didn&rsquo;t bind to a curated product."
       >

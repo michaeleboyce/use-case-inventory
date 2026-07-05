@@ -4,10 +4,12 @@
  * Sections (numbered dynamically; supply-chain and description are both
  * conditional, so a `nextSection()` counter assigns roman numerals in order):
  *   § I    Identity         — CSP, CSO, status stamp, impact, models, FedRAMP id
- *   § II?  Supply chain     — leverages / leveraged by (omitted when empty)
- *   § III? Description      — service_desc paragraph
- *   § IV   Authorizations   — full ATO ledger
- *   § V    Colophon         — assessor, contacts, dates
+ *   § II?  AI classification — independent LLM label (omitted when absent)
+ *   § III? Supply chain     — leverages / leveraged by (omitted when empty)
+ *   § IV?  Services in scope — the package's own service catalog, AI-labeled
+ *   § V?   Description      — service_desc paragraph
+ *   § VI   Authorizations   — full ATO ledger
+ *   § VII  Colophon         — assessor, contacts, dates
  */
 
 import { notFound } from "next/navigation";
@@ -22,6 +24,7 @@ import {
   getProductsLeveragedBy,
   getAiClassificationFor,
   getInventoryProductsForFedrampProduct,
+  getServicesInScopeForProduct,
 } from "@/lib/db";
 import { Section, MonoChip, Eyebrow, Figure } from "@/components/editorial";
 import { MetricTile } from "@/components/metric-tile";
@@ -62,6 +65,16 @@ export default async function MarketplaceProductDetailPage({
   const leveragedBy = getProductsLeveragedBy(product.fedramp_id);
   const hasSupplyChain = leverages.length > 0 || leveragedBy.length > 0;
 
+  // Services in scope (from the marketplace export's per-package catalogs),
+  // AI-labeled first. Only ~90 of 659 products publish one.
+  const servicesInScope = getServicesInScopeForProduct(product.fedramp_id);
+  const aiServices = servicesInScope.filter(
+    (s) => s.category === "core_ai" || s.category === "ai_featured",
+  );
+  const otherServices = servicesInScope.filter(
+    (s) => s.category !== "core_ai" && s.category !== "ai_featured",
+  );
+
   // Independent AI classification (orthogonal to inventory linkage). Present
   // only after the classification pass has shipped in the DB.
   const aiClassification = getAiClassificationFor(product.fedramp_id);
@@ -87,6 +100,7 @@ export default async function MarketplaceProductDetailPage({
   const identityNum = nextSection();
   const aiNum = aiClassification ? nextSection() : null;
   const supplyChainNum = hasSupplyChain ? nextSection() : null;
+  const servicesNum = servicesInScope.length > 0 ? nextSection() : null;
   const descriptionNum = product.service_desc ? nextSection() : null;
   const authorizationsNum = nextSection();
   const colophonNum = nextSection();
@@ -318,6 +332,72 @@ export default async function MarketplaceProductDetailPage({
               </div>
             </div>
           ) : null}
+        </Section>
+      ) : null}
+
+      {servicesInScope.length > 0 ? (
+        <Section
+          number={servicesNum!}
+          title="Services in scope"
+          lede="The individual services this package's FedRAMP authorization covers, from the marketplace's own scope catalog. Being in scope means the authorization covers the service — not that any agency has enabled it."
+        >
+          {aiServices.length > 0 ? (
+            <div className="mb-6">
+              <Eyebrow color="stamp">AI services in scope</Eyebrow>
+              <ul className="mt-3 space-y-2">
+                {aiServices.map((s) => (
+                  <li key={s.service} className="flex flex-wrap items-baseline gap-2">
+                    <MonoChip
+                      tone={s.category === "core_ai" ? "stamp" : "ink"}
+                      size="xs"
+                      title={
+                        s.category === "core_ai"
+                          ? "Primary purpose is AI/ML (independent per-service classification)"
+                          : "Ships material AI/ML capability as a feature"
+                      }
+                    >
+                      {s.category === "core_ai" ? "Core AI" : "AI-featured"}
+                    </MonoChip>
+                    <span className="text-[0.95rem] font-medium text-foreground">
+                      {s.service}
+                    </span>
+                    {s.recency === "last_90" ? (
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-muted-foreground">
+                        added within 90 days of snapshot
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Per-service AI labels: independent LLM classification, frontier-QC&rsquo;d ·{" "}
+                <Link
+                  href="/fedramp/coverage/spread#services"
+                  className="text-[var(--stamp)] hover:underline"
+                >
+                  the shelf inside the shelf →
+                </Link>
+              </p>
+            </div>
+          ) : null}
+
+          <details className="group">
+            <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-[var(--stamp)]">
+              Show all {formatNumber(servicesInScope.length)} services in scope
+            </summary>
+            <ul className="mt-4 columns-2 gap-x-8 text-[13px] leading-[1.7] text-foreground/80 md:columns-3">
+              {otherServices.map((s) => (
+                <li key={s.service} className="break-inside-avoid">
+                  {s.service}
+                </li>
+              ))}
+              {aiServices.map((s) => (
+                <li key={`ai-${s.service}`} className="break-inside-avoid font-medium text-foreground">
+                  {s.service}
+                </li>
+              ))}
+            </ul>
+          </details>
         </Section>
       ) : null}
 

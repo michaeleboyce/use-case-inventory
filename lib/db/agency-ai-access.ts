@@ -71,6 +71,54 @@ export function getAgencyAiAccessEvidence(): AgencyAiAccessRow[] {
   });
 }
 
+/** One agency's best availability tier + best corroborated share estimate. */
+export interface AgencyAccessTier {
+  tier: AgencyAiAccessCoverage;
+  /** Highest corroborated estimated_share_of_eligible (0–1), or null. */
+  share: number | null;
+}
+
+/**
+ * Per-agency best (most-available) tier keyed by abbreviation — the
+ * cross-reference shape for reach-vs-access joins on the FedRAMP coverage
+ * pages. Tier logic mirrors getAiAccessSummary; the share comes from the
+ * table's estimated_share_of_eligible column (corroborated rows only).
+ */
+export function getAgencyAccessTiers(): Record<string, AgencyAccessTier> {
+  const db = getDb();
+  const rows = db
+    .prepare<[], {
+      agency_abbreviation: string;
+      coverage_assessment: string | null;
+      status: string;
+      estimated_share_of_eligible: number | null;
+    }>(
+      `SELECT agency_abbreviation, coverage_assessment, status,
+              estimated_share_of_eligible
+         FROM agency_ai_access_evidence`,
+    )
+    .all();
+  const out: Record<string, AgencyAccessTier> = {};
+  for (const r of rows) {
+    const rank = COVERAGE_RANK[r.coverage_assessment ?? "unknown"] ?? 6;
+    const tier = COVERAGE_VALUES[rank - 1] ?? "unknown";
+    const share =
+      r.status === "corroborated" ? r.estimated_share_of_eligible : null;
+    const prev = out[r.agency_abbreviation];
+    if (!prev || rank < (COVERAGE_RANK[prev.tier] ?? 6)) {
+      out[r.agency_abbreviation] = { tier, share };
+    } else if (
+      prev &&
+      rank === (COVERAGE_RANK[prev.tier] ?? 6) &&
+      share != null &&
+      (prev.share == null || share > prev.share)
+    ) {
+      prev.share = share;
+    }
+  }
+  return out;
+}
+
 /** Coverage rollup for the /readiness/access header and the /readiness teaser.
  *  `by_coverage` counts DISTINCT agencies at each agency's BEST (most
  *  available) coverage tier — so an agency with both an `all` tool and a

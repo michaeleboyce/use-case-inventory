@@ -14,10 +14,13 @@
 import { getDb } from "../shared/init";
 import { hasAiClassification } from "./classification";
 import type {
+  AiServiceForProductRow,
+  AiServiceInReachRow,
   AiServiceInScopeRow,
   AiServiceShelfCounts,
   CoreAiSpreadRow,
   FrontierProductStatus,
+  FrontierReachAgencyRow,
   SpreadCounts,
   UnlinkedAiAtoAgencyRow,
 } from "../../types";
@@ -213,6 +216,99 @@ export function getAiServiceShelfCounts(): AiServiceShelfCounts {
     )
     .get() ?? { n: 0 };
   return { ...cats, agencies_in_reach: reach.n };
+}
+
+/**
+ * Every in-scope service of one package, AI-labeled where the per-service
+ * classification exists. AI categories sort first (core_ai, then
+ * ai_featured), then everything else alphabetically — the product page shows
+ * the AI slice prominently and folds the rest into a disclosure.
+ */
+export function getServicesInScopeForProduct(
+  fedrampId: string,
+): AiServiceForProductRow[] {
+  const db = getDb();
+  const hasServices = Boolean(
+    db
+      .prepare(
+        `SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fedramp_authorized_services'`,
+      )
+      .get(),
+  );
+  if (!hasServices) return [];
+  const hasLabels = hasServiceClassification();
+  return db
+    .prepare<[string], AiServiceForProductRow>(
+      `SELECT s.service,
+              s.recency,
+              ${hasLabels ? "c.category, c.confidence, c.source" : "NULL AS category, NULL AS confidence, NULL AS source"}
+         FROM fedramp_authorized_services s
+         ${hasLabels ? "LEFT JOIN fedramp_ai_service_classification c ON c.service = s.service" : ""}
+        WHERE s.fedramp_id = ?
+        ORDER BY CASE ${hasLabels ? "c.category" : "NULL"}
+                   WHEN 'core_ai' THEN 0
+                   WHEN 'ai_featured' THEN 1
+                   ELSE 2
+                 END,
+                 s.service`,
+    )
+    .all(fedrampId);
+}
+
+/**
+ * Core-AI services in scope of packages a specific inventory agency holds an
+ * ATO for — the per-agency "frontier-adjacent services in reach" list.
+ * In scope of an authorization the agency already holds; says nothing about
+ * whether the agency enabled the service.
+ */
+export function getAiServicesInReachForAgency(
+  inventoryAgencyId: number,
+): AiServiceInReachRow[] {
+  if (!hasServiceClassification()) return [];
+  return getDb()
+    .prepare<[number], AiServiceInReachRow>(
+      `SELECT s.service,
+              p.fedramp_id AS host_fedramp_id,
+              p.cso,
+              p.impact_level,
+              MAX(a.ato_issuance_date) AS ato_issuance_date,
+              c.source
+         FROM fedramp_authorized_services s
+         JOIN fedramp_ai_service_classification c
+           ON c.service = s.service AND c.category = 'core_ai'
+         JOIN fedramp_products p ON p.fedramp_id = s.fedramp_id
+         JOIN fedramp_authorizations a ON a.fedramp_id = s.fedramp_id
+         JOIN fedramp_agency_links al ON al.fedramp_agency_id = a.agency_id
+        WHERE al.inventory_agency_id = ?
+        GROUP BY s.service, p.fedramp_id
+        ORDER BY s.service, p.cso`,
+    )
+    .all(inventoryAgencyId);
+}
+
+/**
+ * Per-agency rollup: how many core-AI services sit in scope of packages each
+ * agency holds. Feeds the reach-vs-access table on /fedramp/coverage/agencies.
+ */
+export function getFrontierReachByAgency(): FrontierReachAgencyRow[] {
+  if (!hasServiceClassification()) return [];
+  return getDb()
+    .prepare<[], FrontierReachAgencyRow>(
+      `SELECT ia.id AS inventory_agency_id,
+              ia.name AS agency_name,
+              ia.abbreviation AS agency_abbreviation,
+              COUNT(DISTINCT s.service) AS core_ai_services_in_reach,
+              COUNT(DISTINCT s.fedramp_id) AS host_packages
+         FROM fedramp_authorized_services s
+         JOIN fedramp_ai_service_classification c
+           ON c.service = s.service AND c.category = 'core_ai'
+         JOIN fedramp_authorizations a ON a.fedramp_id = s.fedramp_id
+         JOIN fedramp_agency_links al ON al.fedramp_agency_id = a.agency_id
+         JOIN agencies ia ON ia.id = al.inventory_agency_id
+        GROUP BY ia.id
+        ORDER BY core_ai_services_in_reach DESC, ia.name`,
+    )
+    .all();
 }
 
 /**

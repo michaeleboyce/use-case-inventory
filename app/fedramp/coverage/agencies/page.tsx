@@ -2,11 +2,30 @@ import Link from "next/link";
 import {
   getCoverageAgencyRows,
   getFedrampSnapshot,
+  getFrontierReachByAgency,
+  getAgencyAccessTiers,
+  type AgencyAccessTier,
 } from "@/lib/db";
-import type { CoverageAgencyRow, FedrampSnapshot } from "@/lib/types";
+import type {
+  CoverageAgencyRow,
+  FedrampSnapshot,
+  FrontierReachAgencyRow,
+} from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
-import { Section } from "@/components/editorial";
+import { Section, MonoChip } from "@/components/editorial";
 import { AgenciesCoverageTable } from "./_sections/agencies-table";
+
+// Availability tiers, least-available first — the sort puts high-reach /
+// low-access agencies (the article's laggard cases) at the top.
+const TIER_ORDER: Record<string, number> = {
+  none: 0,
+  latent: 1,
+  unknown: 2,
+  pilot: 3,
+  partial: 4,
+  most: 5,
+  all: 6,
+};
 
 export const metadata = {
   title: "Agency gap analysis · FedRAMP × AI Inventory",
@@ -129,8 +148,122 @@ export default function FedrampCoverageAgenciesPage() {
         </Section>
       )}
 
+      <FrontierReachSection />
+
       <SnapshotFooter snapshot={snapshot} />
     </div>
+  );
+}
+
+/**
+ * § II — the reach-vs-access cross-reference. One row per agency holding an
+ * ATO on at least one package whose scope catalog contains a core-AI service
+ * (Bedrock, Azure OpenAI, …), joined to IFP's web-corroborated estimate of
+ * how widely staff can actually use a general-purpose AI tool. The gap
+ * between the two columns is article beat 4: frontier capability was legally
+ * in reach at agencies where employees have little or nothing.
+ */
+function FrontierReachSection() {
+  let reach: FrontierReachAgencyRow[] = [];
+  let tiers: Record<string, AgencyAccessTier> = {};
+  try {
+    reach = getFrontierReachByAgency();
+    tiers = getAgencyAccessTiers();
+  } catch {
+    return null;
+  }
+  if (reach.length === 0) return null;
+
+  const rows = reach
+    .map((r) => ({ ...r, _access: tiers[r.agency_abbreviation] ?? null }))
+    .sort((a, b) => {
+      if (b.core_ai_services_in_reach !== a.core_ai_services_in_reach) {
+        return b.core_ai_services_in_reach - a.core_ai_services_in_reach;
+      }
+      const ta = a._access ? (TIER_ORDER[a._access.tier] ?? 2) : 2;
+      const tb = b._access ? (TIER_ORDER[b._access.tier] ?? 2) : 2;
+      return ta - tb;
+    });
+
+  return (
+    <Section
+      number="II"
+      title="Frontier capability in reach vs. staff access"
+      source="mixed"
+      lede="Agencies holding an ATO on at least one package whose scope catalog contains a core-AI service, against IFP's estimate of how widely staff can actually use a general-purpose AI tool. In scope of an authorization the agency already holds — not evidence the agency enabled anything. IFP access estimates are web-corroborated assessments, not OMB data."
+    >
+      <table className="w-full border-t-2 border-foreground text-sm">
+        <thead>
+          <tr className="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <th className="py-2 pr-4">Agency</th>
+            <th className="py-2 pr-4 text-right">Core-AI services in reach</th>
+            <th className="py-2 pr-4 text-right">Host packages</th>
+            <th className="py-2">IFP staff-access estimate</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border/60">
+          {rows.map((r) => (
+            <tr key={r.inventory_agency_id} className="hover:bg-muted/30">
+              <td className="py-2.5 pr-4">
+                <MonoChip
+                  href={`/fedramp/coverage/agencies/${r.agency_abbreviation}`}
+                  tone="ink"
+                  size="xs"
+                >
+                  {r.agency_abbreviation}
+                </MonoChip>
+                <span className="ml-2 text-[0.9rem] text-foreground">
+                  {r.agency_name}
+                </span>
+              </td>
+              <td className="py-2.5 pr-4 text-right font-display italic tabular-nums text-foreground">
+                {formatNumber(r.core_ai_services_in_reach)}
+              </td>
+              <td className="py-2.5 pr-4 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                {formatNumber(r.host_packages)}
+              </td>
+              <td className="py-2.5">
+                {r._access ? (
+                  <span className="text-foreground/85">
+                    <span
+                      className={`font-medium ${
+                        (TIER_ORDER[r._access.tier] ?? 2) <= 1
+                          ? "text-[var(--stamp)]"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {r._access.tier}
+                    </span>
+                    {r._access.share != null ? (
+                      <span className="ml-1 font-mono text-[11px] text-muted-foreground">
+                        ~{Math.round(r._access.share * 100)}% of eligible staff
+                      </span>
+                    ) : null}
+                  </span>
+                ) : (
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    no assessment
+                  </span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-3 max-w-prose font-mono text-[11px] text-muted-foreground">
+        Reach: services-in-scope catalogs ⨝ per-service AI classification
+        (frontier-QC&rsquo;d) ⨝ agency ATO holdings. Access: IFP
+        web-corroborated availability tier (best across tools), share shown
+        where a corroborated estimate exists. Full service detail:{" "}
+        <Link
+          href="/fedramp/coverage/spread#services"
+          className="text-foreground hover:text-[var(--stamp)] underline-offset-2 hover:underline"
+        >
+          the shelf inside the shelf
+        </Link>
+        .
+      </p>
+    </Section>
   );
 }
 

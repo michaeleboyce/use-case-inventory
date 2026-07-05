@@ -5,6 +5,9 @@ import {
   hasServiceClassification,
   getAiServicesInScope,
   getAiServiceShelfCounts,
+  getServicesInScopeForProduct,
+  getAiServicesInReachForAgency,
+  getFrontierReachByAgency,
 } from "@/lib/db";
 
 /**
@@ -97,6 +100,38 @@ describe("lib/db/fedramp — services in scope (shelf inside the shelf)", () => 
     expect(c.agencies_in_reach).toBe(2);
   });
 
+  it("lists a product's services with AI labels first (Wave B)", () => {
+    const host = getServicesInScopeForProduct("FR_HOST");
+    expect(host.map((s) => s.service)).toEqual(["Test Bedrock", "Test Backup"]);
+    expect(host[0].category).toBe("core_ai");
+    expect(host[1].category).toBe("not_ai");
+
+    const other = getServicesInScopeForProduct("FR_OTHER");
+    expect(other).toHaveLength(1);
+    expect(other[0].category).toBe("not_ai");
+    expect(other[0].recency).toBe("last_90");
+
+    expect(getServicesInScopeForProduct("FR_NOPE")).toEqual([]);
+  });
+
+  it("lists core-AI services in reach for an agency (Wave B)", () => {
+    const va = getAiServicesInReachForAgency(1);
+    expect(va).toHaveLength(1);
+    expect(va[0].service).toBe("Test Bedrock");
+    expect(va[0].host_fedramp_id).toBe("FR_HOST");
+    expect(va[0].ato_issuance_date).toBe("2024-05-01"); // VA's own ATO date
+    expect(getAiServicesInReachForAgency(3)).toEqual([]); // unmapped agency
+  });
+
+  it("rolls up frontier reach by agency (Wave B)", () => {
+    const rows = getFrontierReachByAgency();
+    expect(rows).toHaveLength(2); // VA and DHS both hold FR_HOST
+    for (const r of rows) {
+      expect(r.core_ai_services_in_reach).toBe(1);
+      expect(r.host_packages).toBe(1);
+    }
+  });
+
   it("degrades to empty/zero when the sidecar table is absent", () => {
     db.exec("DROP TABLE fedramp_ai_service_classification");
     expect(hasServiceClassification()).toBe(false);
@@ -107,5 +142,12 @@ describe("lib/db/fedramp — services in scope (shelf inside the shelf)", () => 
       host_packages: 0,
       agencies_in_reach: 0,
     });
+    // Wave B guards: reach helpers empty; the per-product list still works
+    // (labels degrade to null rather than hiding the catalog).
+    expect(getAiServicesInReachForAgency(1)).toEqual([]);
+    expect(getFrontierReachByAgency()).toEqual([]);
+    const host = getServicesInScopeForProduct("FR_HOST");
+    expect(host).toHaveLength(2);
+    expect(host.every((s) => s.category === null)).toBe(true);
   });
 });
