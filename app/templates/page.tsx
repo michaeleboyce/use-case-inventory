@@ -3,6 +3,7 @@ import { TemplatesFilters } from "@/components/template/templates-filters";
 import { CapabilityCategoryChart } from "@/components/charts/capability-category-chart";
 import { Section, Figure } from "@/components/editorial";
 import { PageMasthead } from "@/components/page-masthead";
+import { DefinitionCallout } from "@/components/definition-callout";
 import { StatTile } from "@/components/stat-tile";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
@@ -117,6 +118,28 @@ export default async function TemplatesPage() {
           </div>
         }
       />
+
+      {/* ------------------------------------------------------------ */}
+      {/* WHAT A TEMPLATE IS — definitional band                       */}
+      {/* ------------------------------------------------------------ */}
+      <DefinitionCallout
+        title="What a template is"
+        source="derived"
+        aside={
+          <Link
+            href="/glossary#template"
+            className="transition-colors hover:text-[var(--stamp)]"
+          >
+            Full definition →
+          </Link>
+        }
+        className="mt-12"
+      >
+        A template is a verbatim phrasing that recurs across many filings —
+        often vendor- or OMB-supplied boilerplate an agency copied word for
+        word. IFP groups identical phrasings so you can see who adopted the same
+        language; the counts below are IFP&rsquo;s, over OMB-filed text.
+      </DefinitionCallout>
 
       {/* ------------------------------------------------------------ */}
       {/* § I — CATEGORY VOLUME                                        */}

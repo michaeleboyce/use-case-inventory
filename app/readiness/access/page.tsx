@@ -94,6 +94,16 @@ export default function AiAccessPage() {
         />
       </div>
 
+      <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+        This evidence base supports the essay{" "}
+        <Link
+          href="/experience"
+          className="text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-[var(--stamp)]"
+        >
+          The AI experience of an average civil servant →
+        </Link>
+      </p>
+
       {/* Methodology note */}
       <aside className="mt-8 max-w-3xl border-l-4 border-[var(--stamp)] bg-muted/20 px-5 py-4">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">

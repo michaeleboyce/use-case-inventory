@@ -266,6 +266,16 @@ export default async function SilentlyDroppedPage() {
         }
       />
 
+      <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+        This finding is narrated in Stories §06 —{" "}
+        <Link
+          href="/stories#disappearing-act"
+          className="text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-[var(--stamp)]"
+        >
+          The disappearing act →
+        </Link>
+      </p>
+
       {/* ------------------------------------------------------------ */}
       {/* § I — THE BREAKDOWN                                           */}
       {/* ------------------------------------------------------------ */}

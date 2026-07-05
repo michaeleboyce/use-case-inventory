@@ -13,9 +13,10 @@ import {
 } from "@/lib/db";
 import { formatDate, formatNumber } from "@/lib/formatting";
 import { DATA_QUALITY_ISSUES, TAG_SCHEMA } from "./_sections/about-content";
+import { MATURITY_TIER_DEFS } from "@/lib/definitions";
 
 export const metadata = {
-  title: "Colophon · Federal AI Use Case Inventory",
+  title: "Methods & Sources · Federal AI Use Case Inventory",
 };
 
 export default function AboutPage() {
@@ -27,8 +28,8 @@ export default function AboutPage() {
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* HERO — editorial nameplate */}
       <PageMasthead
-        kicker="§ Colophon"
-        metaLines={["Masthead · Methodology", "OMB M-25-21 · Cycle 2025"]}
+        kicker="§ Reference · Methods & Sources"
+        metaLines={["Colophon · Methodology", "OMB M-25-21 · Cycle 2025"]}
         meta={
           <div className="space-y-3 border-t border-border pt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             <div>
@@ -162,8 +163,15 @@ export default function AboutPage() {
               computed from the aggregates in{" "}
               <code className="border border-border bg-background px-1 py-0.5 font-mono text-xs">
                 agency_ai_maturity
-              </code>{" "}
-              using thresholds documented in the data repo.
+              </code>
+              ; the thresholds are spelled out in{" "}
+              <a
+                href="#maturity-tiers"
+                className="font-medium text-foreground underline-offset-4 hover:text-[var(--stamp)] hover:underline"
+              >
+                § III below
+              </a>
+              .
             </p>
           </div>
         </div>
@@ -209,9 +217,140 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* § III · Errata — stamp-style */}
+      {/* § III · Maturity tiers — the heuristic, spelled out */}
       <Section
         number="III"
+        title="Maturity tiers"
+        lede="The heuristic behind the ledger on the home page and /agencies — thresholds fixed in compute_maturity.py."
+        source="derived"
+        id="maturity-tiers"
+      >
+        <div className="border-t-2 border-foreground">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <th scope="col" className="py-2 pr-4 align-bottom">Tier</th>
+                <th scope="col" className="py-2 align-bottom">Threshold</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(["leading", "progressing", "early", "minimal"] as const).map(
+                (tier) => (
+                  <tr
+                    key={tier}
+                    className="border-b border-border/60 align-top last:border-b-0"
+                  >
+                    <th
+                      scope="row"
+                      className="py-3 pr-4 text-left font-display italic text-[1.05rem] text-foreground"
+                    >
+                      {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                    </th>
+                    <td className="py-3 leading-snug text-muted-foreground">
+                      {MATURITY_TIER_DEFS[tier].definition.replace(
+                        " IFP heuristic tier.",
+                        "",
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+          <p className="mt-4 max-w-prose text-[0.95rem] leading-[1.6] text-muted-foreground">
+            The tier is a breadth heuristic over <em>what an agency filed</em>{" "}
+            — it rewards inventory volume and capability coverage, not
+            disclosure quality. It is deliberately simple and deliberately
+            IFP-opinionated; the thresholds mirror{" "}
+            <code className="border border-border bg-background px-1 py-0.5 font-mono text-xs">
+              compute_maturity.py
+            </code>{" "}
+            in the ETL repo.
+          </p>
+        </div>
+      </Section>
+
+      {/* § IV · Counting rules — why two pages can show different numbers */}
+      <Section
+        number="IV"
+        title="Counting rules"
+        lede="The denominators, and why two pages can honestly show different numbers for the same idea."
+        source="derived"
+        id="counting-rules"
+      >
+        <div className="max-w-prose space-y-5 font-body text-[1rem] leading-[1.6] text-foreground/90">
+          <p>
+            <strong>Individual vs consolidated.</strong> IFP tags cover
+            individual use cases only — consolidated entries are one filed row
+            standing for many deployments and carry no tags. Every percentage
+            on this site therefore divides tag-derived counts by the{" "}
+            <em>individual</em> use-case total, and captions say so.
+          </p>
+          <p>
+            <strong>Products vs deployments.</strong> The product count is the
+            canonical catalogue size (distinct products). &ldquo;Deployments&rdquo;
+            sums agency×product pairs — a product run by twelve agencies
+            counts twelve times. The home page shows both, labeled.
+          </p>
+          <p>
+            <strong>Generative AI, three ways.</strong> The home page and
+            explorer use the IFP <code className="border border-border bg-background px-1 py-0.5 font-mono text-xs">is_generative_ai</code>{" "}
+            tag. The 2024 ↔ 2025 comparison uses re-audited IFP tags on both
+            cycles. The AI Experience essay additionally shows OMB&rsquo;s own
+            classification, because &ldquo;how much GenAI&rdquo; genuinely
+            depends on whose definition you use. When numbers differ across
+            pages, this is why.
+          </p>
+          <p>
+            <strong>Agencies reporting.</strong> The canonical figure is
+            agencies with at least one inventory entry
+            (<code className="border border-border bg-background px-1 py-0.5 font-mono text-xs">total_agencies_with_data</code>);
+            the tracked universe is larger and shown as &ldquo;N of M
+            agencies.&rdquo;
+          </p>
+        </div>
+      </Section>
+
+      {/* § V · Maturity vs readiness — the canonical reconciliation */}
+      <Section
+        number="V"
+        title="Maturity vs readiness"
+        lede="Two agency scores, two questions — the site keeps both on purpose."
+        source="derived"
+        id="maturity-vs-readiness"
+      >
+        <div className="max-w-prose space-y-5 font-body text-[1rem] leading-[1.6] text-foreground/90">
+          <p>
+            <strong>Maturity tiers</strong> (Leading → Minimal, § III above)
+            describe <em>what an agency filed</em>: a breadth heuristic over
+            its inventory that rewards volume and capability coverage.{" "}
+            <strong>Readiness grades</strong> (A–F) score <em>how it filed</em>{" "}
+            against the published five-dimension rubric — procurement hygiene,
+            reporting quality, internal build, and so on (see the{" "}
+            <a
+              href="/readiness/methodology"
+              className="font-medium text-foreground underline-offset-4 hover:text-[var(--stamp)] hover:underline"
+            >
+              Readiness methodology
+            </a>
+            ).
+          </p>
+          <p>
+            The two deliberately disagree. An agency can be{" "}
+            <em>Leading</em> on maturity — an enormous, capability-rich
+            inventory — and still grade <em>F</em> on readiness because its
+            filings lack ATO evidence, risk documentation, or disclosure
+            discipline. That gap is a finding, not a bug: it is the distance
+            between adopting AI and being institutionally ready to run it.
+            Wherever both scores appear together, they are labeled with which
+            system they come from.
+          </p>
+        </div>
+      </Section>
+
+      {/* § VI · Errata — stamp-style */}
+      <Section
+        number="VI"
         title="Errata"
         lede="Known data-quality issues. Each is handled in the importer; they are listed here so downstream users understand the caveats."
       >
@@ -242,9 +381,9 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* § IV · Data sources — full ranked list of reporting agencies */}
+      {/* § VII · Data sources — full ranked list of reporting agencies */}
       <Section
-        number="IV"
+        number="VII"
         title="Sources"
         lede="Primary guidance, the consolidated portal, and every per-agency inventory page behind this database."
       >

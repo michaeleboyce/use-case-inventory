@@ -4,6 +4,10 @@ import { StatTile } from "@/components/stat-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import { Section, Figure, SourceLegend, Eyebrow } from "@/components/editorial";
 import { PageMasthead } from "@/components/page-masthead";
+import {
+  DefinitionCallout,
+  DefinitionTile,
+} from "@/components/definition-callout";
 import { TermChip } from "@/components/term-chip";
 import { LINEAGE_STATUS_DEFS } from "@/lib/definitions";
 import { YearComparisonChart } from "@/components/charts/year-comparison-chart";
@@ -144,6 +148,51 @@ export default async function CompareYearsPage() {
           </>
         }
       />
+
+      {/* ------------------------------------------------------------ */}
+      {/* HOW THE TWO CYCLES ARE MATCHED — definitional band            */}
+      {/* ------------------------------------------------------------ */}
+      <DefinitionCallout
+        title="How the two cycles are matched"
+        aside={
+          <Link
+            href="#methodology"
+            className="transition-colors hover:text-[var(--stamp)]"
+          >
+            Full caveats · §V →
+          </Link>
+        }
+        className="mt-12"
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <DefinitionTile label="Lineage matching">
+            IFP linked every 2024 use case to its 2025 counterpart by
+            deterministic name matching plus an LLM adjudication pass, so each
+            lands in one lineage status.{" "}
+            <Link
+              href="/glossary#lineage-continued"
+              className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+            >
+              Lineage statuses →
+            </Link>
+          </DefinitionTile>
+          <DefinitionTile label="Taxonomies changed">
+            The two cycles use different deployment-stage and impact
+            vocabularies, so some dimensions are a lossy IFP recode. Read the
+            direction of travel, not the exact deltas — §V names each caveat.
+          </DefinitionTile>
+          <DefinitionTile label="Silently dropped" emphasis>
+            A use case active in 2024 that vanished from 2025 without a Retired
+            marker — the single biggest reason raw totals understate churn.{" "}
+            <Link
+              href="/glossary#silently-dropped"
+              className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+            >
+              Definition →
+            </Link>
+          </DefinitionTile>
+        </div>
+      </DefinitionCallout>
 
       {/* ------------------------------------------------------------ */}
       {/* § I — GROWTH AT A GLANCE                                       */}

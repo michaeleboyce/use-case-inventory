@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageSubnav } from "@/components/page-subnav";
 import { Section } from "@/components/editorial";
 import { PageMasthead } from "@/components/page-masthead";
+import { MaturityVsReadinessNote } from "@/components/maturity-vs-readiness-note";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
 import { ReadinessTierBand } from "@/components/readiness/readiness-tier-band";
 import { ReadinessRankTable } from "@/components/readiness/readiness-rank-table";
@@ -102,6 +103,8 @@ export default async function ReadinessPage() {
         }
       />
       </div>
+
+      <MaturityVsReadinessNote className="mt-8" />
 
       {/* ----------------------------------------------------------------- */}
       {/* § 01 — THE HEADLINE                                                */}

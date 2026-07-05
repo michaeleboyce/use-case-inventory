@@ -71,6 +71,7 @@ import {
 import { agencyUseCasesUrl } from "@/lib/urls";
 import { getAgencyReadinessByAbbr } from "@/lib/readiness";
 import { AgencyScorecardCard } from "@/components/agency/agency-scorecard-card";
+import { MaturityVsReadinessNote } from "@/components/maturity-vs-readiness-note";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   BreakdownChips,
@@ -180,16 +181,19 @@ function TopLevelOrgPage({
           carrying the #scorecard anchor so deep links from /readiness and
           from the scorecard card's own footer land at the right spot. */}
       {readiness ? (
-        <div id="scorecard" className="scroll-mt-36">
-          <Section
-            number="0"
-            title="Readiness scorecard"
-            source="derived"
-            lede="Scored against a 5-dimension Federal AI Readiness rubric."
-          >
-            <AgencyScorecardCard readiness={readiness} />
-          </Section>
-        </div>
+        <>
+          <MaturityVsReadinessNote className="mt-10" />
+          <div id="scorecard" className="scroll-mt-36">
+            <Section
+              number="0"
+              title="Readiness scorecard"
+              source="derived"
+              lede="Scored against a 5-dimension Federal AI Readiness rubric."
+            >
+              <AgencyScorecardCard readiness={readiness} />
+            </Section>
+          </div>
+        </>
       ) : null}
 
       {/* Ledger row — 4 of 7 tiles expand in place to show their matching use

@@ -152,11 +152,11 @@ export const NAV_SECTIONS: NavSection[] = [
 
 /**
  * Reference surfaces — methods, audits, provenance. Unnumbered; rendered
- * as the right-aligned "Reference" menu. (/glossary joins this list when
- * the route ships.)
+ * as the right-aligned "Reference" menu.
  */
 export const REFERENCE_LINKS: NavChild[] = [
   { href: "/about", label: "Methods & Sources" },
+  { href: "/glossary", label: "Glossary" },
   { href: "/discrepancies", label: "Discrepancies" },
 ];
 

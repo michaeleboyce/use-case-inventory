@@ -5,6 +5,7 @@ import { getFullHierarchyWithCounts } from "@/lib/hierarchy";
 import { AgenciesTable, type AgencyRow } from "@/components/agencies-table";
 import { AgencyHierarchyTree } from "@/components/hierarchy";
 import { PageMasthead } from "@/components/page-masthead";
+import { MaturityVsReadinessNote } from "@/components/maturity-vs-readiness-note";
 import { StatTile } from "@/components/stat-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
@@ -128,6 +129,8 @@ export default async function AgenciesPage({
           </div>
         }
       />
+
+      <MaturityVsReadinessNote className="mt-10" />
 
       {/* ---------------------------------------------------------------- */}
       {/* Directory table or hierarchy tree                                 */}

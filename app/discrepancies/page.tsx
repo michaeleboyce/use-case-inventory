@@ -21,6 +21,7 @@ import { getDiscrepancySummary } from "@/lib/discrepancies";
 import type { DiscrepancyStatus } from "@/lib/types";
 import { Section, MonoChip } from "@/components/editorial";
 import { PageMasthead } from "@/components/page-masthead";
+import { DefinitionCallout } from "@/components/definition-callout";
 import { StatTile } from "@/components/stat-tile";
 import { BulkResolveBar } from "@/components/bulk-resolve-bar";
 import { DiscrepancyTable } from "@/components/discrepancy/discrepancy-table";
@@ -125,6 +126,18 @@ export default async function DiscrepanciesPage({
           ) : null
         }
       />
+
+      <DefinitionCallout
+        title="What an audit finding is"
+        source="mixed"
+        className="mt-12"
+      >
+        An audit finding is a field-level disagreement between OMB&rsquo;s
+        published consolidated file and IFP&rsquo;s row-for-row ingest of the
+        agency&rsquo;s own filing — a row present in one but not the other, a
+        suggested rename, a duplicate, or a value that drifted on a matched
+        pair. Each finding&rsquo;s status is triaged by hand, not auto-resolved.
+      </DefinitionCallout>
 
       {patterns.length > 0 ? (
         <Section

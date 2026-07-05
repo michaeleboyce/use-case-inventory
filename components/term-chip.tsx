@@ -89,14 +89,24 @@ export function TermChip({
           >
             {provenanceLabel}
           </span>
-          {href ? (
-            <Link
-              href={href}
-              className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground underline-offset-2 hover:text-[var(--stamp)] hover:underline"
-            >
-              {hrefLabel}
-            </Link>
-          ) : null}
+          <span className="flex items-baseline gap-3">
+            {term.glossarySlug ? (
+              <Link
+                href={`/glossary#${term.glossarySlug}`}
+                className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground underline-offset-2 hover:text-[var(--stamp)] hover:underline"
+              >
+                Full definition →
+              </Link>
+            ) : null}
+            {href ? (
+              <Link
+                href={href}
+                className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground underline-offset-2 hover:text-[var(--stamp)] hover:underline"
+              >
+                {hrefLabel}
+              </Link>
+            ) : null}
+          </span>
         </div>
       </PopoverContent>
     </Popover>
@@ -155,8 +165,18 @@ export function TermLinkChip({
           >
             {provenanceLabel}
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-            Click chip to browse →
+          <span className="flex items-baseline gap-3">
+            {term.glossarySlug ? (
+              <Link
+                href={`/glossary#${term.glossarySlug}`}
+                className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground underline-offset-2 hover:text-[var(--stamp)] hover:underline"
+              >
+                Full definition →
+              </Link>
+            ) : null}
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+              Click chip to browse →
+            </span>
           </span>
         </div>
       </PopoverContent>

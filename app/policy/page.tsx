@@ -1,5 +1,6 @@
 // app/policy/page.tsx — top-level /policy section.
 
+import Link from "next/link";
 import { Section, Figure } from "@/components/editorial";
 import { PageMasthead } from "@/components/page-masthead";
 import { StatTile } from "@/components/stat-tile";
@@ -75,6 +76,16 @@ export default async function PolicyPage({
             sublabel="public agency plan"
           />
         </div>
+        <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Compliance context: the readiness rubric scores what these documents
+          disclose — see{" "}
+          <Link
+            href="/readiness/methodology"
+            className="text-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-[var(--stamp)]"
+          >
+            readiness methodology →
+          </Link>
+        </p>
       </Section>
 
       <Section

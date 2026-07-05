@@ -400,6 +400,49 @@ export default async function ExperiencePage() {
         </ul>
       </Section>
 
+      {/* Continue — cross-links onward from the essay */}
+      <aside
+        aria-label="Continue"
+        className="mt-16 border-t-2 border-foreground pt-5 md:mt-24"
+      >
+        <div className="eyebrow mb-4 !text-[var(--stamp)]">Continue</div>
+        <ul className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              href: "/readiness",
+              label: "Readiness scorecard",
+              note: "the scored rubric behind these agencies",
+            },
+            {
+              href: "/readiness/access",
+              label: "AI Access & Scale",
+              note: "the source-backed evidence base",
+            },
+            {
+              href: "/compare-years",
+              label: "2024 ↔ 2025",
+              note: "how the two cycles compare",
+            },
+            {
+              href: "/stories",
+              label: "Opening the laptop",
+              note: "the narrative arcs, agency by agency",
+            },
+          ].map((item) => (
+            <li key={item.href}>
+              <Link href={item.href} className="group block">
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors group-hover:text-[var(--stamp)]">
+                  {item.label} →
+                </span>
+                <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
+                  {item.note}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
       {/* Footer */}
       <footer className="mt-12 border-t border-border pt-5 font-mono text-[11px] leading-relaxed text-muted-foreground">
         <p>

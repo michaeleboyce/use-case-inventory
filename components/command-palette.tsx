@@ -83,6 +83,7 @@ const QUICK_LINKS: Array<{
   },
   { href: "/discrepancies", label: "Discrepancies", icon: FileText },
   { href: "/about", label: "Methods & Sources", icon: FileText },
+  { href: "/glossary", label: "Glossary", icon: FileText },
 ];
 
 /** Reader-facing names for the dimension slugs in the palette index. */

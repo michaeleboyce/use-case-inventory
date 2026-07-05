@@ -781,6 +781,49 @@ export default async function StoriesPage() {
           </p>
         </div>
       </Section>
+
+      {/* Continue — cross-links onward from the narrative */}
+      <aside
+        aria-label="Continue"
+        className="mt-16 border-t-2 border-foreground pt-5 md:mt-24"
+      >
+        <div className="eyebrow mb-4 !text-[var(--stamp)]">Continue</div>
+        <ul className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              href: "/experience",
+              label: "AI Experience",
+              note: "the data essay these stories draw from",
+            },
+            {
+              href: "/compare-years/silently-dropped",
+              label: "The disappearing act",
+              note: "the silently-dropped entries, in full",
+            },
+            {
+              href: "/fedramp/coverage",
+              label: "FedRAMP coverage",
+              note: "what is authorized but absent",
+            },
+            {
+              href: "/readiness",
+              label: "Readiness scorecard",
+              note: "the scored rubric across agencies",
+            },
+          ].map((item) => (
+            <li key={item.href}>
+              <Link href={item.href} className="group block">
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground transition-colors group-hover:text-[var(--stamp)]">
+                  {item.label} →
+                </span>
+                <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
+                  {item.note}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </aside>
     </main>
   );
 }

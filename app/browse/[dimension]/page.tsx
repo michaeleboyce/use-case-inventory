@@ -14,8 +14,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCrossCutSummary, getCrossCutHeatmap } from "@/lib/db";
 import type { CrossCutKey } from "@/lib/types";
-import { Section, MonoChip } from "@/components/editorial";
+import { Section } from "@/components/editorial";
 import { PageMasthead } from "@/components/page-masthead";
+import { DefinitionCallout } from "@/components/definition-callout";
 import { CrossCutList } from "@/components/cross-cut-list";
 import { CrossCutHeatmap } from "@/components/cross-cut-heatmap";
 import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
@@ -115,19 +116,21 @@ export default async function BrowseDimensionPage({
           <>
             {/* Provenance — make it obvious whether values come from OMB
                 filings or from IFP's analytical layer. */}
-            <div className="flex max-w-prose items-baseline gap-3 border-l-2 border-border pl-3">
-              <MonoChip
-                tone={
-                  DIMENSION_PROVENANCE[key].source === "omb" ? "muted" : "stamp"
-                }
-                size="xs"
-              >
-                {DIMENSION_PROVENANCE[key].source === "omb" ? "OMB" : "IFP"}
-              </MonoChip>
-              <p className="text-[0.85rem] leading-[1.5] text-muted-foreground">
-                {DIMENSION_PROVENANCE[key].long}
-              </p>
-            </div>
+            <DefinitionCallout
+              title="What this dimension is"
+              source={DIMENSION_PROVENANCE[key].source}
+              aside={
+                <Link
+                  href="/glossary"
+                  className="transition-colors hover:text-[var(--stamp)]"
+                >
+                  Glossary →
+                </Link>
+              }
+              className="max-w-prose"
+            >
+              {DIMENSION_PROVENANCE[key].long}
+            </DefinitionCallout>
 
             {/* Tab strip */}
             <nav

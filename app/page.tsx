@@ -89,7 +89,7 @@ export default async function HomePage() {
           <p className="max-w-prose font-display text-[1rem] italic leading-snug text-muted-foreground">
             The ledger above groups agencies by an internal-heuristic maturity
             tier; the readiness index in § {kickers.Readiness} scores them
-            against a published rubric — the two deliberately disagree.{" "}
+            against a published rubric — the two deliberately disagree (<Link href="/about#maturity-vs-readiness" className="underline decoration-dotted underline-offset-4 text-foreground hover:text-[var(--stamp)]">why</Link>).{" "}
             <Link
               href="/agencies"
               className="underline decoration-dotted underline-offset-4 text-foreground hover:text-[var(--stamp)]"

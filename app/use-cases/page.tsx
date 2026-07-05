@@ -1,5 +1,10 @@
+import Link from "next/link";
 import { formatNumber } from "@/lib/formatting";
 import type { UseCaseFilterInput } from "@/lib/types";
+import {
+  DefinitionCallout,
+  DefinitionTile,
+} from "@/components/definition-callout";
 import { UseCaseFilters } from "@/components/use-case/filters";
 import { MobileFiltersSheet } from "@/components/mobile-filters-sheet";
 import { PageMasthead } from "@/components/page-masthead";
@@ -251,6 +256,49 @@ export default async function UseCasesPage({
           </>
         }
       />
+
+      {/* ------------------------------------------------------------ */}
+      {/* READ BEFORE FILTERING — definitional band                     */}
+      {/* ------------------------------------------------------------ */}
+      <DefinitionCallout
+        title="Read before filtering"
+        aside={
+          <Link
+            href="/glossary#consolidated"
+            className="transition-colors hover:text-[var(--stamp)]"
+          >
+            Full definition →
+          </Link>
+        }
+        className="mt-10"
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <DefinitionTile label="Individual vs consolidated entries">
+            Agencies filed {formatNumber(stats.total_use_cases)} individual use
+            cases plus {formatNumber(stats.total_consolidated)} consolidated
+            entries (one row standing for many small deployments). The explorer
+            shows individual entries by default; IFP tags cover individual
+            entries only.
+          </DefinitionTile>
+          <DefinitionTile label="OMB-filed vs IFP-derived tags" emphasis>
+            Some filter values come verbatim from the agency&rsquo;s OMB filing
+            (topic area, high-impact designation); others (sophistication, entry
+            type, product links) were computed by IFP. Each carries an OMB / IFP
+            marker where it renders.
+          </DefinitionTile>
+          <DefinitionTile label="How percentages are computed">
+            Shares quoted across this site divide by the{" "}
+            {formatNumber(stats.total_use_cases)} individual use cases, not the
+            consolidated rows.{" "}
+            <Link
+              href="/about#counting-rules"
+              className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+            >
+              Counting rules →
+            </Link>
+          </DefinitionTile>
+        </div>
+      </DefinitionCallout>
 
       {/* ------------------------------------------------------------ */}
       {/* EXPLORER — filter rail + results pane                         */}
