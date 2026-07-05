@@ -5,6 +5,8 @@ import {
   getUseCasesForCoverageAgencyProduct,
   getUnlinkedAiProductsForAgency,
   getAiServicesInReachForAgency,
+  getSleepingServicesForAgency,
+  bucketTiming,
   getAgencyAccessTiers,
   type AgencyAccessTier,
 } from "@/lib/db";
@@ -164,15 +166,21 @@ export default async function FedrampCoverageAgencyDrillPage({
     }
   }
 
-  // Roman-numeral counter — two fixed sections, then up to three conditional
+  // Sleeping services: mapped services in reach here where a peer agency is
+  // a proven lead user and this agency reports nothing. Empty when the
+  // sleeping-services sidecars aren't loaded.
+  const sleepingServices = getSleepingServicesForAgency(agency.id);
+
+  // Roman-numeral counter — two fixed sections, then up to four conditional
   // ones. Replaces the old hardcoded "IV"/"V-or-III" juggling.
-  const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
+  const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII"];
   let sectionIdx = 0;
   const nextSection = () => ROMAN[sectionIdx++];
   const authorizedNum = nextSection();
   const mentionedNum = nextSection();
   const unlinkedNum = unlinkedAiHeld.length > 0 ? nextSection() : null;
   const reachNum = servicesInReach.length > 0 ? nextSection() : null;
+  const sleepingServicesNum = sleepingServices.length > 0 ? nextSection() : null;
   const tokensNum = nextSection();
 
   // Attach top-10 use cases per "mentioned without ATO" row, server-side.
@@ -468,6 +476,74 @@ export default async function FedrampCoverageAgencyDrillPage({
               the shelf inside the shelf
             </Link>
             .
+          </p>
+        </Section>
+      ) : null}
+
+      {sleepingServices.length > 0 ? (
+        <Section
+          number={sleepingServicesNum!}
+          title="AI services in reach, unreported"
+          source="mixed"
+          lede="Services this agency has in authorized reach where at least one peer agency reports real AI use of the mapped product — and this agency's inventory names neither the product nor, where flagged, anything in the capability class."
+        >
+          <table className="w-full border-t-2 border-foreground text-sm">
+            <thead>
+              <tr className="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <th className="py-2 pr-4">Product / service</th>
+                <th className="py-2 pr-4">Via</th>
+                <th className="py-2 pr-4">First host ATO</th>
+                <th className="py-2">Similar capability deployed?</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {sleepingServices.map((s) => {
+                const bucket = bucketTiming(s.first_ato_date);
+                const excluded = bucket === "post_cutoff" || s.recency_last90 === 1;
+                return (
+                  <tr
+                    key={s.product}
+                    className={`hover:bg-muted/30 ${excluded ? "opacity-45" : ""}`}
+                  >
+                    <td className="py-2.5 pr-4">
+                      <span className="font-medium text-foreground">{s.product}</span>
+                      <span className="mt-0.5 block max-w-[22rem] truncate font-mono text-[10px] text-muted-foreground">
+                        {s.services.split(",").join(" · ")}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-4 text-[0.85rem] text-muted-foreground">
+                      {(s.host_packages ?? "").split(",")[0] || "—"}
+                    </td>
+                    <td className="py-2.5 pr-4 font-mono text-[11px] text-muted-foreground">
+                      {s.first_ato_date ? formatDate(s.first_ato_date) : "—"}
+                      {excluded ? " · post-inventory" : ""}
+                    </td>
+                    <td className="py-2.5 text-[0.85rem]">
+                      {s.similar_deployed === 1 ? (
+                        <span className="text-muted-foreground">
+                          yes{s.similar_products ? ` — ${s.similar_products.split(",").slice(0, 3).join(", ")}` : ""}
+                        </span>
+                      ) : (
+                        <span className="font-medium text-[var(--stamp)]">
+                          nothing similar
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="mt-4 max-w-prose text-sm text-muted-foreground">
+            Government-wide view:{" "}
+            <Link
+              href="/fedramp/coverage/sleeping-services"
+              className="text-foreground hover:text-[var(--stamp)] underline-offset-2 hover:underline"
+            >
+              the sleeping-services board
+            </Link>
+            . Grayed rows postdate the inventory cutoff and are excluded from
+            headline counts.
           </p>
         </Section>
       ) : null}

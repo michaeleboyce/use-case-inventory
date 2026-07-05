@@ -106,6 +106,7 @@ const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
   { href: "/fedramp/coverage/vendors", label: "Vendor coverage" },
   { href: "/fedramp/coverage/products", label: "Unused authorizations" },
   { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations" },
+  { href: "/fedramp/coverage/sleeping-services", label: "Sleeping services" },
   { href: "/fedramp/coverage/unlinked-ai", label: "Unlinked AI products" },
   { href: "/fedramp/coverage/spread", label: "Authorization vs adoption" },
   { href: "/fedramp/coverage/fit", label: "Authorization fit" },

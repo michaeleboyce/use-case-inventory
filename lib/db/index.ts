@@ -170,6 +170,12 @@ export {
   getServicesInScopeForProduct,
   getAiServicesInReachForAgency,
   getFrontierReachByAgency,
+  hasSleepingServices,
+  bucketTiming,
+  getSleepingServicePairs,
+  getSleepingServicesForAgency,
+  getAgencyReportedCategories,
+  SLEEPING_INVENTORY_CUTOFF,
 } from "./fedramp";
 export {
   getGenAiHeadlines,

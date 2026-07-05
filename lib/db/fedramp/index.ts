@@ -4,3 +4,4 @@ export * from "./coverage";
 export * from "./queue";
 export * from "./classification";
 export * from "./spread";
+export * from "./sleeping-services";

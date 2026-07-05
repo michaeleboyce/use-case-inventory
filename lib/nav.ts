@@ -142,6 +142,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/fedramp/coverage/vendors", label: "Vendor coverage", indent: true },
       { href: "/fedramp/coverage/products", label: "Unused authorizations", indent: true },
       { href: "/fedramp/coverage/sleeping", label: "Sleeping authorizations", indent: true },
+      { href: "/fedramp/coverage/sleeping-services", label: "Sleeping services", indent: true },
       { href: "/fedramp/coverage/unlinked-ai", label: "Unlinked AI products", indent: true },
       { href: "/fedramp/coverage/spread", label: "Authorization vs adoption", indent: true },
       { href: "/fedramp/coverage/fit", label: "Authorization fit", indent: true },

@@ -91,6 +91,14 @@ export default async function FedrampCoverageSleepingPage({
             >
               ← Coverage hub
             </Link>
+            {/* Sibling board: same question one level finer — the AI
+                services inside packages, not the packages themselves. */}
+            <Link
+              href="/fedramp/coverage/sleeping-services"
+              className="block font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:text-[var(--stamp)]"
+            >
+              ↔ Service-level board
+            </Link>
           </div>
         </aside>
 

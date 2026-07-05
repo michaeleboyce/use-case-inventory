@@ -564,3 +564,77 @@ export interface LinkQueueRow {
   /** Convenience join — vendor / agency_type for grouping. */
   inventory_group: string | null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Sleeping services (service-level FedRAMP → AI gap)                  */
+/* ------------------------------------------------------------------ */
+
+/** Closed capability vocabulary shared with the ETL crosswalk + labels. */
+export type CapabilityCategory =
+  | "genai_platform"
+  | "assistant"
+  | "ml_lowcode"
+  | "ml_platform"
+  | "doc_processing"
+  | "speech"
+  | "translation"
+  | "vision"
+  | "nlp"
+  | "search"
+  | "chatbot";
+
+/** Bucketed age of the agency's first host-package ATO for a service.
+ *  `post_cutoff` = issued after the inventory reporting cutoff (the agency
+ *  could not have reported use); `unknown` = no usable issuance date. */
+export type SleepingTimingBucket =
+  | "2022_or_earlier"
+  | "2023_24"
+  | "2025h1"
+  | "2025h2"
+  | "post_cutoff"
+  | "unknown";
+
+/**
+ * One (mapped product × agency) pair from the sleeping-services
+ * computation. Emitted for BOTH roles: `lead` (the agency reports the
+ * product, with or without an ATO in reach) and `sleeping` (service in
+ * reach via a host-package ATO, ≥1 peer lead exists, agency reports
+ * nothing). Only products with ≥1 lead user anywhere are emitted.
+ */
+export interface SleepingServicePairRow {
+  /** Inventory canonical_name — the durable key used in board anchors. */
+  product: string;
+  /** Comma-joined FedRAMP service-variant names behind this product. */
+  services: string;
+  capability_category: CapabilityCategory;
+  gen_ai: 0 | 1;
+  confidence: "strong" | "inferred";
+  evidence_tier: "named_offering" | "catalog";
+  agency_id: number;
+  agency_abbr: string;
+  agency_name: string;
+  role: "lead" | "sleeping";
+  /** 1 when the agency holds a host-package ATO listing the service
+   *  (always 1 for sleeping rows; leads may report without reach). */
+  has_reach: 0 | 1;
+  /** MIN valid (>= 2000-01-01) ATO issuance date across host packages. */
+  first_ato_date: string | null;
+  /** Service was added to a host scope catalog in the snapshot's last
+   *  90 days — in reach only after the inventory closed. */
+  recency_last90: 0 | 1;
+  /** Agency reports ≥1 product labeled with the same capability
+   *  category (LLM labels; sleeping rows only — leads trivially 1). */
+  similar_deployed: 0 | 1;
+  /** Sample of same-category products the agency reports. */
+  similar_products: string | null;
+  /** Comma-joined host-package CSO names carrying the service. */
+  host_packages: string | null;
+}
+
+/** Cell state for the frontier grid + capability matrix. */
+export type SleepingCellState =
+  | "lead"
+  | "sleeping_similar"
+  | "sleeping_void"
+  | "timing_excluded"
+  | "no_reach";
