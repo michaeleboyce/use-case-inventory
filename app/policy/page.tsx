@@ -1,5 +1,8 @@
 // app/policy/page.tsx — top-level /policy section.
 
+import { Section, Figure } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { formatDate, formatNumber } from "@/lib/formatting";
 import { buildPolicyViewModel } from "./_view-model";
 import { ComplianceScorecard } from "./_sections/compliance-scorecard";
@@ -24,98 +27,117 @@ export default async function PolicyPage({
     : undefined;
 
   return (
-    <main className="mx-auto max-w-[1400px] px-4 py-8 md:px-8">
-      <header className="mb-8">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-stamp">
-          VI · Policy
-        </p>
-        <h1 className="mt-1 font-display text-4xl italic leading-tight md:text-5xl">
-          Federal AI Policy
-        </h1>
-        <p className="mt-2 max-w-[60ch] text-sm text-foreground/70">
-          M-25-21 compliance · {vm.stats.total_agencies} agencies · last
-          refreshed {formatDate(vm.stats.last_refreshed)}
-        </p>
-      </header>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+      <PageMasthead
+        kicker="§ VI · Policy"
+        metaLines={[
+          "M-25-21 Compliance",
+          `Last refreshed ${formatDate(vm.stats.last_refreshed)}`,
+        ]}
+        title={
+          <>
+            Federal AI
+            <br />
+            policy.
+          </>
+        }
+        lede={`What ${vm.stats.total_agencies} agencies have published in response to the executive orders and OMB memoranda governing federal AI — strategies, compliance plans, and the page counts behind them.`}
+        dropCap
+      />
 
-      <section className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard
-          label="Pages of policy"
-          value={formatNumber(vm.stats.total_pages)}
-          hint="agency-issued only"
-        />
-        <StatCard
-          label="Documents"
-          value={vm.stats.total_documents.toString()}
-          hint="agency-issued only"
-        />
-        <StatCard
-          label="M-25-21 Strategies"
-          value={`${vm.stats.strategies_published} / ${vm.stats.total_agencies}`}
-          hint="public agency strategy"
-        />
-        <StatCard
-          label="M-25-21 Compliance Plans"
-          value={`${vm.stats.plans_published} / ${vm.stats.total_agencies}`}
-          hint="public agency plan"
-        />
-      </section>
-
-      <section className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="rounded-sm border border-border bg-card/40 p-4">
-          <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
-            Compliance scorecard
-          </h2>
-          <ComplianceScorecard rows={vm.compliance} />
+      <Section
+        number="I"
+        title="By the numbers"
+        lede="Agency-issued AI policy, counted."
+        source="derived"
+      >
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
+          <StatTile
+            label="Pages of policy"
+            value={formatNumber(vm.stats.total_pages)}
+            sublabel="agency-issued only"
+            accent="stamp"
+          />
+          <StatTile
+            label="Documents"
+            value={vm.stats.total_documents}
+            sublabel="agency-issued only"
+          />
+          <StatTile
+            label="M-25-21 strategies"
+            value={`${vm.stats.strategies_published} / ${vm.stats.total_agencies}`}
+            sublabel="public agency strategy"
+            accent="verified"
+          />
+          <StatTile
+            label="M-25-21 compliance plans"
+            value={`${vm.stats.plans_published} / ${vm.stats.total_agencies}`}
+            sublabel="public agency plan"
+          />
         </div>
-        <div className="rounded-sm border border-border bg-card/40 p-4">
-          <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
-            Pages of policy by agency
-          </h2>
-          <PagesByAgencyChart rows={vm.pagesByAgency} />
+      </Section>
+
+      <Section
+        number="II"
+        title="Compliance"
+        lede="Who has published what, and how much of it."
+        source="derived"
+      >
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <Figure eyebrow="Fig. 1 · Compliance scorecard">
+            <ComplianceScorecard rows={vm.compliance} />
+          </Figure>
+          <Figure eyebrow="Fig. 2 · Pages of policy by agency">
+            <PagesByAgencyChart rows={vm.pagesByAgency} />
+          </Figure>
         </div>
-      </section>
+      </Section>
 
-      <section id="documents" className="mb-12 scroll-mt-36">
-        <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
-          All policy documents
-        </h2>
-        <DocumentDirectory documents={vm.documents} initialAgency={initialAgency} />
-      </section>
+      <Section
+        number="III"
+        title="The directory"
+        lede="Every located agency-issued AI policy document."
+        source="derived"
+        id="documents"
+      >
+        <DocumentDirectory
+          documents={vm.documents}
+          initialAgency={initialAgency}
+        />
+      </Section>
 
-      <GoverningDocsBlock governing={vm.governing} />
+      <Section
+        number="IV"
+        title="Governing documents"
+        lede="The White House and OMB foundation agencies respond to."
+        source="omb"
+      >
+        <GoverningDocsBlock governing={vm.governing} />
+      </Section>
 
-      <section id="methodology" className="mb-12 max-w-[68ch] text-sm text-foreground/70">
-        <h2 className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
-          Methodology
-        </h2>
-        <p>
-          Coverage is the {vm.stats.total_agencies} agencies that filed a 2025
-          AI use case inventory, plus the Department of Defense (inventory-exempt
-          but a major AI-strategy publisher). For each agency, parallel research
-          sweeps located the AI landing page, identified every formal AI
-          strategy or policy document published since 2023, and recorded the
-          publication year, source URL, and mapping to the M-24-10 / M-25-21
-          required-artifact set. PDF page counts are exact; web-page documents
-          are estimated at ~500 words per page. The full source tracker (CSVs,
-          per-agency research notes, and the downloaded originals) lives in the
-          ETL workspace under <code>audit/research/ai_strategies/</code>.
-        </p>
-      </section>
+      <Section
+        number="V"
+        title="Methodology"
+        lede="How the documents were located and counted."
+        source="derived"
+        id="methodology"
+      >
+        <div className="max-w-prose text-[0.95rem] leading-[1.6] text-muted-foreground">
+          <p>
+            Coverage is the {vm.stats.total_agencies} agencies that filed a
+            2025 AI use case inventory, plus the Department of Defense
+            (inventory-exempt but a major AI-strategy publisher). For each
+            agency, parallel research sweeps located the AI landing page,
+            identified every formal AI strategy or policy document published
+            since 2023, and recorded the publication year, source URL, and
+            mapping to the M-24-10 / M-25-21 required-artifact set. PDF page
+            counts are exact; web-page documents are estimated at ~500 words
+            per page. The full source tracker (CSVs, per-agency research
+            notes, and the downloaded originals) lives in the ETL workspace
+            under <code>audit/research/ai_strategies/</code>.
+          </p>
+        </div>
+      </Section>
     </main>
-  );
-}
-
-function StatCard({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="rounded-sm border border-border bg-card/40 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/60">
-        {label}
-      </p>
-      <p className="mt-1 font-display text-3xl leading-none text-foreground">
-        {value}
-      </p>
-      <p className="mt-1 text-[11px] text-foreground/50">{hint}</p>
-    </div>
   );
 }

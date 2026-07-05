@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { FedrampCoverageBadge } from "@/components/fedramp/coverage-badge";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
 import { buildUseCasesUrl, productUseCasesUrl } from "@/lib/urls";
-import { StatCell } from "./_sections/stat-cell";
+import { StatTile } from "@/components/stat-tile";
 import { AgenciesRunnersList } from "./_sections/agencies-runners-list";
 
 type ProductPageProps = { params: Promise<{ id: string }> };
@@ -177,17 +177,17 @@ export default async function ProductDetailPage(props: ProductPageProps) {
 
           {/* Stat ledger */}
           <div className="mt-10 grid grid-cols-3 gap-x-6 border-t-2 border-foreground pt-4">
-            <StatCell
+            <StatTile variant="cell"
               label="Agencies"
               value={product.agencies.length}
               href="/agencies"
             />
-            <StatCell
+            <StatTile variant="cell"
               label="Total entries"
               value={product.use_case_count}
               href={productUseCasesUrl(product.id)}
             />
-            <StatCell
+            <StatTile variant="cell"
               label="Consolidated"
               value={consolidatedCount}
               href={productUseCasesUrl(product.id)}

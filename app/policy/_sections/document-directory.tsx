@@ -175,7 +175,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-sm border border-border bg-background px-2 py-0.5 text-[11px]"
+        className="rounded-none border border-border bg-background px-2 py-0.5 text-[11px]"
       >
         <option value="">All</option>
         {options.map((o) => (

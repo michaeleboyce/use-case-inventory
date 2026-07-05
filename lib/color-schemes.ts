@@ -67,3 +67,15 @@ export const LLM_VENDOR_COLOR_OVERRIDES: Record<string, string> = {
   "Vendor unspecified": "#cbd5e1", // slate-300
   Other: "#94a3b8", // slate-400 (legacy fallback)
 };
+
+/**
+ * Maturity-tier accents — the ONE color vocabulary for the four IFP
+ * maturity tiers, expressed in design-system tokens (not raw Tailwind
+ * palette classes). Consumed by MaturityTierCard and any tier badge.
+ */
+export const TIER_ACCENTS: Record<string, string> = {
+  leading: "var(--verified)",
+  progressing: "var(--ink)",
+  early: "var(--highlight)",
+  minimal: "oklch(0.7 0.01 60)",
+};

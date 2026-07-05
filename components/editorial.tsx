@@ -295,12 +295,9 @@ export const SCOPE_LABELS: Record<string, string> = {
   unknown: "Unknown",
 };
 
-export const TIER_ACCENTS: Record<string, string> = {
-  leading: "var(--verified)",
-  progressing: "var(--ink)",
-  early: "var(--highlight)",
-  minimal: "oklch(0.7 0.01 60)",
-};
+// Canonical tier accents live in lib/color-schemes.ts; re-exported here for
+// callers that import editorial primitives.
+export { TIER_ACCENTS } from "@/lib/color-schemes";
 
 /* --------------------------------------------------------------------- */
 /* TagChip                                                                */

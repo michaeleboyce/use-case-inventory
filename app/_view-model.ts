@@ -31,7 +31,6 @@ type AgencyType = ReturnType<typeof getAgencyTypeByTier>;
 type Recent = ReturnType<typeof getRecentlyModifiedAgencies>;
 type ReadinessHeadline = ReturnType<typeof getHeadlineStats>;
 type Categories = ReturnType<typeof getCategoryDistribution>;
-type Products = ReturnType<typeof getTopProducts>;
 
 export interface HomeViewModel {
   stats: Stats;

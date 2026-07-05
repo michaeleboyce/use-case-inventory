@@ -1,16 +1,10 @@
-import Link from "next/link";
-import { formatNumber } from "@/lib/formatting";
+import { StatTile, type StatTileAccent } from "@/components/stat-tile";
 
-type Accent = "default" | "stamp" | "verified" | "ink" | "highlight";
-
-const ACCENT_CLASSES: Record<Accent, string> = {
-  default: "text-foreground",
-  stamp: "text-[var(--stamp)]",
-  verified: "text-[var(--verified)]",
-  ink: "text-foreground",
-  highlight: "text-foreground bg-[var(--highlight)]/50",
-};
-
+/**
+ * @deprecated Thin shim over `StatTile variant="rule"`. Migrate call sites
+ * to `StatTile` directly; this file is deleted at the end of the retrofit
+ * sweep (refactor Phase 3).
+ */
 export function MetricTile({
   label,
   value,
@@ -21,44 +15,17 @@ export function MetricTile({
   label: string;
   value: number | string;
   sublabel?: string;
-  accent?: Accent;
+  accent?: StatTileAccent;
   href?: string;
 }) {
-  const display =
-    typeof value === "number" ? formatNumber(value) : value || "—";
-
-  const inner = (
-    <>
-      <div className="eyebrow truncate">{label}</div>
-      <div
-        className={`font-display text-[2.2rem] leading-[0.95] tracking-[-0.02em] italic transition-colors ${ACCENT_CLASSES[accent]} ${
-          href ? "group-hover:text-[var(--stamp)]" : ""
-        }`}
-      >
-        <span className="tabular-nums">{display}</span>
-      </div>
-      {sublabel ? (
-        <div className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
-          {sublabel}
-        </div>
-      ) : null}
-    </>
-  );
-
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className="group flex min-w-0 flex-col gap-1 border-t-2 border-foreground pt-2"
-      >
-        {inner}
-      </Link>
-    );
-  }
-
   return (
-    <div className="group flex min-w-0 flex-col gap-1 border-t-2 border-foreground pt-2">
-      {inner}
-    </div>
+    <StatTile
+      variant="rule"
+      label={label}
+      value={value}
+      sublabel={sublabel}
+      accent={accent}
+      href={href}
+    />
   );
 }

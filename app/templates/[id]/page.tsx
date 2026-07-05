@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StatTile } from "@/components/stat-tile";
 import { notFound } from "next/navigation";
 import {
   getAllTemplates,
@@ -94,13 +95,13 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
 
           {/* Stat ledger */}
           <div className="mt-10 grid grid-cols-3 gap-x-6 border-t-2 border-foreground pt-4">
-            <StatCell label="Agencies" value={template.agencies.length} />
-            <StatCell
+            <StatTile variant="cell" label="Agencies" value={template.agencies.length} />
+            <StatTile variant="cell"
               label="Entries"
               value={template.use_case_count}
               href={templateUseCasesUrl(template.id)}
             />
-            <StatCell
+            <StatTile variant="cell"
               label="Products paired"
               value={template.products.length}
             />
@@ -287,36 +288,6 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
           </span>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function StatCell({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: number;
-  href?: string;
-}) {
-  const valueClass =
-    "mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground md:text-[2.8rem]";
-  return (
-    <div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </div>
-      {href ? (
-        <Link
-          href={href}
-          className={`${valueClass} block transition-colors hover:text-[var(--stamp)]`}
-        >
-          {formatNumber(value)}
-        </Link>
-      ) : (
-        <div className={valueClass}>{formatNumber(value)}</div>
-      )}
     </div>
   );
 }

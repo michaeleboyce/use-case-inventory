@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { buildAgenciesUrl } from "@/lib/urls";
+import { TIER_ACCENTS } from "@/lib/color-schemes";
 
 type TierBlock = {
   tier: string;
@@ -26,27 +27,27 @@ const TIER_META: Record<string, TierMeta> = {
     label: "Leading",
     description:
       "Department-wide LLM + coding tools + agentic systems, ≥ 50 use cases.",
-    accent: "var(--verified)",
+    accent: TIER_ACCENTS.leading,
   },
   progressing: {
     kicker: "II",
     label: "Progressing",
     description:
       "Real inventory with at least one enterprise-wide LLM deployment.",
-    accent: "var(--ink)",
+    accent: TIER_ACCENTS.progressing,
   },
   early: {
     kicker: "III",
     label: "Early",
     description:
       "Any generative AI on the books, typically bureau-scoped pilots.",
-    accent: "var(--highlight)",
+    accent: TIER_ACCENTS.early,
   },
   minimal: {
     kicker: "IV",
     label: "Minimal",
     description: "Fewer than five use cases, or none that are generative.",
-    accent: "oklch(0.7 0.01 60)",
+    accent: TIER_ACCENTS.minimal,
   },
 };
 

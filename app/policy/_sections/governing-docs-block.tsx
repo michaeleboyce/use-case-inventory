@@ -13,7 +13,7 @@ export function GoverningDocsBlock({ governing }: Props) {
   const totalPages = governing.reduce((acc, d) => acc + (d.pages ?? 0), 0);
 
   return (
-    <section className="mb-12 rounded-sm border border-stamp/40 bg-stamp/[0.04] p-5">
+    <section className="border border-stamp/40 bg-stamp/[0.04] p-5">
       <header className="mb-3">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stamp">
           Governing documents · White House &amp; OMB

@@ -27,13 +27,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowUpRight, Check, Minus, Search } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { MonoChip } from "@/components/editorial";
 import { TermChip } from "@/components/term-chip";
 import { MATURITY_TIER_DEFS } from "@/lib/definitions";
@@ -365,7 +359,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
           />
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <LabeledSelect
+          <FilterSelect
             label="Type"
             value={type}
             onChange={(v) => {
@@ -379,7 +373,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
               { value: "LEGISLATIVE", label: "Legislative" },
             ]}
           />
-          <LabeledSelect
+          <FilterSelect
             label="Tier"
             value={tier}
             onChange={(v) => {
@@ -395,7 +389,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
               { value: "none", label: "Unranked" },
             ]}
           />
-          <LabeledSelect
+          <FilterSelect
             label="LLM"
             value={llm}
             onChange={(v) => {
@@ -409,7 +403,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
               { value: "no", label: "No enterprise LLM" },
             ]}
           />
-          <LabeledSelect
+          <FilterSelect
             label="Coding"
             value={coding}
             onChange={(v) => {
@@ -423,7 +417,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
               { value: "no", label: "No coding tools" },
             ]}
           />
-          <LabeledSelect
+          <FilterSelect
             label="Agentic"
             value={agentic}
             onChange={(v) => {
@@ -437,7 +431,7 @@ export function AgenciesTable({ rows }: { rows: AgencyRow[] }) {
               { value: "no", label: "No agentic AI" },
             ]}
           />
-          <LabeledSelect
+          <FilterSelect
             label="Custom"
             value={custom}
             onChange={(v) => {
@@ -571,44 +565,5 @@ function SourceHead({
         {source === "omb" ? "OMB" : "IFP"}
       </span>
     </span>
-  );
-}
-
-function LabeledSelect({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  return (
-    <label className="inline-flex items-center gap-2">
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </span>
-      <Select
-        value={value}
-        onValueChange={(v: string | null) => onChange(v ?? "")}
-      >
-        <SelectTrigger className="h-8 min-w-[140px] rounded-none border-0 border-b border-border bg-transparent font-mono text-[11px] uppercase tracking-[0.08em] shadow-none focus-visible:border-foreground">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem
-              key={o.value}
-              value={o.value}
-              className="font-mono text-[11px] uppercase tracking-[0.08em]"
-            >
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </label>
   );
 }

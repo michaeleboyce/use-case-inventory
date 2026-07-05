@@ -116,24 +116,8 @@ export function agencyTypeLabel(type: string | null | undefined): string {
   }
 }
 
-/**
- * Tailwind class string for maturity tier badges. Kept as raw class literals
- * so the Tailwind JIT can see them.
- */
-export function maturityTierColor(tier: string | null | undefined): string {
-  switch (tier) {
-    case "leading":
-      return "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800";
-    case "progressing":
-      return "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800";
-    case "early":
-      return "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800";
-    case "minimal":
-      return "bg-zinc-100 text-zinc-900 border-zinc-300 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700";
-    default:
-      return "bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700";
-  }
-}
+// NOTE: tier COLORS live in lib/color-schemes.ts (TIER_ACCENTS) — the old
+// maturityTierColor() raw-palette helper was dead code and has been removed.
 
 export function maturityTierLabel(tier: string | null | undefined): string {
   switch (tier) {
