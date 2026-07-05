@@ -315,6 +315,10 @@ export interface AgencySeatModelInput {
   denominator_basis: string | null;
   headcount_as_of: string | null;
   headcount_source_url: string | null;
+  /** Why this agency's AI-eligible share is what it is (researched). */
+  ai_eligible_share: number | null;
+  ai_eligible_rationale: string | null;
+  ai_eligible_source_url: string | null;
   /** FedScope occupational caps per role stratum (agency_occupation_counts). */
   stratum_caps: Partial<Record<Stratum, number>>;
   reaches: StratumReachInput[];

@@ -170,6 +170,34 @@ export default async function AgencySeatPage({
             </p>
           ) : null}
         </div>
+
+        {input?.ai_eligible_rationale ? (
+          <div className="mt-5 border-l-4 border-[var(--stamp)] bg-muted/20 px-4 py-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Why{" "}
+              {input.ai_eligible_share != null
+                ? formatPercent(input.ai_eligible_share)
+                : "this share"}{" "}
+              of staff count as AI-eligible
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+              {input.ai_eligible_rationale}
+            </p>
+            {input.ai_eligible_source_url ? (
+              <p className="mt-2">
+                <a
+                  href={input.ai_eligible_source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                >
+                  Eligible-share source
+                  <ExternalLink className="h-3 w-3" aria-hidden />
+                </a>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </Section>
 
       {/* The estimate's logic, in plain English — generated from the model

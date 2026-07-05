@@ -188,3 +188,8 @@ INSERT INTO use_case_tags_2024 (use_case_id_2024, is_generative_ai, is_enterpris
   (9001, 1, 1, '1'),
   (9001, 1, 1, '3'),   -- later wave wins in the canonical view (dedup check)
   (9002, 0, 0, '2a');
+
+-- readiness_headline: the 1-row ETL-persisted headline stats read by
+-- lib/readiness getHeadlineStats() (home page). Values mirror a real
+-- 2026-07 snapshot; tests assert plumbing, not these numbers.
+INSERT INTO readiness_headline VALUES(1,'1.2',31.5,13.5,55.0,32.9,30.0,30.9,9.9,0,68,3503,3549,92.0,71.8,132,'2026-07-05T21:59:33+00:00');

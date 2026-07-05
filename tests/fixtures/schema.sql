@@ -1060,3 +1060,23 @@ CREATE TABLE agency_occupation_counts (
                 UNIQUE(organization_slug, occ_series, as_of)
             );
 CREATE INDEX idx_aoc_agency ON agency_occupation_counts(agency_id);
+CREATE TABLE readiness_headline (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    rubric_version TEXT NOT NULL,
+    internal_build_pct REAL NOT NULL,
+    purchased_pct REAL NOT NULL,
+    unreported_pct REAL NOT NULL,
+    production_rate_pct REAL NOT NULL,
+    production_rate_all_pct REAL NOT NULL,
+    fedramp_linked_pct REAL NOT NULL,
+    fedramp_floor_pct REAL NOT NULL,
+    frontier_ready_agency_count INTEGER NOT NULL,
+    total_agencies_scored INTEGER NOT NULL,
+    total_units INTEGER NOT NULL,
+    total_use_cases INTEGER NOT NULL,
+    hi_no_risk_docs_pct REAL NOT NULL,
+    hi_no_risk_docs_high_impact_pct REAL NOT NULL,
+    fedramp_link_row_count INTEGER NOT NULL DEFAULT 0,
+    computed_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX idx_use_case_tags_uc_unique ON use_case_tags(use_case_id) WHERE use_case_id IS NOT NULL;

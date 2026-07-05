@@ -145,6 +145,9 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
       denominator_basis: string | null;
       headcount_as_of: string | null;
       headcount_source_url: string | null;
+      ai_eligible_share: number | null;
+      ai_eligible_rationale: string | null;
+      ai_eligible_source_url: string | null;
     }
   >();
   for (const r of getDb()
@@ -156,13 +159,15 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
         contractor_headcount: number | null;
         denominator_basis: string | null;
         ai_eligible_share: number | null;
+        ai_eligible_rationale: string | null;
+        ai_eligible_source_url: string | null;
         headcount_as_of: string | null;
         headcount_source_url: string | null;
       }
     >(`
       SELECT agency_id, total_headcount, contractor_headcount,
-             denominator_basis, ai_eligible_share, headcount_as_of,
-             headcount_source_url
+             denominator_basis, ai_eligible_share, ai_eligible_rationale,
+             ai_eligible_source_url, headcount_as_of, headcount_source_url
         FROM agency_workforce_profile
        WHERE level = 'agency'
          AND total_headcount IS NOT NULL
@@ -181,6 +186,9 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
       denominator_basis: r.denominator_basis,
       headcount_as_of: r.headcount_as_of,
       headcount_source_url: r.headcount_source_url,
+      ai_eligible_share: r.ai_eligible_share,
+      ai_eligible_rationale: r.ai_eligible_rationale,
+      ai_eligible_source_url: r.ai_eligible_source_url,
     });
   }
 
@@ -240,6 +248,9 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
         denominator_basis: w?.denominator_basis ?? null,
         headcount_as_of: w?.headcount_as_of ?? null,
         headcount_source_url: w?.headcount_source_url ?? null,
+        ai_eligible_share: w?.ai_eligible_share ?? null,
+        ai_eligible_rationale: w?.ai_eligible_rationale ?? null,
+        ai_eligible_source_url: w?.ai_eligible_source_url ?? null,
         stratum_caps: capsCommensurable
           ? (caps.get(row.agency_id) ?? {})
           : {},
