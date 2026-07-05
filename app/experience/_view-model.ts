@@ -19,15 +19,21 @@ import {
 
 /** Fixed scenario set for the sensitivity view (server-computed). */
 const SENSITIVITY_SCENARIOS: Array<{ label: string; scenario: SeatModelScenario }> = [
-  { label: "Central (band midpoints)", scenario: DEFAULT_SCENARIO },
-  { label: "Band lower ends", scenario: { ...DEFAULT_SCENARIO, band: "lower" } },
-  { label: "Band upper ends", scenario: { ...DEFAULT_SCENARIO, band: "upper" } },
+  { label: "Best estimate (each band at its midpoint)", scenario: DEFAULT_SCENARIO },
   {
-    label: "Drop low-confidence labels",
+    label: "If every band is read at its bottom end",
+    scenario: { ...DEFAULT_SCENARIO, band: "lower" },
+  },
+  {
+    label: "If every band is read at its top end",
+    scenario: { ...DEFAULT_SCENARIO, band: "upper" },
+  },
+  {
+    label: "If rows the labelers were unsure about are dropped",
     scenario: { ...DEFAULT_SCENARIO, dropLowConfidence: true },
   },
   {
-    label: "Exclude clinical stratum",
+    label: "If clinical tools (scribes, decision support) don't count",
     scenario: { ...DEFAULT_SCENARIO, includeClinical: false },
   },
 ];
@@ -61,6 +67,19 @@ export async function buildExperienceViewModel() {
     const { totals } = computeSeatModel(seatSource.inputs, scenario);
     return { label, ...totals };
   });
+
+  // The estimate hierarchy for §04: the externally-evidenced floor (per-tool
+  // shares documented from press/official sources; agencies without public
+  // evidence contribute zero) and the family-deduped filed-band sum bracket
+  // the model's central estimate from below and above.
+  const evidencedFloorTotal = matrix.reduce(
+    (a, r) => a + (r.estimated_seats_headcount ?? 0),
+    0,
+  );
+  const filedDedupedTotal = matrix.reduce(
+    (a, r) => a + r.estimated_seats_filed,
+    0,
+  );
 
   // Estimator scatter: each modeled agency's naive filed-band midpoint sum
   // (from the uncorrected `seats` rows, matched by agency_id) against the
@@ -98,6 +117,8 @@ export async function buildExperienceViewModel() {
     provenance,
     sensitivity,
     scatter,
+    evidencedFloorTotal,
+    filedDedupedTotal,
   };
 }
 

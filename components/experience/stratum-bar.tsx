@@ -103,16 +103,18 @@ export function StratumBar({ agency }: { agency: AgencySeatModel }) {
         {/* interval labels */}
         <div className="mt-1 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
           <span>
-            Floor <span className="tabular-nums text-foreground">{compact(floor)}</span>
+            At least{" "}
+            <span className="tabular-nums text-foreground">{compact(floor)}</span>
           </span>
           <span>
-            Central{" "}
+            Best estimate{" "}
             <span className="tabular-nums font-semibold text-[var(--stamp,#b3361f)]">
               {compact(central)}
             </span>
           </span>
           <span>
-            Ceiling <span className="tabular-nums text-foreground">{compact(ceiling)}</span>
+            At most{" "}
+            <span className="tabular-nums text-foreground">{compact(ceiling)}</span>
           </span>
         </div>
       </div>

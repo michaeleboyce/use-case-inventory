@@ -23,6 +23,7 @@ import {
 } from "@/components/experience/band-evidence-table";
 import { AiAccessTable } from "@/components/readiness/ai-access-table";
 import { formatPercent } from "@/lib/formatting";
+import { buildSeatNarrative } from "@/lib/seat-narrative";
 import {
   buildAgencySeatViewModel,
   getModeledAgencySlugs,
@@ -102,18 +103,18 @@ export default async function AgencySeatPage({
           title={agency.name}
           lede={
             <>
-              Between <strong>{fmt(agency.floor ?? 0)}</strong> and{" "}
-              <strong>{fmt(agency.ceiling ?? 0)}</strong>{" "}
-              {agency.abbreviation} staff have at least one AI tool — a central
-              estimate of <strong>{fmt(agency.central ?? 0)}</strong> of{" "}
-              <strong>{fmt(agency.eligible ?? 0)}</strong> AI-eligible
-              employees, or{" "}
+              Our best estimate: <strong>{fmt(agency.central ?? 0)}</strong>{" "}
+              {agency.abbreviation} staff have at least one AI tool —{" "}
               <strong>
                 {agency.coverage_share != null
                   ? formatPercent(agency.coverage_share)
                   : "—"}
               </strong>{" "}
-              of the eligible workforce.
+              of the <strong>{fmt(agency.eligible ?? 0)}</strong> employees
+              whose jobs could use one. Under the most conservative reading of
+              the filings it&apos;s at least{" "}
+              <strong>{fmt(agency.floor ?? 0)}</strong>; under the most
+              generous, at most <strong>{fmt(agency.ceiling ?? 0)}</strong>.
             </>
           }
         />
@@ -171,12 +172,51 @@ export default async function AgencySeatPage({
         </div>
       </Section>
 
-      {/* Stratum bar */}
+      {/* The estimate's logic, in plain English — generated from the model
+          output itself so the story can't drift from the numbers. */}
       <Section
         number="02"
-        title="Coverage by population stratum"
+        title="How this estimate was built"
         source="derived"
-        lede="Each stratum's reach is its largest filed band, capped at the eligible workforce; strata combine by independence into the central estimate."
+        lede="The whole chain of reasoning, step by step — every number below comes from a filed inventory row, a hand-audited label, or a cited workforce source."
+      >
+        {(() => {
+          const narrative = buildSeatNarrative(agency);
+          return (
+            <>
+              <ol className="max-w-prose space-y-4">
+                {narrative.steps.map((step, i) => (
+                  <li key={step.title} className="flex gap-4">
+                    <span className="mt-0.5 font-mono text-xs font-semibold text-[var(--stamp)]">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-foreground">
+                        {step.title}
+                      </p>
+                      <p className="mt-1 text-sm leading-relaxed text-foreground/85">
+                        {step.body}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              {narrative.conclusion ? (
+                <p className="mt-5 max-w-prose border-l-4 border-[var(--stamp)] bg-muted/20 px-4 py-3 text-sm font-medium leading-relaxed text-foreground">
+                  {narrative.conclusion}
+                </p>
+              ) : null}
+            </>
+          );
+        })()}
+      </Section>
+
+      {/* Stratum bar */}
+      <Section
+        number="03"
+        title="Coverage by population group"
+        source="derived"
+        lede="Each group's coverage is its largest filed band, capped at the people who actually hold those roles; groups combine without double-counting into the best estimate."
       >
         <StratumBar agency={agency} />
         <div className="mt-6">
@@ -186,7 +226,7 @@ export default async function AgencySeatPage({
 
       {/* Band evidence */}
       <Section
-        number="03"
+        number="04"
         title="The labeled band evidence"
         source="derived"
         lede="Every banded row this agency filed, with its population label, unit counted, confidence, and audit disposition."
@@ -203,7 +243,7 @@ export default async function AgencySeatPage({
       {/* Rollout evidence — reuse the /readiness/access finding table */}
       {access.length > 0 ? (
         <Section
-          number="04"
+          number="05"
           title="Researched rollout evidence"
           source="derived"
           lede="Public evidence of how widely this agency has made a general-purpose AI tool available — availability, not measured usage."

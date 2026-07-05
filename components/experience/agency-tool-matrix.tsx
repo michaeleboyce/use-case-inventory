@@ -24,7 +24,18 @@ import { cn } from "@/lib/utils";
  * Each cell exposes the underlying entries on hover. Entries are tagged
  * `Appendix B` (consolidated) or `Filing` (individual use_case row).
  */
-export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
+export function AgencyToolMatrix({
+  rows,
+  bestEstimateByAgencyId,
+}: {
+  rows: AgencyToolMatrixRow[];
+  /**
+   * Stratified-overlap model central per agency_id (undefined = agency not
+   * modeled). When provided, a linked "IFP best estimate" column renders so
+   * the corrected number sits beside what the raw filings imply.
+   */
+  bestEstimateByAgencyId?: Record<number, number>;
+}) {
   const sorted = [...rows]
     .filter((r) => Object.keys(r.cells).length > 0)
     .sort((a, b) => b.estimated_seats_filed - a.estimated_seats_filed);
@@ -55,16 +66,33 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
             ))}
             <th
               className="px-3 py-2 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
-              title="Sum of license-band midpoints from the consolidated inventory."
+              title="Sum of license-band midpoints from the consolidated inventory — the same people can appear once per tool, so this overstates."
             >
-              Filed bands
+              Seats as filed
+              <span className="block font-normal normal-case tracking-normal text-muted-foreground/70">
+                (sum, uncorrected)
+              </span>
             </th>
             <th
               className="px-3 py-2 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
-              title="Workforce × AI-eligible share × Σ per-tool share-of-eligible. NULL until backfill data lands for that agency."
+              title="Counts a tool only where a press release or official source documents its rollout — agencies with no public evidence show zero, so this understates."
             >
-              Headcount-derived
+              Publicly provable
+              <span className="block font-normal normal-case tracking-normal text-muted-foreground/70">
+                (floor)
+              </span>
             </th>
+            {bestEstimateByAgencyId ? (
+              <th
+                className="px-3 py-2 text-right font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--stamp)]"
+                title="Stratified-overlap model: filed bands deduped per population group, capped at the workforce, combined without double-counting. Click a value for the full reasoning."
+              >
+                IFP best estimate
+                <span className="block font-normal normal-case tracking-normal text-muted-foreground/70">
+                  (people, corrected)
+                </span>
+              </th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -96,25 +124,44 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
               </td>
               <td
                 className="px-3 py-2 text-right font-mono text-xs tabular-nums"
-                title={row.headcount_breakdown ?? "Workforce data not yet researched for this agency."}
+                title={row.headcount_breakdown ?? "No public rollout evidence found for this agency's tools — shows zero, not 'no seats'."}
               >
                 {row.estimated_seats_headcount != null
                   ? row.estimated_seats_headcount.toLocaleString()
                   : "—"}
               </td>
+              {bestEstimateByAgencyId ? (
+                <td className="px-3 py-2 text-right font-mono text-xs tabular-nums">
+                  {bestEstimateByAgencyId[row.agency_id] != null ? (
+                    <a
+                      href={`/experience/seats/${row.abbreviation.toLowerCase()}`}
+                      className="font-semibold text-[var(--stamp)] underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                      title="See the step-by-step reasoning behind this number"
+                    >
+                      {bestEstimateByAgencyId[row.agency_id].toLocaleString()}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+              ) : null}
             </tr>
           ))}
         </tbody>
       </table>
       <p className="mt-3 text-xs text-muted-foreground">
-        <strong>Filed bands</strong> = sum of OMB-filed license-band midpoints
-        (the seat count agencies self-report).{" "}
-        <strong>Headcount-derived</strong> = total workforce × IFP-researched
-        AI-eligible share × Σ per-tool share-of-eligible. Cells show the
-        largest license band on file; hover any cell for the underlying
-        entries. <span className="font-mono">Appendix B</span> entries come
-        from the consolidated form; <span className="font-mono">Filing</span>{" "}
-        entries come from an individual M-25-21 use-case filing.
+        <strong>Seats as filed</strong> sums the license-band midpoints
+        agencies self-reported — the same employees can appear once per tool,
+        so it overstates. <strong>Publicly provable</strong> counts only
+        rollouts documented by a press release or official source — no
+        public evidence shows as zero, so it understates.{" "}
+        <strong>IFP best estimate</strong> corrects the filings for
+        repetition, non-people counts, and workforce ceilings — click any
+        value for the step-by-step reasoning. Cells show the largest license
+        band on file; hover any cell for the underlying entries.{" "}
+        <span className="font-mono">Appendix B</span> entries come from the
+        consolidated form; <span className="font-mono">Filing</span> entries
+        come from an individual M-25-21 use-case filing.
       </p>
     </div>
   );

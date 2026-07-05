@@ -27,6 +27,7 @@ import { SeatsByAgencyChart } from "@/components/experience/seats-by-agency-char
 import { SeatsHeadcountChart } from "@/components/experience/seats-headcount-chart";
 import { SeatsAgencyDetails } from "@/components/experience/seats-agency-details";
 import { SeatWaterfallChart } from "@/components/experience/seat-waterfall-chart";
+import { buildSeatNarrative } from "@/lib/seat-narrative";
 import { EstimatorScatter } from "@/components/experience/estimator-scatter";
 import { SensitivityRange } from "@/components/experience/sensitivity-range";
 import { DefinitionEuler } from "@/components/experience/definition-euler";
@@ -77,6 +78,8 @@ export default async function ExperiencePage() {
     waterfall,
     sensitivity,
     scatter,
+    evidencedFloorTotal,
+    filedDedupedTotal,
   } = vm;
 
   const ombHeadline = headlines.find((h) => h.definition === "omb");
@@ -148,15 +151,14 @@ export default async function ExperiencePage() {
               <strong>{fmt(enterpriseHeadline?.total ?? 0)}</strong> are tagged
               as enterprise-wide LLM access — a working-day chat surface
               available to a whole agency&apos;s staff. Beneath the use-case
-              counts, the corrected seat model puts between{" "}
-              <strong>{fmt(totals.floor)}</strong> and{" "}
-              <strong>{fmt(totals.ceiling)}</strong> federal employees — a
-              central estimate of <strong>{fmt(totals.central)}</strong> of the{" "}
-              <strong>{fmt(totals.eligible_total)}</strong> AI-eligible staff in{" "}
-              {fmt(totals.agencies_modeled)} agencies — with at least one AI
-              tool. That replaces the older uncorrected sum of{" "}
-              {fmt(totalSeatsMidpoint)} seats, which double-counted people
-              across tools and task rows;{" "}
+              counts, our best estimate is that{" "}
+              <strong>{fmt(totals.central)}</strong> federal employees — of the{" "}
+              <strong>{fmt(totals.eligible_total)}</strong> whose jobs could
+              use one, across {fmt(totals.agencies_modeled)} agencies — have at
+              least one AI tool (no fewer than {fmt(totals.floor)}, no more
+              than {fmt(totals.ceiling)}). That replaces the older uncorrected
+              sum of {fmt(totalSeatsMidpoint)} seats, which double-counted
+              people across tools and task rows;{" "}
               <a
                 href="#section-04"
                 className="underline underline-offset-2 hover:text-foreground"
@@ -335,7 +337,14 @@ export default async function ExperiencePage() {
         source="omb-derived"
         lede="For each agency, the largest license-band reported on the consolidated inventory for each major LLM tool family. Coarse on purpose — bands are agency-filed."
       >
-        <AgencyToolMatrix rows={matrix} />
+        <AgencyToolMatrix
+          rows={matrix}
+          bestEstimateByAgencyId={Object.fromEntries(
+            seatModel.agencies
+              .filter((a) => a.modeled && a.central != null)
+              .map((a) => [a.agency_id, a.central as number]),
+          )}
+        />
       </Section>
 
       {/* § 04 — The corrected seat model */}
@@ -346,7 +355,91 @@ export default async function ExperiencePage() {
         source="derived"
         lede="Filed license bands can't be summed — the same employees repeat across task rows and tools, and some bands count devices or the public. The stratified-overlap model corrects for all three and caps every agency at its own eligible workforce."
       >
-        <p className="max-w-prose text-sm leading-relaxed text-foreground/85">
+        {/* The best estimate, stated as such. */}
+        <div className="border-2 border-foreground p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
+            IFP best estimate · people with at least one AI tool
+          </p>
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-8 gap-y-3">
+            <div>
+              <span className="font-display text-5xl font-semibold tabular-nums tracking-tight text-foreground">
+                {fmt(totals.central)}
+              </span>
+              <span className="ml-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                best estimate
+              </span>
+            </div>
+            <div className="font-mono text-sm tabular-nums text-muted-foreground">
+              at least{" "}
+              <strong className="text-foreground">{fmt(totals.floor)}</strong>
+              <span className="mx-2 text-muted-foreground/50">·</span>
+              at most{" "}
+              <strong className="text-foreground">{fmt(totals.ceiling)}</strong>
+            </div>
+          </div>
+          <p className="mt-3 max-w-prose text-sm leading-relaxed text-foreground/85">
+            That is{" "}
+            <strong>
+              {Math.round((totals.central / totals.eligible_total) * 100)}%
+            </strong>{" "}
+            of the {fmt(totals.eligible_total)} AI-eligible employees across
+            the {totals.agencies_modeled} agencies that filed license bands —
+            DoD and USPS excluded by inventory policy.
+          </p>
+          {/* Where the estimate sits among the competing answers. */}
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Where it sits
+            </p>
+            <div className="mt-2 grid grid-cols-1 gap-1.5 text-xs sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  n: evidencedFloorTotal,
+                  label: "Externally evidenced",
+                  note: "press & official sources only; no public evidence = counts zero",
+                  tone: "text-muted-foreground",
+                },
+                {
+                  n: totals.central,
+                  label: "IFP model (this page)",
+                  note: "audited filings, deduped, workforce-capped",
+                  tone: "text-[var(--stamp)] font-semibold",
+                },
+                {
+                  n: filedDedupedTotal,
+                  label: "Filings at face value",
+                  note: "largest band per tool family, no overlap correction",
+                  tone: "text-muted-foreground",
+                },
+                {
+                  n: totalSeatsMidpoint,
+                  label: "Naive sum (retired)",
+                  note: "every task row summed — double-counts people",
+                  tone: "text-muted-foreground line-through decoration-border",
+                },
+              ].map((e) => (
+                <div key={e.label} className="border border-border px-2.5 py-2">
+                  <div className={`font-mono text-sm tabular-nums ${e.tone}`}>
+                    {fmt(e.n)}
+                  </div>
+                  <div className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground/80">
+                    {e.label}
+                  </div>
+                  <div className="mt-0.5 leading-snug text-muted-foreground">
+                    {e.note}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              The model sits between what can be proven from public sources
+              alone and what the filings claim at face value — consistent with
+              both, beholden to neither.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-8 max-w-prose text-sm leading-relaxed text-foreground/85">
           The waterfall starts from the naive sum of every filed band — the
           number this page used to publish — and applies each correction as an
           explicit, labeled step: remove non-people units, count each
@@ -388,37 +481,80 @@ export default async function ExperiencePage() {
         {topModeled.length > 0 ? (
           <div className="mt-10 border-t border-border pt-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              Per-agency seat model · floor – central – ceiling
+              The logic, agency by agency
             </p>
             <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
-              The {topModeled.length} largest modeled agencies by central
-              estimate. Click through for the full stratum breakdown, the
-              workforce denominator, and the labeled band evidence.
+              The {topModeled.length} largest modeled agencies. Expand any row
+              for the step-by-step reasoning behind its estimate — generated
+              from the model&apos;s own inputs — or click through for the full
+              evidence page.
             </p>
-            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {topModeled.map((a) => (
-                <Link
-                  key={a.agency_id}
-                  href={`/experience/seats/${a.abbreviation.toLowerCase()}`}
-                  className="group flex items-baseline justify-between gap-3 border border-border px-3 py-2 hover:border-[var(--stamp)]"
-                >
-                  <span className="min-w-0">
-                    <span className="font-mono text-xs font-semibold text-foreground group-hover:text-[var(--stamp)]">
-                      {a.abbreviation}
-                    </span>
-                    <span className="ml-2 truncate text-[11px] text-muted-foreground">
-                      {a.name}
-                    </span>
-                  </span>
-                  <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-muted-foreground">
-                    {fmt(a.floor ?? 0)}
-                    <span className="text-muted-foreground/50"> · </span>
-                    <span className="text-foreground">{fmt(a.central ?? 0)}</span>
-                    <span className="text-muted-foreground/50"> · </span>
-                    {fmt(a.ceiling ?? 0)}
-                  </span>
-                </Link>
-              ))}
+            <div className="mt-4 space-y-1.5">
+              {topModeled.map((a) => {
+                const narrative = buildSeatNarrative(a);
+                return (
+                  <details
+                    key={a.agency_id}
+                    className="group/agency border border-border open:border-[var(--stamp)]"
+                  >
+                    <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 px-3 py-2 hover:bg-muted/30 [&::-webkit-details-marker]:hidden">
+                      <span className="flex min-w-0 items-baseline gap-2">
+                        <span
+                          aria-hidden
+                          className="font-mono text-[10px] text-muted-foreground transition-transform group-open/agency:rotate-90"
+                        >
+                          ▸
+                        </span>
+                        <span className="font-mono text-xs font-semibold text-foreground">
+                          {a.abbreviation}
+                        </span>
+                        <span className="truncate text-[11px] text-muted-foreground">
+                          {a.name}
+                        </span>
+                      </span>
+                      <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-muted-foreground">
+                        at least {fmt(a.floor ?? 0)}
+                        <span className="text-muted-foreground/50"> · </span>
+                        <span className="font-semibold text-foreground">
+                          best est. {fmt(a.central ?? 0)}
+                        </span>
+                        <span className="text-muted-foreground/50"> · </span>
+                        at most {fmt(a.ceiling ?? 0)}
+                      </span>
+                    </summary>
+                    <div className="border-t border-border px-4 py-3">
+                      <ol className="max-w-prose space-y-3">
+                        {narrative.steps.map((step, i) => (
+                          <li key={step.title} className="flex gap-3">
+                            <span className="mt-0.5 font-mono text-[10px] font-semibold text-[var(--stamp)]">
+                              {String(i + 1).padStart(2, "0")}
+                            </span>
+                            <div>
+                              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
+                                {step.title}
+                              </p>
+                              <p className="mt-0.5 text-[13px] leading-relaxed text-foreground/85">
+                                {step.body}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                      {narrative.conclusion ? (
+                        <p className="mt-3 max-w-prose text-[13px] font-medium leading-relaxed text-foreground">
+                          {narrative.conclusion}
+                        </p>
+                      ) : null}
+                      <Link
+                        href={`/experience/seats/${a.abbreviation.toLowerCase()}`}
+                        className="mt-3 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground hover:text-[var(--stamp)]"
+                      >
+                        Full evidence page: every filed row, label, and audit →
+                      </Link>
+                    </div>
+                  </details>
+                );
+              })}
             </div>
           </div>
         ) : null}
@@ -450,19 +586,27 @@ export default async function ExperiencePage() {
           </div>
           <div>
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--stamp)]">
-              Headcount-derived · IFP-researched (uncorrected)
+              Externally-evidenced floor · press &amp; official sources only
             </p>
             <SeatsHeadcountChart rows={matrix} />
+            <p className="mt-2 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              Formerly labeled &ldquo;headcount-derived.&rdquo; It counts a
+              tool only where a public source documents its rollout share —
+              agencies with no press coverage contribute zero — so it is a
+              floor on provable access, not an estimate of actual access.
+            </p>
           </div>
         </div>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           Across all {seats.length} agencies with at least one license band on
           file, the uncorrected midpoint sum is{" "}
           <strong>{fmt(totalSeatsMidpoint)}</strong> seats (bounds{" "}
-          {fmt(totalSeatsLower)}–{fmt(totalSeatsUpper)}). The corrected model in
-          §04 brings that to a central <strong>{fmt(totals.central)}</strong>{" "}
-          people once repetition, non-people units, and workforce ceilings are
-          removed.
+          {fmt(totalSeatsLower)}–{fmt(totalSeatsUpper)}), and the
+          externally-evidenced floor is{" "}
+          <strong>{fmt(evidencedFloorTotal)}</strong>. The corrected model in
+          §04 sits between them at a central{" "}
+          <strong>{fmt(totals.central)}</strong> people once repetition,
+          non-people units, and workforce ceilings are removed.
         </p>
 
         <SeatsAgencyDetails rows={matrix} />
