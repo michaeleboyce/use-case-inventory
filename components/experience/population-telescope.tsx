@@ -91,6 +91,10 @@ export function PopulationTelescope({
   );
 
   const [selected, setSelected] = React.useState<string>("all");
+  const [mode, setMode] = React.useState<"single" | "compare">("single");
+  const [compareScale, setCompareScale] = React.useState<
+    "relative" | "absolute"
+  >("relative");
   const view =
     selected === "all"
       ? allView
@@ -102,8 +106,29 @@ export function PopulationTelescope({
   const w = (n: number) =>
     view.workforce > 0 ? `${(n / view.workforce) * 100}%` : "0%";
 
+  if (mode === "compare") {
+    return (
+      <CompareAll
+        modeled={modeled}
+        scale={compareScale}
+        onScale={setCompareScale}
+        onBack={() => setMode("single")}
+      />
+    );
+  }
+
   return (
     <div>
+      {/* Mode switch */}
+      <div className="mb-3 flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setMode("compare")}
+          className="border border-border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:border-foreground hover:text-foreground"
+        >
+          Compare all {modeled.length} agencies at once →
+        </button>
+      </div>
       {/* Scope selector */}
       <div className="flex flex-wrap items-center gap-1.5">
         {[allView.key, ...pillAgencies.map((a) => String(a.agency_id))].map(
@@ -264,6 +289,166 @@ export function PopulationTelescope({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Consolidated view: every modeled agency as one compact row with the same
+ * three nested layers. Two honest scales:
+ *   relative — each row is normalized to its own workforce, so the SHAPES
+ *              compare (how deep does AI reach into each agency);
+ *   absolute — one shared people-scale, so the SIZES compare (where the
+ *              actual seats are; small agencies become honest slivers).
+ */
+function CompareAll({
+  modeled,
+  scale,
+  onScale,
+  onBack,
+}: {
+  modeled: AgencySeatModel[];
+  scale: "relative" | "absolute";
+  onScale: (s: "relative" | "absolute") => void;
+  onBack: () => void;
+}) {
+  const rows = React.useMemo(
+    () =>
+      modeled
+        .map(viewFor)
+        .sort((a, b) => b.central - a.central),
+    [modeled],
+  );
+  const maxWorkforce = rows.reduce((m, r) => Math.max(m, r.workforce), 1);
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="border border-border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:border-foreground hover:text-foreground"
+        >
+          ← One agency at a time
+        </button>
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            Scale:
+          </span>
+          {(
+            [
+              ["relative", "Each agency = 100% of itself"],
+              ["absolute", "Shared scale (actual people)"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onScale(key)}
+              className={`border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                scale === key
+                  ? "border-[var(--stamp)] bg-[var(--stamp)] text-white"
+                  : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-3 w-4 border border-foreground/60 bg-muted/30" />
+          everyone employed
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="inline-block h-3 w-4"
+            style={{ backgroundColor: `${TEAL}33`, borderRight: `2px solid ${TEAL}` }}
+          />
+          could use an AI tool
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="inline-block h-3 w-4"
+            style={{ backgroundColor: `${STAMP}40` }}
+          />
+          has one — at least → at most, line = best estimate
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-1">
+        {rows.map((r) => {
+          const rowSpan =
+            scale === "relative" ? 1 : r.workforce / maxWorkforce;
+          const frac = (n: number) =>
+            r.workforce > 0
+              ? `${(n / r.workforce) * 100 * rowSpan}%`
+              : "0%";
+          return (
+            <div
+              key={r.key}
+              className="grid grid-cols-[6rem_1fr_9rem] items-center gap-3"
+            >
+              <Link
+                href={r.agencyHref ?? "#"}
+                className="truncate font-mono text-xs font-semibold text-foreground hover:text-[var(--stamp)]"
+                title={`${r.label}: how this number was built`}
+              >
+                {r.label}
+              </Link>
+              <div className="relative h-5">
+                {/* workforce envelope */}
+                <div
+                  className="absolute inset-y-0 left-0 border border-foreground/40 bg-muted/20 transition-all duration-500"
+                  style={{ width: `${100 * rowSpan}%` }}
+                  title={`${r.label}: ${exact(r.workforce)} people employed${r.includesContractors ? " (incl. on-site contractors)" : ""}`}
+                />
+                {/* eligible */}
+                <div
+                  className="absolute inset-y-0 left-0 transition-all duration-500"
+                  style={{
+                    width: frac(r.eligible),
+                    backgroundColor: `${TEAL}2e`,
+                    borderRight: `2px solid ${TEAL}`,
+                  }}
+                  title={`${exact(r.eligible)} could use an AI tool (${pct(r.eligible, r.workforce)} of everyone)`}
+                />
+                {/* at-most band, then at-least band, then best-estimate line */}
+                <div
+                  className="absolute inset-y-1 left-0 transition-all duration-500"
+                  style={{ width: frac(r.ceiling), backgroundColor: `${STAMP}1f` }}
+                />
+                <div
+                  className="absolute inset-y-1 left-0 transition-all duration-500"
+                  style={{ width: frac(r.floor), backgroundColor: `${STAMP}47` }}
+                  title={`At least ${exact(r.floor)}, at most ${exact(r.ceiling)}`}
+                />
+                <div
+                  className="absolute inset-y-0 w-0.5 transition-all duration-500"
+                  style={{ left: frac(r.central), backgroundColor: STAMP }}
+                  title={`Best estimate: ${exact(r.central)}`}
+                />
+              </div>
+              <div className="whitespace-nowrap text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                  {compact(r.central)}
+                </span>{" "}
+                of {compact(r.eligible)} elig.
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">
+        {scale === "relative"
+          ? "Each row is scaled to its own workforce, so the shapes compare: how far AI reaches into each agency, regardless of size. Switch to the shared scale to see where the actual seats are."
+          : "One shared scale: bar length is actual people, so the seats concentrate where the bars are long. Small agencies render as honest slivers — switch to per-agency scale to read their proportions."}{" "}
+        Click an agency for its step-by-step reasoning.
+      </p>
     </div>
   );
 }
