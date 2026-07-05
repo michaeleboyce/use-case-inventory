@@ -41,8 +41,10 @@ export {
   type CapabilityLadderData,
 } from "./capability";
 export {
+  getAgencyOccupationCaps,
   getStratifiedSeatInputs,
   type LabeledBandRow,
+  type OccupationCapRow,
   type SeatModelSourceData,
 } from "./strata";
 export { computeAgencySeatModel, computeSeatModel } from "./seat-model";

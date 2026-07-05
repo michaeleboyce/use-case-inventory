@@ -10,8 +10,10 @@
 import {
   computeSeatModel,
   getAgencyAiAccessEvidence,
+  getAgencyOccupationCaps,
   getStratifiedSeatInputs,
 } from "@/lib/db";
+import type { OccupationCapRow } from "@/lib/db";
 import type {
   AgencySeatModel,
   AgencySeatModelInput,
@@ -30,6 +32,8 @@ export interface AgencySeatPageData {
   eligibleShare: number | null;
   /** Denominator base actually used (headcount, contractor-aware). */
   denominatorBase: number | null;
+  /** FedScope-successor occupational ceilings for this agency, with sources. */
+  occupationCaps: OccupationCapRow[];
 }
 
 /** Lowercased abbreviations of every modeled agency — for generateStaticParams. */
@@ -73,5 +77,15 @@ export async function buildAgencySeatViewModel(
       ? agency.eligible / denominatorBase
       : null;
 
-  return { agency, input, rows, access, eligibleShare, denominatorBase };
+  const occupationCaps = getAgencyOccupationCaps(agency.agency_id);
+
+  return {
+    agency,
+    input,
+    rows,
+    access,
+    eligibleShare,
+    denominatorBase,
+    occupationCaps,
+  };
 }

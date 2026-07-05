@@ -326,6 +326,42 @@ export default async function SeatMethodologyPage() {
             </ul>
           </div>
 
+          <div className="mt-8 border-l-4 border-[var(--stamp)] bg-muted/20 px-5 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Where the numbers come from
+            </p>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-foreground/90">
+              <li>
+                <strong>Tool reach</strong> — the license bands agencies filed
+                in the OMB M-25-21 consolidated inventory, labeled row-by-row
+                (who each band counts) and hand-audited; every labeled row is
+                on its agency&apos;s evidence page.
+              </li>
+              <li>
+                <strong>Headcounts, eligible shares, and role ceilings</strong>{" "}
+                — computed from{" "}
+                <a
+                  href="https://data.opm.gov"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                >
+                  OPM&apos;s Federal Workforce Data
+                </a>{" "}
+                (the successor to FedScope; employee-level May-2026 snapshot),
+                cross-checked against agency budget justifications, IG and GAO
+                reports, and workforce dashboards. Each agency&apos;s
+                denominator card links its specific sources, including the
+                arithmetic behind its AI-eligible share.
+              </li>
+              <li>
+                <strong>Rollout corroboration</strong> — official press
+                releases and credible reporting on agency-wide deployments,
+                quoted verbatim with links on each agency&apos;s evidence page.
+              </li>
+            </ul>
+          </div>
+
           <div className="mt-8 border-t border-border pt-6">
             <Link
               href="/experience#section-04"

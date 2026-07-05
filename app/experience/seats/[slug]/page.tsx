@@ -29,6 +29,25 @@ import {
   getModeledAgencySlugs,
 } from "./_view-model";
 
+/** Render plain-text URLs inside researched rationale text as links. */
+function linkifyUrls(text: string): React.ReactNode[] {
+  return text.split(/(https?:\/\/[^\s,;)\]]+)/g).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 function fmt(n: number): string {
   return n.toLocaleString();
 }
@@ -63,7 +82,8 @@ export default async function AgencySeatPage({
   const { slug } = await params;
   const data = await buildAgencySeatViewModel(slug);
   if (!data) notFound();
-  const { agency, input, rows, access, eligibleShare, denominatorBase } = data;
+  const { agency, input, rows, access, eligibleShare, denominatorBase, occupationCaps } =
+    data;
 
   const evidenceRows = rows as unknown as BandEvidenceRow[];
   const abbrLower = agency.abbreviation.toLowerCase();
@@ -181,7 +201,7 @@ export default async function AgencySeatPage({
               of staff count as AI-eligible
             </p>
             <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-              {input.ai_eligible_rationale}
+              {linkifyUrls(input.ai_eligible_rationale)}
             </p>
             {input.ai_eligible_source_url ? (
               <p className="mt-2">
@@ -250,6 +270,44 @@ export default async function AgencySeatPage({
         <div className="mt-6">
           <StratumLegend />
         </div>
+
+        {occupationCaps.length > 0 ? (
+          <div className="mt-6 border-t border-border pt-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Role-population ceilings, with sources
+            </p>
+            <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              A specialist group can never be estimated above the number of
+              people who actually hold those jobs here. Counts are computed
+              from OPM&apos;s employee-level workforce data.
+            </p>
+            <ul className="mt-3 space-y-1.5 text-sm">
+              {occupationCaps.map((c) => (
+                <li
+                  key={c.occ_series}
+                  className="flex flex-wrap items-baseline gap-x-2"
+                >
+                  <span className="font-mono text-xs tabular-nums text-foreground">
+                    {fmt(c.headcount)}
+                  </span>
+                  <span className="text-foreground/85">
+                    {c.occ_label} (series {c.occ_series})
+                  </span>
+                  <a
+                    href={c.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                    title={c.source_title ?? undefined}
+                  >
+                    OPM Federal Workforce Data, {c.as_of}
+                    <ExternalLink className="h-3 w-3" aria-hidden />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </Section>
 
       {/* Band evidence */}

@@ -122,6 +122,33 @@ function fetchLabeledRows(): LabeledBandRow[] {
     .all();
 }
 
+/** One occupational-series population ceiling with its source. */
+export interface OccupationCapRow {
+  occ_series: string;
+  occ_label: string;
+  stratum: string;
+  headcount: number;
+  as_of: string;
+  source_url: string;
+  source_title: string | null;
+}
+
+/** The FedScope-successor occupational caps for one agency, with sources. */
+export function getAgencyOccupationCaps(agencyId: number): OccupationCapRow[] {
+  return getDb()
+    .prepare<[number], OccupationCapRow>(`
+      SELECT occ_series, occ_label, stratum, headcount, as_of,
+             source_url, source_title
+        FROM agency_occupation_counts
+       WHERE agency_id = ?
+         AND as_of = (SELECT MAX(o2.as_of) FROM agency_occupation_counts o2
+                       WHERE o2.organization_slug = agency_occupation_counts.organization_slug
+                         AND o2.occ_series = agency_occupation_counts.occ_series)
+       ORDER BY headcount DESC
+    `)
+    .all(agencyId);
+}
+
 export interface SeatModelSourceData {
   inputs: AgencySeatModelInput[];
   /** Band mass removed before modeling, by reason — feeds the waterfall. */

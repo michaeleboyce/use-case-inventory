@@ -188,6 +188,7 @@ export {
   GENAI_DEFINITION_SOURCE,
   MATRIX_PRODUCT_BUCKETS,
   getStratifiedSeatInputs,
+  getAgencyOccupationCaps,
   computeAgencySeatModel,
   computeSeatModel,
   buildProvenance,
@@ -208,6 +209,7 @@ export type {
   CapabilityLadderData,
   EnterpriseTierRollupRow,
   LabeledBandRow,
+  OccupationCapRow,
   SeatModelSourceData,
   ProvenanceRollup,
 } from "./experience";
