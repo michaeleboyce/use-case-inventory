@@ -5,6 +5,7 @@ import {
   Eyebrow,
   MonoChip,
 } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import {
   getAgencyInventoryLinks,
   getGlobalStats,
@@ -23,58 +24,48 @@ export default function AboutPage() {
   const lastUpdated = getLastUpdatedDate();
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-10 md:px-8 md:py-14">
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* HERO — editorial nameplate */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12">
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
+      <PageMasthead
+        kicker="§ Colophon"
+        metaLines={["Masthead · Methodology", "OMB M-25-21 · Cycle 2025"]}
+        meta={
+          <div className="space-y-3 border-t border-border pt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             <div>
-              <div className="eyebrow mb-1.5 !text-[var(--stamp)]">§ Colophon</div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Masthead · Methodology
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Last updated
               </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                OMB M-25-21 · Cycle 2025
+              <div className="text-foreground">{formatDate(lastUpdated)}</div>
+            </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Aggregate
+              </div>
+              <div className="text-foreground">
+                {formatNumber(stats.total_use_cases)} uc ·{" "}
+                {formatNumber(stats.total_consolidated)} cons
               </div>
             </div>
-
-            <div className="space-y-3 border-t border-border pt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Last updated
-                </div>
-                <div className="text-foreground">{formatDate(lastUpdated)}</div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Coverage
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Aggregate
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(stats.total_use_cases)} uc ·{" "}
-                  {formatNumber(stats.total_consolidated)} cons
-                </div>
-              </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Coverage
-                </div>
-                <div className="text-foreground">
-                  {stats.total_agencies_with_data}/{stats.total_agencies}{" "}
-                  agencies
-                </div>
+              <div className="text-foreground">
+                {stats.total_agencies_with_data}/{stats.total_agencies}{" "}
+                agencies
               </div>
             </div>
           </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display italic text-[clamp(2.6rem,6vw,5rem)] leading-[0.95] tracking-[-0.02em] text-foreground">
+        }
+        title={
+          <>
             How this issue
             <br />
             was put together.
-          </h1>
-
-          <p className="mt-8 max-w-prose font-body text-[1.05rem] leading-[1.55] text-foreground/85">
+          </>
+        }
+        lede={
+          <>
             <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
               T
             </span>
@@ -87,9 +78,9 @@ export default function AboutPage() {
             the publishing agency, parsed verbatim, and then passed through a
             three-stage tagging pipeline. This page documents the schema, the
             sources, and the known gaps.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* § I · Collection pipeline — methodology prose */}
       <Section

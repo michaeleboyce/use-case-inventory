@@ -11,6 +11,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Section, MonoChip } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { AiAccessCoverageBand } from "@/components/readiness/ai-access-coverage-band";
 import { AiAccessTable } from "@/components/readiness/ai-access-table";
 import { getAgencyAiAccessEvidence, getAiAccessSummary } from "@/lib/db";
@@ -69,32 +70,32 @@ export default function AiAccessPage() {
       </div>
 
       {/* Header + lede */}
-      <header className="mt-10 max-w-3xl">
-        <h1 className="font-display italic text-[2.6rem] leading-[0.95] tracking-[-0.02em] text-foreground md:text-[3.6rem]">
-          AI Access &amp; Scale
-        </h1>
-        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          How widely is a general-purpose AI tool available to federal staff?
-        </p>
-        <p className="mt-6 text-lg leading-relaxed text-foreground">
-          Of the {summary.total_agencies} CFO Act agencies in the federal AI
-          use-case inventory,{" "}
-          <strong className="font-semibold">
-            {c.all} have made a general-purpose AI tool available to all
-            employees
-          </strong>{" "}
-          and {c.most} to most. {partialPilot} run partial or pilot
-          deployments, {c.latent} have only latent access — a Microsoft 365
-          entitlement with no deliberate rollout — {c.unknown} have no public
-          statement of scope, and {c.none} has paused staff AI use. Most
-          findings below are backed by a verbatim quote and a dated public
-          source; where no public evidence exists, the gap is recorded rather
-          than hidden.
-        </p>
-      </header>
+      <div className="mt-10">
+        <PageMasthead
+          kicker="How widely is a general-purpose AI tool available to federal staff?"
+          title="AI Access & Scale"
+          lede={
+            <>
+              Of the {summary.total_agencies} CFO Act agencies in the federal AI
+              use-case inventory,{" "}
+              <strong className="font-semibold">
+                {c.all} have made a general-purpose AI tool available to all
+                employees
+              </strong>{" "}
+              and {c.most} to most. {partialPilot} run partial or pilot
+              deployments, {c.latent} have only latent access — a Microsoft 365
+              entitlement with no deliberate rollout — {c.unknown} have no public
+              statement of scope, and {c.none} has paused staff AI use. Most
+              findings below are backed by a verbatim quote and a dated public
+              source; where no public evidence exists, the gap is recorded rather
+              than hidden.
+            </>
+          }
+        />
+      </div>
 
       {/* Methodology note */}
-      <aside className="mt-8 max-w-3xl border-l-4 border-[var(--stamp)] bg-stone-50 px-5 py-4">
+      <aside className="mt-8 max-w-3xl border-l-4 border-[var(--stamp)] bg-muted/20 px-5 py-4">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           How to read &ldquo;coverage&rdquo;
         </p>

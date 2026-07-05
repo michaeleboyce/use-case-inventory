@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { formatNumber, formatYoY } from "@/lib/formatting";
-import { InsightCard } from "@/components/insight-card";
+import { StatTile } from "@/components/stat-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import { Section, Figure, SourceLegend, Eyebrow } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { TermChip } from "@/components/term-chip";
 import { LINEAGE_STATUS_DEFS } from "@/lib/definitions";
 import { YearComparisonChart } from "@/components/charts/year-comparison-chart";
@@ -74,47 +75,33 @@ export default async function CompareYearsPage() {
       {/* ------------------------------------------------------------ */}
       {/* HERO                                                          */}
       {/* ------------------------------------------------------------ */}
-      <header
+      <PageMasthead
         id="overview"
-        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
-      >
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
-            <div>
-              <div className="eyebrow mb-1.5 !text-[var(--stamp)]">
-                § Cycle Comparison
+        italicTitle={false}
+        kicker="§ Cycle Comparison"
+        metaLines={["Two-Cycle Analysis", "2024 → 2025 · M-25-21"]}
+        meta={
+          <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
+            <div className="border-t border-border pt-3">
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Corpus
               </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Two-Cycle Analysis
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                2024 → 2025 · M-25-21
+              <div className="text-foreground">
+                {formatNumber(total.count_2024)} → {formatNumber(total.count_2025)} uc
               </div>
             </div>
-
-            <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
-              <div className="border-t border-border pt-3">
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Corpus
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(total.count_2024)} → {formatNumber(total.count_2025)} uc
-                </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Lineage links
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Lineage links
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(lineageTotal)} adjudicated
-                </div>
+              <div className="text-foreground">
+                {formatNumber(lineageTotal)} adjudicated
               </div>
             </div>
           </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.6rem,6.5vw,5.4rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
+        }
+        title={
+          <>
             <em className="inline font-normal italic">2024</em>{" "}
             <span className="text-muted-foreground">↔</span>{" "}
             <em className="inline font-normal italic">2025</em>
@@ -128,9 +115,10 @@ export default async function CompareYearsPage() {
               />
               <span className="relative">one lineage.</span>
             </span>
-          </h1>
-
-          <p className="mt-10 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85">
+          </>
+        }
+        lede={
+          <>
             <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
               T
             </span>
@@ -153,9 +141,9 @@ export default async function CompareYearsPage() {
               were active in 2024 simply vanished
             </span>{" "}
             from the 2025 filing rather than being marked Retired.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* ------------------------------------------------------------ */}
       {/* § I — GROWTH AT A GLANCE                                       */}
@@ -168,21 +156,21 @@ export default async function CompareYearsPage() {
         lede="The two headline counts, the net change, and the caveat that belongs right next to them."
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="A · 2024 cycle"
             value={formatNumber(total.count_2024)}
             accent="ink"
             headline={<>Individual use cases in the 2024 inventory.</>}
-            subtext="The prior-cycle baseline, across 41 reporting agencies."
+            sublabel="The prior-cycle baseline, across 41 reporting agencies."
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="B · 2025 cycle"
             value={formatNumber(total.count_2025)}
             accent="ink"
             headline={<>Individual use cases in the 2025 inventory.</>}
-            subtext="The current cycle, across 36 reporting agencies — a smaller agency set covering more use cases."
+            sublabel="The current cycle, across 36 reporting agencies — a smaller agency set covering more use cases."
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="C · Net change"
             value={formatYoY(total.pct_change)}
             accent="verified"
@@ -193,9 +181,9 @@ export default async function CompareYearsPage() {
                 {formatNumber(total.delta)}).
               </>
             }
-            subtext="Genuine expansion — but see §V: the 2025 cycle also moved COTS products into a separate appendix, so this is not strictly apples-to-apples."
+            sublabel="Genuine expansion — but see §V: the 2025 cycle also moved COTS products into a separate appendix, so this is not strictly apples-to-apples."
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="D · The drop"
             value={`~${formatNumber(roundTo(retired.active, 10))}`}
             accent="stamp"
@@ -207,7 +195,7 @@ export default async function CompareYearsPage() {
                 the 2025 inventory.
               </>
             }
-            subtext={`Of ${formatNumber(retired.total)} use cases present only in 2024, ${formatNumber(retired.alreadyRetired)} had already been filed as Retired. The other ${formatNumber(retired.active)} were in Pre-deployment, Pilot, or Deployed status — and were dropped, not retired. An agency-compliance gap, not a data artifact. Open the deep dive →`}
+            sublabel={`Of ${formatNumber(retired.total)} use cases present only in 2024, ${formatNumber(retired.alreadyRetired)} had already been filed as Retired. The other ${formatNumber(retired.active)} were in Pre-deployment, Pilot, or Deployed status — and were dropped, not retired. An agency-compliance gap, not a data artifact. Open the deep dive →`}
           />
         </div>
         <SourceLegend />
@@ -322,26 +310,26 @@ export default async function CompareYearsPage() {
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="2024 · IFP-tagged"
             value={formatNumber(tags2024.genai)}
             accent="ink"
             headline={<>Generative-AI use cases in the 2024 inventory.</>}
-            subtext={`Of ${formatNumber(tags2024.total)} use cases IFP tagged in the prior cycle.`}
+            sublabel={`Of ${formatNumber(tags2024.total)} use cases IFP tagged in the prior cycle.`}
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="2025 · IFP-tagged"
             value={formatNumber(genai2025Total)}
             accent="ink"
             headline={<>Generative-AI use cases in the 2025 inventory.</>}
-            subtext="Same is_generative_ai tag, applied to the current cycle."
+            sublabel="Same is_generative_ai tag, applied to the current cycle."
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="Net change"
             value={`${genaiDelta > 0 ? "+" : ""}${formatNumber(genaiDelta)}`}
             accent="verified"
             headline={<>Growth in IFP-tagged GenAI, 2024 → 2025.</>}
-            subtext="A like-for-like comparison — both years tagged by the same IFP narrative definition."
+            sublabel="A like-for-like comparison — both years tagged by the same IFP narrative definition."
           />
         </div>
 
@@ -358,7 +346,7 @@ export default async function CompareYearsPage() {
         </div>
 
         {silentlyDroppedGenAiDistinct > 0 ? (
-          <div className="mt-10 border-l-4 border-[var(--stamp)] bg-stone-50 px-5 py-4">
+          <div className="mt-10 border-l-4 border-[var(--stamp)] bg-muted/20 px-5 py-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
               The sharp edge
             </p>

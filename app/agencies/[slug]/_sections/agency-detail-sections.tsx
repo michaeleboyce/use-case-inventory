@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MonoChip } from "@/components/editorial";
+import { StatTile } from "@/components/stat-tile";
 import { formatNumber } from "@/lib/formatting";
 import type { OrgWithUseCaseCount } from "@/lib/types";
 import { agencyUseCasesUrl } from "@/lib/urls";
@@ -79,21 +80,7 @@ export function FedrampStat({
   value: number;
   sub?: string;
 }) {
-  return (
-    <div>
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 font-display text-[2.2rem] leading-none tabular-nums text-foreground md:text-[2.6rem]">
-        {formatNumber(value)}
-      </div>
-      {sub ? (
-        <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          {sub}
-        </div>
-      ) : null}
-    </div>
-  );
+  return <StatTile variant="cell" label={label} value={value} sublabel={sub} />;
 }
 
 export function Colophon({ label, value }: { label: string; value: string }) {

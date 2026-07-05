@@ -21,7 +21,8 @@ import {
   Section,
   SourceLegend,
 } from "@/components/editorial";
-import { MetricTile } from "@/components/metric-tile";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { EnterpriseTierChart } from "@/components/experience/enterprise-tier-chart";
 import { buildUseCasesUrl } from "@/lib/urls";
 import type { UseCaseFilterInput } from "@/lib/types";
@@ -73,45 +74,45 @@ export default async function StoriesPage() {
       </div>
 
       {/* Header */}
-      <header className="mt-10 max-w-3xl">
-        <h1 className="font-display italic text-[2.6rem] leading-[0.95] tracking-[-0.02em] text-foreground md:text-[3.6rem]">
-          Opening the laptop
-        </h1>
-        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          Six archetypes · fourteen agencies · every claim sourced
-        </p>
-        <p className="mt-6 text-lg leading-relaxed text-foreground">
-          How the individual federal employee&rsquo;s experience of generative
-          AI changed between the 2024 and 2025 inventory cycles. Numbered
-          footnotes cite original external sources; chips deep-link to the
-          underlying data on this site. Claims tagged{" "}
-          <EvidenceTag>inventory-only</EvidenceTag> rest on an agency&rsquo;s
-          filing with no independent press;{" "}
-          <EvidenceTag>agency-reported</EvidenceTag> marks self-reported
-          performance figures.
-        </p>
-        <SourceLegend />
-      </header>
+      <div className="mt-10">
+        <PageMasthead
+          kicker="Six archetypes · fourteen agencies · every claim sourced"
+          title="Opening the laptop"
+          lede={
+            <>
+              How the individual federal employee&rsquo;s experience of generative
+              AI changed between the 2024 and 2025 inventory cycles. Numbered
+              footnotes cite original external sources; chips deep-link to the
+              underlying data on this site. Claims tagged{" "}
+              <EvidenceTag>inventory-only</EvidenceTag> rest on an agency&rsquo;s
+              filing with no independent press;{" "}
+              <EvidenceTag>agency-reported</EvidenceTag> marks self-reported
+              performance figures.
+            </>
+          }
+          actions={<SourceLegend />}
+        />
+      </div>
 
       {/* Stat strip */}
       <div className="mt-12 grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-3 lg:grid-cols-6">
         <div className="bg-card p-4">
-          <MetricTile label="Use cases filed" value="2,133 → 3,549" sublabel="2024 → 2025; 2025 moved most COTS to a separate 900-row appendix" />
+          <StatTile variant="rule" label="Use cases filed" value="2,133 → 3,549" sublabel="2024 → 2025; 2025 moved most COTS to a separate 900-row appendix" />
         </div>
         <div className="bg-card p-4">
-          <MetricTile label="Tagged GenAI" value="527 → 999" sublabel="IFP tags, both years re-audited" />
+          <StatTile variant="rule" label="Tagged GenAI" value="527 → 999" sublabel="IFP tags, both years re-audited" />
         </div>
         <div className="bg-card p-4">
-          <MetricTile label="Enterprise-wide GenAI" value="44 → 242" accent="stamp" sublabel="rows; agencies with any went 21 → 24" />
+          <StatTile variant="rule" label="Enterprise-wide GenAI" value="44 → 242" accent="stamp" sublabel="rows; agencies with any went 21 → 24" />
         </div>
         <div className="bg-card p-4">
-          <MetricTile label="Operated internal services" value="27% → 69%" accent="stamp" sublabel="share of enterprise GenAI run as an in-house service, not a permission slip" />
+          <StatTile variant="rule" label="Operated internal services" value="27% → 69%" accent="stamp" sublabel="share of enterprise GenAI run as an in-house service, not a permission slip" />
         </div>
         <div className="bg-card p-4">
-          <MetricTile label="Coding filings / enterprise" value="57 / 4" sublabel="individual coding-assistant filings vs. agencies at enterprise breadth" />
+          <StatTile variant="rule" label="Coding filings / enterprise" value="57 / 4" sublabel="individual coding-assistant filings vs. agencies at enterprise breadth" />
         </div>
         <div className="bg-card p-4">
-          <MetricTile label="Claude Code mentions" value="1" sublabel="in 3,549 use cases — one Interior line item" href={productUrl("Claude Code")} />
+          <StatTile variant="rule" label="Claude Code mentions" value="1" sublabel="in 3,549 use cases — one Interior line item" href={productUrl("Claude Code")} />
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">

@@ -12,6 +12,7 @@ import type {
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
 import { CoverageAgencyFilter } from "@/components/coverage/coverage-agency-filter";
 import { VendorsTable } from "./_sections/vendors-table";
@@ -173,11 +174,14 @@ export default async function FedrampCoverageVendorsPage({
         </Section>
       ) : rows.length === 0 ? (
         <Section number="I" title="No products" lede="Nothing to rank.">
-          <p className="border-t-2 border-foreground pt-4 text-sm text-muted-foreground">
-            {agencyMatch
-              ? `${agencyMatch.abbreviation} has no use cases with linked AI products.`
-              : "The inventory has no products with reportable use-case counts."}
-          </p>
+          <EmptyState
+            variant="boxed"
+            message={
+              agencyMatch
+                ? `${agencyMatch.abbreviation} has no use cases with linked AI products.`
+                : "The inventory has no products with reportable use-case counts."
+            }
+          />
         </Section>
       ) : (
         <>

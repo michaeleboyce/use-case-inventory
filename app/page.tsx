@@ -488,7 +488,7 @@ export default async function HomePage() {
           variant="big"
           href="/readiness/methodology#internal-build"
         />
-        <p className="mt-6 max-w-prose font-display text-[1rem] italic leading-snug text-stone-600">
+        <p className="mt-6 max-w-prose font-display text-[1rem] italic leading-snug text-muted-foreground">
           The ledger below groups agencies by an internal-heuristic tier; the
           readiness index above scores them against a published rubric.{" "}
           <Link

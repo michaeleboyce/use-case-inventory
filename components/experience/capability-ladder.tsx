@@ -30,7 +30,7 @@ function Rung({
           {status}
         </p>
       </div>
-      <h3 className="mt-1 font-serif text-lg text-foreground">{title}</h3>
+      <h3 className="mt-1 font-display text-lg text-foreground">{title}</h3>
       <div className="mt-3 text-sm leading-relaxed text-foreground">
         {children}
       </div>

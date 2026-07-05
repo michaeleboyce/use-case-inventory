@@ -44,13 +44,13 @@ export function ResolutionForm({
 
   if (resolvedAt) {
     return (
-      <div className="space-y-3 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm">
+      <div className="space-y-3 border border-[var(--verified)]/30 bg-[var(--verified)]/10 p-4 text-sm">
         <div className="flex items-baseline justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wider text-emerald-800">
+            <p className="text-xs uppercase tracking-wider text-[var(--verified)]">
               Resolved
             </p>
-            <p className="font-mono text-xs text-emerald-900/70">
+            <p className="font-mono text-xs text-[var(--verified)]/70">
               {new Date(resolvedAt).toLocaleString()}
             </p>
           </div>
@@ -69,7 +69,7 @@ export function ResolutionForm({
               <button
                 type="submit"
                 disabled={pending}
-                className="rounded border border-emerald-300 bg-white px-3 py-1 text-xs font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+                className="border border-[var(--verified)]/40 bg-background px-3 py-1 text-xs font-medium text-[var(--verified)] hover:bg-[var(--verified)]/10 disabled:opacity-50"
               >
                 {pending ? "Working…" : "Unresolve"}
               </button>
@@ -77,37 +77,37 @@ export function ResolutionForm({
           ) : null}
         </div>
         {resolutionReason ? (
-          <span className="font-display text-sm text-stone-900">
+          <span className="font-display text-sm text-foreground">
             Reason: {RESOLUTION_REASON_LABELS[resolutionReason]}
           </span>
         ) : null}
         {resolutionNote ? (
-          <p className="whitespace-pre-wrap text-emerald-950">
+          <p className="whitespace-pre-wrap text-foreground">
             {resolutionNote}
           </p>
         ) : (
-          <p className="italic text-emerald-900/60">No note left.</p>
+          <p className="italic text-muted-foreground">No note left.</p>
         )}
         {!canWrite ? (
-          <p className="text-xs text-emerald-900/70">
+          <p className="text-xs text-[var(--verified)]/70">
             Editing is local-dev only. To change a resolution, run{" "}
             <code className="font-mono">npm run dev</code> and update there.
           </p>
         ) : null}
-        {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+        {error ? <p className="text-xs text-[var(--stamp)]">{error}</p> : null}
       </div>
     );
   }
 
   if (!canWrite) {
     return (
-      <div className="rounded border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
+      <div className="border border-border bg-muted/20 p-4 text-sm text-foreground">
         <p className="font-medium">Resolutions are local-dev only.</p>
-        <p className="mt-1 text-stone-600">
+        <p className="mt-1 text-muted-foreground">
           Vercel serverless filesystems are ephemeral, so this surface
           can&rsquo;t persist edits. To triage:
         </p>
-        <ol className="mt-2 list-decimal pl-5 text-stone-600">
+        <ol className="mt-2 list-decimal pl-5 text-muted-foreground">
           <li>
             Pull the dashboard repo and run{" "}
             <code className="font-mono">npm run dev</code>.
@@ -157,9 +157,9 @@ export function ResolutionForm({
           }
         });
       }}
-      className="space-y-3 rounded border border-stone-200 p-4"
+      className="space-y-3 border border-border p-4"
     >
-      <label className="block text-xs uppercase tracking-wider text-stone-500">
+      <label className="block text-xs uppercase tracking-wider text-muted-foreground">
         Resolution reason
         <select
           id="resolution-reason"
@@ -167,7 +167,7 @@ export function ResolutionForm({
           required
           value={reason}
           onChange={(e) => setReason(e.target.value as ResolutionReason)}
-          className="mt-1 block w-full rounded border border-stone-300 bg-white px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+          className="mt-1 block w-full border border-border bg-background px-2 py-1 text-sm font-normal normal-case tracking-normal text-foreground"
         >
           <option value="" disabled>
             Select reason…
@@ -179,7 +179,7 @@ export function ResolutionForm({
           ))}
         </select>
       </label>
-      <label className="block text-xs uppercase tracking-wider text-stone-500">
+      <label className="block text-xs uppercase tracking-wider text-muted-foreground">
         Note (optional)
         <textarea
           name="note"
@@ -187,18 +187,18 @@ export function ResolutionForm({
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="e.g., 'OMB-side typo, ignored' or 'Verified ID DHS-2577'"
-          className="mt-1 block w-full rounded border border-stone-300 px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+          className="mt-1 block w-full border border-border px-2 py-1 text-sm font-normal normal-case tracking-normal text-foreground"
         />
       </label>
       <div className="flex items-center gap-3">
         <button
           type="submit"
           disabled={!canSubmit}
-          className="rounded bg-stone-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="bg-foreground px-4 py-1.5 text-sm font-medium text-background hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "Saving…" : "Mark resolved"}
         </button>
-        {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+        {error ? <p className="text-xs text-[var(--stamp)]">{error}</p> : null}
       </div>
     </form>
   );

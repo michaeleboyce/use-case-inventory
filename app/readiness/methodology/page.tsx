@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { PageSubnav } from "@/components/page-subnav";
 import { Section, MonoChip } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { ReadinessRubricTable } from "@/components/readiness/readiness-rubric-table";
 import {
   RUBRIC_VERSION,
@@ -82,21 +83,21 @@ export default function MethodologyPage() {
         </Link>
       </div>
 
-      <header className="mt-10 max-w-3xl">
-        <h1 className="font-display italic text-[2.6rem] leading-[0.95] tracking-[-0.02em] text-foreground md:text-[3.6rem]">
-          Methodology
-        </h1>
-        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          Federal AI Readiness Index · v{RUBRIC_VERSION}
-        </p>
-        <p className="mt-6 text-lg leading-relaxed text-foreground">
-          The Federal AI Readiness Index scores each cabinet-level and
-          independent agency in the OMB M-25-21 AI use case inventory along
-          five weighted dimensions. It is a published rubric — every
-          numerator, denominator, weight, and tier threshold on this page is
-          fixed in code and reproducible from the public source data.
-        </p>
-      </header>
+      <div className="mt-10">
+        <PageMasthead
+          kicker={`Federal AI Readiness Index · v${RUBRIC_VERSION}`}
+          title="Methodology"
+          lede={
+            <>
+              The Federal AI Readiness Index scores each cabinet-level and
+              independent agency in the OMB M-25-21 AI use case inventory along
+              five weighted dimensions. It is a published rubric — every
+              numerator, denominator, weight, and tier threshold on this page is
+              fixed in code and reproducible from the public source data.
+            </>
+          }
+        />
+      </div>
 
       <Section
         id="why"
@@ -228,7 +229,7 @@ export default function MethodologyPage() {
         <div id="headline-statistics" className="scroll-mt-36 space-y-6">
           <article
             id="internal-build"
-            className="scroll-mt-36 border-l-4 border-[var(--stamp)] bg-stone-50 p-4"
+            className="scroll-mt-36 border-l-4 border-[var(--stamp)] bg-muted/20 p-4"
           >
             <div className="flex items-baseline gap-3">
               <span className="font-mono tabular-nums text-3xl font-semibold text-foreground">
@@ -289,7 +290,7 @@ export default function MethodologyPage() {
 
           <article
             id="compliance-vs-capacity"
-            className="scroll-mt-36 border-l-2 border-stone-400 bg-stone-50/60 p-4"
+            className="scroll-mt-36 border-l-2 border-border bg-muted/20 p-4"
           >
             <div className="flex items-baseline gap-3">
               <span className="font-mono tabular-nums text-2xl font-semibold text-foreground">
@@ -467,7 +468,7 @@ export default function MethodologyPage() {
         lede="Copy-paste citation for footnoting in policy papers and articles."
       >
         <div id="citation" className="scroll-mt-36">
-          <blockquote className="border-l-4 border-stone-400 bg-stone-50 p-4 font-mono text-sm leading-relaxed text-foreground">
+          <blockquote className="border-l-4 border-border bg-muted/20 p-4 font-mono text-sm leading-relaxed text-foreground">
             Institute for Progress. &ldquo;Federal AI Readiness
             Index.&rdquo; Federal AI Use Case Inventory, accessed{" "}
             {accessDate}. https://use-case-inventory.vercel.app/readiness

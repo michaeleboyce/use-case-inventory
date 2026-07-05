@@ -135,7 +135,7 @@ export function MaturityScatter({ data }: { data: MaturityScatterDatum[] }) {
               if (!active || !payload || payload.length === 0) return null;
               const p = payload[0].payload as ChartPoint;
               return (
-                <div className="rounded-md border border-border bg-popover p-2 text-xs text-popover-foreground shadow">
+                <div className="border border-border bg-popover p-2 text-xs text-popover-foreground shadow">
                   <div className="font-semibold">{p.name}</div>
                   <div className="text-muted-foreground">
                     {p.abbreviation} · {TIER_LABEL[p.tier] ?? p.tier}

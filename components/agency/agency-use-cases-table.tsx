@@ -9,6 +9,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -105,9 +107,10 @@ export function IndividualUseCasesTable({
 
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No individual use cases reported for this agency.
-      </p>
+      <EmptyState
+        variant="boxed"
+        message="No individual use cases reported for this agency."
+      />
     );
   }
 
@@ -122,25 +125,22 @@ export function IndividualUseCasesTable({
           className="max-w-xs"
         />
         {stages.length > 0 ? (
-          <select
+          <FilterSelect
+            label="Stage"
             value={stage}
-            onChange={(e) => setStage(e.target.value)}
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-          >
-            <option value="">All stages</option>
-            {stages.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            onChange={setStage}
+            options={[
+              { value: "", label: "All stages" },
+              ...stages.map((s) => ({ value: s, label: s })),
+            ]}
+          />
         ) : null}
         <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} of {rows.length}
         </span>
       </div>
 
-      <div className="rounded-lg border border-border">
+      <div className="border border-border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -265,9 +265,10 @@ export function ConsolidatedUseCasesTable({
 
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No consolidated entries reported for this agency.
-      </p>
+      <EmptyState
+        variant="boxed"
+        message="No consolidated entries reported for this agency."
+      />
     );
   }
 
@@ -286,7 +287,7 @@ export function ConsolidatedUseCasesTable({
         </span>
       </div>
 
-      <div className="rounded-lg border border-border">
+      <div className="border border-border">
         <Table>
           <TableHeader>
             <TableRow>

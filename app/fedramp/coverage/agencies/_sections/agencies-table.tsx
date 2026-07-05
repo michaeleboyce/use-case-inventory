@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/lib/formatting";
 import type { CoverageAgencyRow } from "@/lib/types";
 
@@ -125,11 +126,11 @@ export function AgenciesCoverageTable({
             })}
             {filtered.length === 0 ? (
               <tr>
-                <td
-                  colSpan={7}
-                  className="py-12 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
-                >
-                  No agencies match &ldquo;{query}&rdquo;.
+                <td colSpan={7} className="py-6 text-center">
+                  <EmptyState
+                    variant="bare"
+                    message={<>No agencies match &ldquo;{query}&rdquo;.</>}
+                  />
                 </td>
               </tr>
             ) : null}

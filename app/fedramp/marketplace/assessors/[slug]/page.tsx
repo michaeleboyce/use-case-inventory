@@ -12,7 +12,8 @@ import {
   getFedrampProductsByAssessor,
 } from "@/lib/db";
 import { Section, Eyebrow, MonoChip } from "@/components/editorial";
-import { MetricTile } from "@/components/metric-tile";
+import { EmptyState } from "@/components/empty-state";
+import { StatTile } from "@/components/stat-tile";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
 import { ImpactBadge } from "@/components/fedramp/impact-badge";
 import { formatDate, formatNumber } from "@/lib/formatting";
@@ -111,23 +112,23 @@ export default async function MarketplaceAssessorDetailPage({
         lede="The four-line portfolio ledger."
       >
         <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <MetricTile
+          <StatTile variant="rule"
             label="Products covered"
             value={products.length}
             sublabel="Lifetime"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="Authorized"
             value={authorized}
             accent="verified"
             sublabel="Currently"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="In process"
             value={inProcess}
             sublabel="Active packages"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="High-impact"
             value={high}
             accent="stamp"
@@ -187,9 +188,7 @@ export default async function MarketplaceAssessorDetailPage({
         lede={`Every cloud-service offering attributed to ${assessor.name} in the marketplace ledger.`}
       >
         {products.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            No offerings on file.
-          </p>
+          <EmptyState variant="bare" message="No offerings on file." />
         ) : (
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-sm">

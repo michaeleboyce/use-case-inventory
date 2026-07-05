@@ -2,6 +2,8 @@ import Link from "next/link";
 import { TemplatesFilters } from "@/components/template/templates-filters";
 import { CapabilityCategoryChart } from "@/components/charts/capability-category-chart";
 import { Section, Figure } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
 import { buildTemplatesViewModel } from "./_view-model";
@@ -21,64 +23,52 @@ export default async function TemplatesPage() {
       {/* ------------------------------------------------------------ */}
       {/* HERO — editorial nameplate                                   */}
       {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
-            <div>
-              <div className="eyebrow mb-1.5 !text-[var(--stamp)]">
-                No. 003 · Compendium
+      <PageMasthead
+        kicker="No. 003 · Compendium"
+        metaLines={["OMB Appendix B", "Boilerplate language"]}
+        meta={
+          <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
+            <div className="border-t border-border pt-3">
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Templates
               </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                OMB Appendix B
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Boilerplate language
+              <div className="text-foreground">
+                {formatNumber(templates.length)}
               </div>
             </div>
-
-            <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
-              <div className="border-t border-border pt-3">
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Templates
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(templates.length)}
-                </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                OMB standard
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  OMB standard
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(ombStandard)} of{" "}
-                  {formatNumber(templates.length)}
-                </div>
+              <div className="text-foreground">
+                {formatNumber(ombStandard)} of{" "}
+                {formatNumber(templates.length)}
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Categories
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(distinctCategories)}
-                </div>
+            </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Categories
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Verbatim entries
-                </div>
-                <Link
-                  href={buildUseCasesUrl({})}
-                  className="block text-foreground transition-colors hover:text-[var(--stamp)]"
-                >
-                  {formatNumber(totalEntries)}
-                </Link>
+              <div className="text-foreground">
+                {formatNumber(distinctCategories)}
               </div>
+            </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Verbatim entries
+              </div>
+              <Link
+                href={buildUseCasesUrl({})}
+                className="block text-foreground transition-colors hover:text-[var(--stamp)]"
+              >
+                {formatNumber(totalEntries)}
+              </Link>
             </div>
           </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.6rem,7vw,6rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
+        }
+        italicTitle={false}
+        title={
+          <>
             The{" "}
             <em className="inline font-normal italic">boilerplate</em> that
             <br />
@@ -93,63 +83,40 @@ export default async function TemplatesPage() {
                 government&nbsp;copied&nbsp;verbatim.
               </span>
             </span>
-          </h1>
-
-          <div className="mt-10 grid grid-cols-12 gap-x-6 gap-y-6">
-            <p className="col-span-12 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85 md:col-span-7">
-              <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
-                O
-              </span>
-              MB Appendix B supplied agencies with{" "}
-              <span className="font-medium text-foreground">
-                {formatNumber(ombStandard)} standard use-case templates
-              </span>{" "}
-              — short capability descriptions like &ldquo;employees use AI to
-              summarize meetings.&rdquo; Many agencies filed these verbatim.
-              Reviewing them side-by-side surfaces which capabilities the
-              federal government most consistently admits to deploying, and
-              which agencies went beyond the template to describe bespoke work.
-            </p>
-
-            <div className="col-span-12 md:col-span-4 md:col-start-9 md:self-end">
-              <div className="editorial-rule-left space-y-3">
-                <div className="eyebrow">By the numbers</div>
-                <dl className="space-y-2 font-mono text-sm">
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">Templates</dt>
-                    <dd className="tabular-nums text-foreground">
-                      {formatNumber(templates.length)}
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">OMB standard</dt>
-                    <dd className="tabular-nums text-foreground">
-                      {formatNumber(ombStandard)}
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">Categories</dt>
-                    <dd className="tabular-nums text-foreground">
-                      {formatNumber(distinctCategories)}
-                    </dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <dt className="text-muted-foreground">Entries</dt>
-                    <dd className="tabular-nums text-foreground">
-                      <Link
-                        href={buildUseCasesUrl({})}
-                        className="transition-colors hover:text-[var(--stamp)]"
-                      >
-                        {formatNumber(totalEntries)}
-                      </Link>
-                    </dd>
-                  </div>
-                </dl>
-              </div>
+          </>
+        }
+        lede={
+          <>
+            <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
+              O
+            </span>
+            MB Appendix B supplied agencies with{" "}
+            <span className="font-medium text-foreground">
+              {formatNumber(ombStandard)} standard use-case templates
+            </span>{" "}
+            — short capability descriptions like &ldquo;employees use AI to
+            summarize meetings.&rdquo; Many agencies filed these verbatim.
+            Reviewing them side-by-side surfaces which capabilities the
+            federal government most consistently admits to deploying, and
+            which agencies went beyond the template to describe bespoke work.
+          </>
+        }
+        actions={
+          <div>
+            <div className="eyebrow mb-4">By the numbers</div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+              <StatTile label="Templates" value={templates.length} />
+              <StatTile label="OMB standard" value={ombStandard} />
+              <StatTile label="Categories" value={distinctCategories} />
+              <StatTile
+                label="Entries"
+                value={totalEntries}
+                href={buildUseCasesUrl({})}
+              />
             </div>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* ------------------------------------------------------------ */}
       {/* § I — CATEGORY VOLUME                                        */}

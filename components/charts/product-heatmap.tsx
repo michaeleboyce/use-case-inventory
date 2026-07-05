@@ -158,12 +158,12 @@ export function ProductHeatmap({ data }: { data: ProductHeatmapData }) {
         {/* Legend */}
         <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>0</span>
-          <span className={cn("h-3 w-6 rounded-sm", intensityClass(1, 100))} />
-          <span className={cn("h-3 w-6 rounded-sm", intensityClass(5, 100))} />
-          <span className={cn("h-3 w-6 rounded-sm", intensityClass(20, 100))} />
-          <span className={cn("h-3 w-6 rounded-sm", intensityClass(50, 100))} />
-          <span className={cn("h-3 w-6 rounded-sm", intensityClass(80, 100))} />
-          <span className={cn("h-3 w-6 rounded-sm", intensityClass(100, 100))} />
+          <span className={cn("h-3 w-6", intensityClass(1, 100))} />
+          <span className={cn("h-3 w-6", intensityClass(5, 100))} />
+          <span className={cn("h-3 w-6", intensityClass(20, 100))} />
+          <span className={cn("h-3 w-6", intensityClass(50, 100))} />
+          <span className={cn("h-3 w-6", intensityClass(80, 100))} />
+          <span className={cn("h-3 w-6", intensityClass(100, 100))} />
           <span>{max}+ use cases</span>
         </div>
       </div>

@@ -9,6 +9,7 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import { MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { ExpandableCoverageTable } from "@/components/coverage/expandable-coverage-table";
 import type { CoreAiSpreadRow, UnlinkedAiAtoAgencyRow } from "@/lib/types";
@@ -118,9 +119,10 @@ function ExpansionPanel({ row }: { row: SpreadTableRow }) {
         Agencies holding an ATO
       </p>
       {row._agencies.length === 0 ? (
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-          No agency ATO recorded on the marketplace ledger.
-        </p>
+        <EmptyState
+          variant="bare"
+          message="No agency ATO recorded on the marketplace ledger."
+        />
       ) : (
         <ul className="grid grid-cols-1 gap-2 pl-1 md:grid-cols-2">
           {row._agencies.map((a, i) => (

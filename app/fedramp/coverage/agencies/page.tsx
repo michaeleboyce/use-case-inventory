@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { AgenciesCoverageTable } from "./_sections/agencies-table";
 
 // Availability tiers, least-available first — the sort puts high-reach /
@@ -126,9 +127,10 @@ export default function FedrampCoverageAgenciesPage() {
           title="No agencies"
           lede="No reporting agencies returned in the dataset."
         >
-          <p className="border-t-2 border-foreground pt-4 text-sm text-muted-foreground">
-            The agency rollup query returned an empty result.
-          </p>
+          <EmptyState
+            variant="boxed"
+            message="The agency rollup query returned an empty result."
+          />
         </Section>
       ) : (
         <Section

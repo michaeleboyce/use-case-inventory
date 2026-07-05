@@ -8,6 +8,7 @@
  */
 
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/lib/formatting";
 import { agencyUseCasesUrl } from "@/lib/urls";
 
@@ -37,9 +38,7 @@ export function ProductGrid({
   agencyId,
 }: Props) {
   if (products.length === 0) {
-    return (
-      <p className="font-body text-sm text-muted-foreground">{emptyMessage}</p>
-    );
+    return <EmptyState variant="bare" message={emptyMessage} />;
   }
 
   return (

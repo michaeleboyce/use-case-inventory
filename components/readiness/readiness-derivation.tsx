@@ -114,18 +114,18 @@ export function ReadinessDerivation({
                 weight={dim.weight}
               />
               {breakdown && breakdown.signals.length > 0 ? (
-                <p className="font-mono text-[11px] leading-relaxed text-stone-600">
+                <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
                   {breakdown.signals.map((s, i) => (
                     <span key={s.label} className="whitespace-nowrap">
                       {i > 0 ? " · " : ""}
                       {s.label}{" "}
-                      <span className="font-semibold tabular-nums text-stone-800">
+                      <span className="font-semibold tabular-nums text-foreground">
                         {s.value.toLocaleString()}
                       </span>
                     </span>
                   ))}
                   {breakdown.denominators[0] ? (
-                    <span className="text-stone-400">
+                    <span className="text-muted-foreground/60">
                       {" "}
                       / {breakdown.denominators[0].value.toLocaleString()}{" "}
                       {breakdown.denominators[0].label.toLowerCase()}
@@ -133,16 +133,16 @@ export function ReadinessDerivation({
                   ) : null}
                 </p>
               ) : (
-                <p className="text-[0.8rem] leading-snug text-stone-600">
+                <p className="text-[0.8rem] leading-snug text-muted-foreground">
                   {readinessInputSummary(inputs, dim.key, dim.definition)}
                 </p>
               )}
-              <p className="font-mono text-[10px] tabular-nums text-stone-400">
+              <p className="font-mono text-[10px] tabular-nums text-muted-foreground/60">
                 {Math.round(dim.weight * 100)}% × {score.toFixed(1)} ={" "}
                 {contribution.toFixed(1)} pts of composite ·{" "}
                 <Link
                   href={`/readiness/methodology#${dim.key}`}
-                  className="underline-offset-2 hover:text-stone-700 hover:underline"
+                  className="underline-offset-2 hover:text-foreground hover:underline"
                 >
                   methodology →
                 </Link>
@@ -151,7 +151,7 @@ export function ReadinessDerivation({
           );
         })}
       </div>
-      <div className="flex flex-wrap items-baseline gap-x-4 border-t border-stone-200 pt-2 font-mono text-[11px] text-stone-500">
+      <div className="flex flex-wrap items-baseline gap-x-4 border-t border-border pt-2 font-mono text-[11px] text-muted-foreground">
         <span className="tabular-nums">
           Composite {readiness.composite_score.toFixed(1)} · Tier{" "}
           {readiness.tier} ({readiness.tier_label})

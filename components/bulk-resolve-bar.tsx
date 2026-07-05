@@ -87,54 +87,54 @@ export function BulkResolveBar() {
       <button
         type="button"
         onClick={open}
-        className="inline-flex items-center gap-1 border border-stone-300 bg-white px-3 py-1.5 font-display text-sm text-stone-900 hover:bg-stone-100"
+        className="inline-flex items-center gap-1 border border-border bg-background px-3 py-1.5 font-display text-sm text-foreground hover:bg-muted"
       >
         Bulk resolve…
       </button>
 
       <dialog
         ref={dialogRef}
-        className="border border-stone-300 bg-white p-6 backdrop:bg-stone-900/30"
+        className="border border-border bg-background p-6 backdrop:bg-foreground/30"
         onClick={(e) => {
           if (e.target === dialogRef.current) close();
         }}
       >
         <form onSubmit={onSubmit} className="min-w-[28rem] max-w-xl space-y-4">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="font-display text-lg text-stone-900">
+            <h2 className="font-display text-lg text-foreground">
               Bulk resolve discrepancies
             </h2>
             <button
               type="button"
               onClick={close}
-              className="text-sm text-stone-500 hover:text-stone-900"
+              className="text-sm text-muted-foreground hover:text-foreground"
               aria-label="Close"
             >
               ×
             </button>
           </div>
 
-          <label className="block text-xs uppercase tracking-wider text-stone-500">
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground">
             Audit IDs
             <textarea
               value={idsText}
               onChange={(e) => setIdsText(e.target.value)}
               rows={4}
               placeholder="Paste audit IDs, separated by commas, spaces, or newlines. Hyphen ranges OK (e.g., 1200-1215)."
-              className="mt-1 block w-full rounded border border-stone-300 px-2 py-1 font-mono text-sm font-normal normal-case tracking-normal text-stone-900"
+              className="mt-1 block w-full border border-border px-2 py-1 font-mono text-sm font-normal normal-case tracking-normal text-foreground"
             />
-            <span className="mt-1 block text-xs text-stone-500">
+            <span className="mt-1 block text-xs text-muted-foreground">
               Parsed: {parsedIds.length} id{parsedIds.length === 1 ? "" : "s"}
             </span>
           </label>
 
-          <label className="block text-xs uppercase tracking-wider text-stone-500">
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground">
             Reason
             <select
               value={reason}
               required
               onChange={(e) => setReason(e.target.value as ResolutionReason)}
-              className="mt-1 block w-full rounded border border-stone-300 bg-white px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+              className="mt-1 block w-full border border-border bg-background px-2 py-1 text-sm font-normal normal-case tracking-normal text-foreground"
             >
               <option value="" disabled>
                 Select reason…
@@ -147,24 +147,24 @@ export function BulkResolveBar() {
             </select>
           </label>
 
-          <label className="block text-xs uppercase tracking-wider text-stone-500">
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground">
             Note (optional)
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="mt-1 block w-full rounded border border-stone-300 px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+              className="mt-1 block w-full border border-border px-2 py-1 text-sm font-normal normal-case tracking-normal text-foreground"
             />
           </label>
 
-          {error ? <p className="text-xs text-rose-700">{error}</p> : null}
-          {result ? <p className="text-xs text-emerald-700">{result}</p> : null}
+          {error ? <p className="text-xs text-[var(--stamp)]">{error}</p> : null}
+          {result ? <p className="text-xs text-[var(--verified)]">{result}</p> : null}
 
           <div className="flex items-center gap-3">
             <button
               type="submit"
               disabled={!canSubmit}
-              className="rounded bg-stone-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-foreground px-4 py-1.5 text-sm font-medium text-background hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending ? "Resolving…" : `Resolve ${parsedIds.length}`}
             </button>
@@ -177,7 +177,7 @@ export function BulkResolveBar() {
                 setResult(null);
                 setError(null);
               }}
-              className="text-sm text-stone-600 hover:text-stone-900"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               Clear
             </button>

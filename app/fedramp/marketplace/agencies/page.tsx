@@ -14,6 +14,7 @@ import {
   getFedrampAuthorizationsForAgency,
 } from "@/lib/db";
 import { Section, Eyebrow, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/lib/formatting";
 
 export const metadata = {
@@ -201,11 +202,11 @@ export default async function MarketplaceAgenciesPage({
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="px-2 py-6 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
-                    >
-                      No agencies match {q ? `“${q}”` : "the current filter"}.
+                    <td colSpan={5} className="px-2 py-6 text-center">
+                      <EmptyState
+                        variant="bare"
+                        message={`No agencies match ${q ? `“${q}”` : "the current filter"}.`}
+                      />
                     </td>
                   </tr>
                 ) : (

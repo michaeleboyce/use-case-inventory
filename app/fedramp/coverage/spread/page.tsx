@@ -20,6 +20,7 @@ import type {
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section, Figure, MonoChip } from "@/components/editorial";
+import { StatTile } from "@/components/stat-tile";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
 import { SpreadTable, type SpreadTableRow } from "./_sections/spread-table";
 import {
@@ -183,17 +184,21 @@ export default function SpreadPage() {
                   <StatTile
                     value={formatNumber(counts.single_ato)}
                     label="Stuck at a single ATO"
-                    accent
+                    accent="stamp"
                   />
                   <StatTile
                     value={formatNumber(counts.multi_ato)}
                     label="Spread to 2+ agencies"
                   />
-                  <StatTile
-                    value={`${formatNumber(counts.ato_pairs_with_reported_use)} of ${formatNumber(counts.ato_pairs)}`}
-                    label="ATO'd pairs with reported use"
+                  <div
+                    className="min-w-0"
                     title="Of the agency × product ATO pairs mappable to an inventory agency, how many are corroborated by a reported use case at that agency."
-                  />
+                  >
+                    <StatTile
+                      value={`${formatNumber(counts.ato_pairs_with_reported_use)} of ${formatNumber(counts.ato_pairs)}`}
+                      label="ATO'd pairs with reported use"
+                    />
+                  </div>
                 </div>
               ) : null}
 
@@ -293,12 +298,16 @@ export default function SpreadPage() {
                     value={formatNumber(shelf.host_packages)}
                     label="Packages hosting them"
                   />
-                  <StatTile
-                    value={formatNumber(shelf.agencies_in_reach)}
-                    label="Agencies holding ≥1 such package"
-                    accent
+                  <div
+                    className="min-w-0"
                     title="Distinct inventory-mapped agencies with an ATO on at least one package containing a core-AI service. In scope of the package's authorization — not necessarily enabled or available to staff."
-                  />
+                  >
+                    <StatTile
+                      value={formatNumber(shelf.agencies_in_reach)}
+                      label="Agencies holding ≥1 such package"
+                      accent="stamp"
+                    />
+                  </div>
                   <StatTile
                     value={formatNumber(shelf.ai_featured_services)}
                     label="AI-featured services (context)"
@@ -430,31 +439,6 @@ export default function SpreadPage() {
       )}
 
       <SnapshotFooter snapshot={snapshot} />
-    </div>
-  );
-}
-
-function StatTile({
-  value,
-  label,
-  accent = false,
-  title,
-}: {
-  value: string;
-  label: string;
-  accent?: boolean;
-  title?: string;
-}) {
-  return (
-    <div className="border-t-2 border-foreground pt-2" title={title}>
-      <div
-        className={`font-display text-[2rem] italic leading-[0.95] tracking-[-0.02em] tabular-nums ${accent ? "text-[var(--stamp)]" : "text-foreground"}`}
-      >
-        {value}
-      </div>
-      <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </div>
     </div>
   );
 }

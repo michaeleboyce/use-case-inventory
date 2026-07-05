@@ -16,6 +16,7 @@ import type {
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { SleepingTable } from "./_sections/sleeping-table";
 import { SleepingByImpactChart } from "./_sections/by-impact-chart";
 import { TopSleepingAgenciesChart } from "./_sections/top-agencies-chart";
@@ -185,9 +186,10 @@ export default async function FedrampCoverageSleepingPage({
             </div>
 
             {withDetail.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No products match the current filter.
-              </p>
+              <EmptyState
+                variant="bare"
+                message="No products match the current filter."
+              />
             ) : (
               <SleepingTable rows={withDetail} />
             )}

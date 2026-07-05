@@ -8,6 +8,7 @@ import {
 import type { AgencyAtoRow, FedrampSnapshot } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { CoverageAgencyFilter } from "@/components/coverage/coverage-agency-filter";
 import { ProductsTable } from "./_sections/products-table";
 
@@ -187,9 +188,10 @@ export default async function FedrampCoverageProductsPage({
           </div>
 
           {sorted.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No products match the current filter.
-            </p>
+            <EmptyState
+              variant="bare"
+              message="No products match the current filter."
+            />
           ) : (
             <ProductsTable rows={withDetail} />
           )}

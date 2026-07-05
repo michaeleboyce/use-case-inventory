@@ -16,6 +16,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { MonoChip, Section } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { GenAiByStageChart } from "@/components/experience/genai-by-stage-chart";
 import { EnterpriseTierChart } from "@/components/experience/enterprise-tier-chart";
 import { GenAiTimelineChart } from "@/components/experience/genai-timeline-chart";
@@ -83,34 +84,34 @@ export default async function ExperiencePage() {
       </div>
 
       {/* Header */}
-      <header className="mt-10 max-w-3xl">
-        <h1 className="font-display italic text-[2.6rem] leading-[0.95] tracking-[-0.02em] text-foreground md:text-[3.6rem]">
-          The AI experience of an average civil servant
-        </h1>
-        <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          Before and after the AI Action Plan · 2024–2025
-        </p>
-        <p className="mt-6 text-lg leading-relaxed text-foreground">
-          The 2024 federal AI use case inventory listed{" "}
-          <strong>{fmt(yearCompare.count_2024_tagged)}</strong> IFP-tagged
-          generative-AI use cases across {fmt(yearCompare.total_2024)} total.
-          The 2025 inventory lists between{" "}
-          <strong>{fmt(ombHeadline?.total ?? 0)}</strong>{" "}
-          and <strong>{fmt(llmHeadline?.total ?? 0)}</strong> — depending on
-          whose definition of &ldquo;Generative AI&rdquo; you trust. Of those,
-          roughly <strong>{fmt(enterpriseHeadline?.total ?? 0)}</strong> are
-          tagged as enterprise-wide LLM access — a working-day chat surface
-          available to a whole agency&apos;s staff. Beneath those use-case
-          counts sit somewhere between{" "}
-          <strong>{fmt(totalSeatsLower)}</strong> and{" "}
-          <strong>{fmt(totalSeatsUpper)}</strong> employee seats with some
-          form of AI tool, extrapolated from the license bands agencies filed
-          in their consolidated inventory.
-        </p>
-      </header>
+      <div className="mt-10">
+        <PageMasthead
+          kicker="Before and after the AI Action Plan · 2024–2025"
+          title="The AI experience of an average civil servant"
+          lede={
+            <>
+              The 2024 federal AI use case inventory listed{" "}
+              <strong>{fmt(yearCompare.count_2024_tagged)}</strong> IFP-tagged
+              generative-AI use cases across {fmt(yearCompare.total_2024)} total.
+              The 2025 inventory lists between{" "}
+              <strong>{fmt(ombHeadline?.total ?? 0)}</strong>{" "}
+              and <strong>{fmt(llmHeadline?.total ?? 0)}</strong> — depending on
+              whose definition of &ldquo;Generative AI&rdquo; you trust. Of those,
+              roughly <strong>{fmt(enterpriseHeadline?.total ?? 0)}</strong> are
+              tagged as enterprise-wide LLM access — a working-day chat surface
+              available to a whole agency&apos;s staff. Beneath those use-case
+              counts sit somewhere between{" "}
+              <strong>{fmt(totalSeatsLower)}</strong> and{" "}
+              <strong>{fmt(totalSeatsUpper)}</strong> employee seats with some
+              form of AI tool, extrapolated from the license bands agencies filed
+              in their consolidated inventory.
+            </>
+          }
+        />
+      </div>
 
       {/* Methodology aside */}
-      <aside className="mt-8 max-w-3xl border-l-4 border-[var(--stamp)] bg-stone-50 px-5 py-4">
+      <aside className="mt-8 max-w-3xl border-l-4 border-[var(--stamp)] bg-muted/20 px-5 py-4">
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           How to read this page
         </p>

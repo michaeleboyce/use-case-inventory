@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { Section, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { MentionedWithoutAtoTable } from "./_sections/mentioned-without-ato-table";
 
 export async function generateMetadata({
@@ -246,11 +247,10 @@ export default async function FedrampCoverageAgencyDrillPage({
         lede="AI-linked FedRAMP authorizations on file for this agency where no inventory use-case names the product. (Filtered to FedRAMP products with a row in fedramp_product_links.)"
       >
         {authorized_but_unreported.length === 0 ? (
-          <p className="border-t-2 border-foreground pt-4 max-w-prose text-sm text-muted-foreground">
-            No gap detected. Either the agency&rsquo;s ATO scope is fully
-            reflected in its inventory, or no FedRAMP authorizations are linked
-            to this agency yet.
-          </p>
+          <EmptyState
+            variant="boxed"
+            message="No gap detected. Either the agency’s ATO scope is fully reflected in its inventory, or no FedRAMP authorizations are linked to this agency yet."
+          />
         ) : (
           <div className="overflow-x-auto border-t-2 border-foreground">
             <table className="w-full text-sm">

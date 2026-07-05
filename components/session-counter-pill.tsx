@@ -25,7 +25,7 @@ export function SessionCounterPill({
   }, []);
 
   return (
-    <span className="font-mono text-xs px-2 py-1 bg-stone-100 border border-stone-200">
+    <span className="font-mono text-xs px-2 py-1 bg-muted border border-border">
       Resolved this session: {resolved} · Remaining: {remaining.toLocaleString()}
     </span>
   );

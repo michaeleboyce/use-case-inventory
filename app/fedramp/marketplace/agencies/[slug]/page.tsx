@@ -14,7 +14,8 @@ import {
   getFedrampAuthorizationsForAgency,
 } from "@/lib/db";
 import { Section, Eyebrow, MonoChip } from "@/components/editorial";
-import { MetricTile } from "@/components/metric-tile";
+import { EmptyState } from "@/components/empty-state";
+import { StatTile } from "@/components/stat-tile";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
 import { ImpactBadge } from "@/components/fedramp/impact-badge";
 import { formatDate, formatNumber } from "@/lib/formatting";
@@ -109,23 +110,23 @@ export default async function MarketplaceAgencyDetailPage({
         lede="The headline numbers for this agency."
       >
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <MetricTile
+          <StatTile variant="rule"
             label="Total ATO events"
             value={total}
             sublabel="Initial + Reuse"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="Initial ATOs"
             value={initial}
             sublabel="As authorizing agency"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="Reuse ATOs"
             value={reuse}
             sublabel="Adopted packages"
             accent="verified"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="Distinct products"
             value={distinct}
             sublabel="Unique CSOs"
@@ -156,7 +157,9 @@ export default async function MarketplaceAgencyDetailPage({
                 </li>
               ))}
               {statusRows.length === 0 ? (
-                <li className="text-muted-foreground">No data.</li>
+                <li>
+                  <EmptyState variant="bare" message="No data." />
+                </li>
               ) : null}
             </ul>
           </div>
@@ -177,7 +180,9 @@ export default async function MarketplaceAgencyDetailPage({
                 </li>
               ))}
               {impactRows.length === 0 ? (
-                <li className="text-muted-foreground">No data.</li>
+                <li>
+                  <EmptyState variant="bare" message="No data." />
+                </li>
               ) : null}
             </ul>
           </div>
@@ -190,9 +195,7 @@ export default async function MarketplaceAgencyDetailPage({
         lede={`Every ATO event ${agency.parent_agency} holds, most recent first.`}
       >
         {auths.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            No authorization events on file.
-          </p>
+          <EmptyState variant="bare" message="No authorization events on file." />
         ) : (
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-sm">

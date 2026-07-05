@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import { MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/lib/formatting";
 import { ExpandableCoverageTable } from "@/components/coverage/expandable-coverage-table";
 import type {
@@ -126,9 +127,10 @@ function ExpansionPanel({
           Lead users · using {cso} for AI
         </p>
         {detail.leadUsers.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            No lead users (shouldn&rsquo;t happen — every row should have ≥1).
-          </p>
+          <EmptyState
+            variant="bare"
+            message="No lead users (shouldn’t happen — every row should have ≥1)."
+          />
         ) : (
           <ul className="space-y-3 pl-4">
             {detail.leadUsers.map((u) => (
@@ -190,9 +192,10 @@ function ExpansionPanel({
           Sleeping authorizers · ATO held, no AI use of {cso} reported
         </p>
         {detail.sleepingAuthorizers.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            None — every authorizer is a lead user.
-          </p>
+          <EmptyState
+            variant="bare"
+            message="None — every authorizer is a lead user."
+          />
         ) : (
           <ul className="space-y-2 pl-4">
             {detail.sleepingAuthorizers.map((s) => (

@@ -121,12 +121,12 @@ export function AgencyToolMatrix({ rows }: { rows: AgencyToolMatrixRow[] }) {
 }
 
 const BAND_TONE: Record<string, string> = {
-  "1-100": "bg-stone-100 text-stone-700",
-  "101-1000": "bg-amber-100 text-amber-800",
-  "1001-5000": "bg-orange-200 text-orange-900",
-  "5001-10,000": "bg-rose-200 text-rose-900",
-  "10,000-50,000": "bg-rose-300 text-rose-950",
-  "50,000+": "bg-rose-500 text-white",
+  "1-100": "bg-muted text-muted-foreground",
+  "101-1000": "bg-[var(--highlight)]/20 text-foreground",
+  "1001-5000": "bg-[var(--highlight)]/40 text-foreground",
+  "5001-10,000": "bg-[var(--stamp)]/15 text-[var(--stamp)]",
+  "10,000-50,000": "bg-[var(--stamp)]/25 text-[var(--stamp)]",
+  "50,000+": "bg-[var(--stamp)] text-background",
 };
 
 function CellHover({ cell }: { cell: MatrixCell }) {
@@ -135,8 +135,8 @@ function CellHover({ cell }: { cell: MatrixCell }) {
     ? cell.highest_band_label
     : `${cell.entries.length} filing${cell.entries.length === 1 ? "" : "s"}`;
   const tone = hasBand
-    ? BAND_TONE[cell.highest_band_label] ?? "bg-stone-100 text-stone-700"
-    : "bg-stone-50 text-stone-600 border border-stone-200";
+    ? BAND_TONE[cell.highest_band_label] ?? "bg-muted text-muted-foreground"
+    : "bg-muted/20 text-muted-foreground border border-border";
   const extra = Math.max(0, cell.rows - cell.entries.length);
 
   return (
@@ -144,7 +144,7 @@ function CellHover({ cell }: { cell: MatrixCell }) {
       <button
         type="button"
         className={cn(
-          "inline-block cursor-pointer rounded px-1.5 py-0.5 font-mono text-[10px] tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-[var(--stamp)]",
+          "inline-block cursor-pointer px-1.5 py-0.5 font-mono text-[10px] tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-[var(--stamp)]",
           tone,
         )}
         title={
@@ -181,8 +181,8 @@ function CellHover({ cell }: { cell: MatrixCell }) {
 function EntryRow({ entry }: { entry: MatrixCellEntry }) {
   const sourceChipTone =
     entry.source === "consolidated"
-      ? "bg-stone-100 text-stone-700"
-      : "bg-amber-50 text-amber-800 border border-amber-200";
+      ? "bg-muted text-muted-foreground"
+      : "bg-[var(--highlight)]/15 text-foreground border border-[var(--highlight)]/30";
   const sourceLabel = entry.source === "consolidated" ? "Appendix B" : "Filing";
 
   const content = (
@@ -190,7 +190,7 @@ function EntryRow({ entry }: { entry: MatrixCellEntry }) {
       <span className="flex items-baseline gap-2">
         <span
           className={cn(
-            "inline-block rounded px-1 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em]",
+            "inline-block px-1 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em]",
             sourceChipTone,
           )}
         >
@@ -236,5 +236,5 @@ function truncate(s: string, n: number): string {
 }
 
 function Dash() {
-  return <span className="text-stone-300">·</span>;
+  return <span className="text-muted-foreground/50">·</span>;
 }

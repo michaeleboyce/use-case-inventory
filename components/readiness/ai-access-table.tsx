@@ -7,13 +7,13 @@ import type { AgencyAiAccessCoverage, AgencyAiAccessRow } from "@/lib/types";
  * "no public data" state rather than being hidden.
  */
 const COVERAGE_CHIP: Record<AgencyAiAccessCoverage, string> = {
-  all: "bg-emerald-100 text-emerald-900 border-emerald-300",
-  most: "bg-teal-100 text-teal-900 border-teal-300",
-  partial: "bg-amber-100 text-amber-900 border-amber-300",
-  pilot: "bg-orange-100 text-orange-900 border-orange-300",
-  latent: "bg-violet-100 text-violet-900 border-violet-300",
-  unknown: "bg-stone-100 text-stone-700 border-stone-300",
-  none: "bg-rose-100 text-rose-900 border-rose-300",
+  all: "bg-[var(--verified)]/15 text-[var(--verified)] border-[var(--verified)]/40",
+  most: "bg-[var(--verified)]/8 text-[var(--verified)] border-[var(--verified)]/25",
+  partial: "bg-[var(--highlight)]/25 text-foreground border-[var(--highlight)]/50",
+  pilot: "bg-[var(--highlight)]/15 text-foreground border-[var(--highlight)]/35",
+  latent: "bg-muted text-muted-foreground border-border",
+  unknown: "bg-muted text-muted-foreground border-border",
+  none: "bg-[var(--stamp)]/15 text-[var(--stamp)] border-[var(--stamp)]/40",
 };
 
 const COVERAGE_LABEL: Record<AgencyAiAccessCoverage, string> = {
@@ -45,7 +45,7 @@ function CoverageChip({ value }: { value: AgencyAiAccessCoverage | null }) {
 
 export function AiAccessTable({ rows }: { rows: AgencyAiAccessRow[] }) {
   return (
-    <div className="flex flex-col divide-y divide-stone-200 border border-stone-300">
+    <div className="flex flex-col divide-y divide-border border border-border">
       {rows.map((r) => {
         const isGap = r.status === "searched_no_source";
         return (
@@ -55,7 +55,7 @@ export function AiAccessTable({ rows }: { rows: AgencyAiAccessRow[] }) {
           >
             {/* Left rail — agency + coverage */}
             <div className="flex flex-row items-baseline gap-2 md:flex-col md:items-start md:gap-2">
-              <span className="font-mono text-sm font-semibold uppercase tracking-[0.06em] text-stone-900">
+              <span className="font-mono text-sm font-semibold uppercase tracking-[0.06em] text-foreground">
                 {r.agency_abbreviation}
               </span>
               <CoverageChip value={r.coverage_assessment} />
@@ -64,7 +64,7 @@ export function AiAccessTable({ rows }: { rows: AgencyAiAccessRow[] }) {
             {/* Right column — the finding */}
             <div className="flex flex-col gap-2">
               {r.tool_name ? (
-                <span className="font-display italic text-[1.05rem] text-stone-900">
+                <span className="font-display italic text-[1.05rem] text-foreground">
                   {r.tool_name}
                 </span>
               ) : null}
@@ -72,43 +72,43 @@ export function AiAccessTable({ rows }: { rows: AgencyAiAccessRow[] }) {
               {/* Absolute scale — surfaced prominently: a "partial" tier can
                   still mean a five-figure userbase (DHS ~19,000). */}
               {r.estimated_users ? (
-                <div className="flex items-baseline gap-2 border-l-2 border-stone-300 pl-2">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-stone-400">
+                <div className="flex items-baseline gap-2 border-l-2 border-border pl-2">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/60">
                     Scale
                   </span>
-                  <span className="font-mono text-xs text-stone-700">
+                  <span className="font-mono text-xs text-foreground">
                     {r.estimated_users}
                   </span>
                 </div>
               ) : null}
 
-              <p className="text-sm leading-snug text-stone-700">
+              <p className="text-sm leading-snug text-foreground">
                 {r.finding}
               </p>
 
               {isGap ? (
-                <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-stone-400">
+                <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground/60">
                   No public deployment-scale data — researched, none found
                 </p>
               ) : r.exact_quote ? (
-                <blockquote className="border-l-2 border-stone-300 bg-stone-50 px-3 py-2 text-sm italic leading-snug text-stone-700">
+                <blockquote className="border-l-2 border-border bg-muted/20 px-3 py-2 text-sm italic leading-snug text-foreground">
                   &ldquo;{r.exact_quote}&rdquo;
                 </blockquote>
               ) : null}
 
               {/* Source line */}
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[11px] text-stone-500">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[11px] text-muted-foreground">
                 {r.source_url ? (
                   <a
                     href={r.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-stone-700 underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+                    className="text-foreground underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
                   >
                     {r.source_title ?? r.source_url} &#8599;
                   </a>
                 ) : (
-                  <span className="text-stone-400">no source</span>
+                  <span className="text-muted-foreground/60">no source</span>
                 )}
                 {r.source_date ? <span>{r.source_date}</span> : null}
                 {r.confidence ? (

@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { getCrossCutSummary, getCrossCutHeatmap } from "@/lib/db";
 import type { CrossCutKey } from "@/lib/types";
 import { Section, MonoChip } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { CrossCutList } from "@/components/cross-cut-list";
 import { CrossCutHeatmap } from "@/components/cross-cut-heatmap";
 import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
@@ -100,58 +101,52 @@ export default async function BrowseDimensionPage({
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* Editorial header */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10">
-        <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-2">
-            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--stamp)]">
-              § Browse
-            </div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              Cross-cut · {dimension}
-            </div>
-          </div>
-        </aside>
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2rem,5.5vw,4.2rem)] leading-[0.98] tracking-[-0.02em] text-foreground">
+      <PageMasthead
+        kicker="§ Browse"
+        metaLines={[`Cross-cut · ${dimension}`]}
+        italicTitle={false}
+        title={
+          <>
             Browse · <em className="inline font-normal italic">{title}</em>
-          </h1>
-          <p className="mt-4 max-w-prose text-[1rem] leading-[1.55] text-foreground/85">
-            {lede}
-          </p>
+          </>
+        }
+        lede={lede}
+        actions={
+          <>
+            {/* Provenance — make it obvious whether values come from OMB
+                filings or from IFP's analytical layer. */}
+            <div className="flex max-w-prose items-baseline gap-3 border-l-2 border-border pl-3">
+              <MonoChip
+                tone={
+                  DIMENSION_PROVENANCE[key].source === "omb" ? "muted" : "stamp"
+                }
+                size="xs"
+              >
+                {DIMENSION_PROVENANCE[key].source === "omb" ? "OMB" : "IFP"}
+              </MonoChip>
+              <p className="text-[0.85rem] leading-[1.5] text-muted-foreground">
+                {DIMENSION_PROVENANCE[key].long}
+              </p>
+            </div>
 
-          {/* Provenance — make it obvious whether values come from OMB
-              filings or from IFP's analytical layer. */}
-          <div className="mt-5 flex max-w-prose items-baseline gap-3 border-l-2 border-border pl-3">
-            <MonoChip
-              tone={
-                DIMENSION_PROVENANCE[key].source === "omb" ? "muted" : "stamp"
-              }
-              size="xs"
+            {/* Tab strip */}
+            <nav
+              aria-label="View toggle"
+              className="mt-6 inline-flex items-stretch gap-0 border-t border-border/70"
             >
-              {DIMENSION_PROVENANCE[key].source === "omb" ? "OMB" : "IFP"}
-            </MonoChip>
-            <p className="text-[0.85rem] leading-[1.5] text-muted-foreground">
-              {DIMENSION_PROVENANCE[key].long}
-            </p>
-          </div>
-
-          {/* Tab strip */}
-          <nav
-            aria-label="View toggle"
-            className="mt-6 inline-flex items-stretch gap-0 border-t border-border/70"
-          >
-            <TabLink href={`${baseHref}?view=list`} active={view === "list"}>
-              List
-            </TabLink>
-            <TabLink
-              href={`${baseHref}?view=heatmap`}
-              active={view === "heatmap"}
-            >
-              Heatmap
-            </TabLink>
-          </nav>
-        </div>
-      </header>
+              <TabLink href={`${baseHref}?view=list`} active={view === "list"}>
+                List
+              </TabLink>
+              <TabLink
+                href={`${baseHref}?view=heatmap`}
+                active={view === "heatmap"}
+              >
+                Heatmap
+              </TabLink>
+            </nav>
+          </>
+        }
+      />
 
       {/* Content */}
       <Section

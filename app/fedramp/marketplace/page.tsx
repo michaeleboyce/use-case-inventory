@@ -7,7 +7,8 @@
 
 import Link from "next/link";
 import { Section, Eyebrow } from "@/components/editorial";
-import { MetricTile } from "@/components/metric-tile";
+import { EmptyState } from "@/components/empty-state";
+import { StatTile } from "@/components/stat-tile";
 import { getFedrampSnapshot, getFedrampProducts } from "@/lib/db";
 import { formatDate, formatNumber } from "@/lib/formatting";
 
@@ -98,31 +99,31 @@ export default function MarketplaceLandingPage() {
         className="mt-4 md:mt-6"
       >
         <dl className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-5">
-          <MetricTile
+          <StatTile variant="rule"
             label="Products"
             value={snapshot?.product_count ?? products.length}
             sublabel="Cloud services"
             href="/fedramp/marketplace/products"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="ATO events"
             value={snapshot?.ato_event_count ?? 0}
             sublabel="Initial + Reuse"
             accent="verified"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="Agencies"
             value={snapshot?.agency_count ?? 0}
             sublabel="Authorizing"
             href="/fedramp/marketplace/agencies"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="Providers"
             value={snapshot?.csp_count ?? 0}
             sublabel="Distinct CSPs"
             href="/fedramp/marketplace/csps"
           />
-          <MetricTile
+          <StatTile variant="rule"
             label="3PAOs"
             value={snapshot?.assessor_count ?? 0}
             sublabel="Independent assessors"
@@ -204,8 +205,8 @@ export default function MarketplaceLandingPage() {
       >
         <ul className="divide-y divide-dotted divide-border border-t-2 border-foreground">
           {recent.length === 0 ? (
-            <li className="py-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              No authorizations on file.
+            <li>
+              <EmptyState variant="bare" message="No authorizations on file." />
             </li>
           ) : (
             recent.map((p) => (

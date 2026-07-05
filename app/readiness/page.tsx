@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageSubnav } from "@/components/page-subnav";
 import { Section } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { ReadinessHeadlineStat } from "@/components/readiness/readiness-headline-stat";
 import { ReadinessTierBand } from "@/components/readiness/readiness-tier-band";
 import { ReadinessRankTable } from "@/components/readiness/readiness-rank-table";
@@ -45,7 +46,7 @@ export default async function ReadinessPage() {
       {/* ----------------------------------------------------------------- */}
       {/* Top banner — data-as-of + methodology link                         */}
       {/* ----------------------------------------------------------------- */}
-      <aside className="border-l-4 border-stone-400 bg-stone-50 px-4 py-2 text-sm text-stone-700">
+      <aside className="border-l-4 border-border bg-muted/20 px-4 py-2 text-sm text-muted-foreground">
         Data as of{" "}
         <span className="font-mono tabular-nums">
           {formatDate(headline.computed_at)}
@@ -60,17 +61,14 @@ export default async function ReadinessPage() {
       </aside>
 
       {/* ----------------------------------------------------------------- */}
-      {/* HERO — H1 + lede                                                   */}
+      {/* HERO — masthead                                                    */}
       {/* ----------------------------------------------------------------- */}
-      <header
+      <div className="mt-10 md:mt-14">
+      <PageMasthead
         id="overview"
-        className="mt-10 grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:mt-14 md:pb-16"
-      >
-        <div className="col-span-12 md:col-span-9">
-          <div className="eyebrow mb-2 !text-[var(--stamp)]">
-            No. 002 · Filed · Readiness Index v1.1
-          </div>
-          <h1 className="font-display text-[clamp(2.6rem,7vw,5.6rem)] italic leading-[0.95] tracking-[-0.03em] text-foreground">
+        kicker="No. 002 · Filed · Readiness Index v1.1"
+        title={
+          <>
             Federal AI{" "}
             <span className="relative inline-block">
               <span
@@ -79,8 +77,10 @@ export default async function ReadinessPage() {
               />
               <span className="relative">Readiness</span>
             </span>
-          </h1>
-          <p className="mt-8 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85">
+          </>
+        }
+        lede={
+          <>
             Across{" "}
             <span className="font-medium text-foreground">
               {formatNumber(totalScored)} federal agencies
@@ -98,9 +98,10 @@ export default async function ReadinessPage() {
             <span className="font-medium text-foreground">{fedrampPct}%</span>{" "}
             of those deployments. These are the gaps between AI policy ambition
             and operational capacity.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
+      </div>
 
       {/* ----------------------------------------------------------------- */}
       {/* § 01 — THE HEADLINE                                                */}
@@ -136,7 +137,7 @@ export default async function ReadinessPage() {
             href="/readiness/methodology#fedramp"
           />
         </div>
-        <p className="mt-6 font-display italic text-[1.05rem] leading-snug text-stone-600">
+        <p className="mt-6 font-display italic text-[1.05rem] leading-snug text-muted-foreground">
           All three numbers are computed deterministically from the OMB M-25-21
           inventory and the FedRAMP marketplace, and will move as agencies file
           corrections. A separate compliance baseline — that {complianceGapPct}%
@@ -174,7 +175,7 @@ export default async function ReadinessPage() {
       {aiAccess ? (
         <Link
           href="/readiness/access"
-          className="group mt-6 block border border-stone-300 bg-[#f6efdf] p-5 transition-colors hover:border-stone-900 md:p-6"
+          className="group mt-6 block border border-border bg-[var(--highlight)]/10 p-5 transition-colors hover:border-foreground md:p-6"
         >
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Companion view
@@ -251,27 +252,27 @@ export default async function ReadinessPage() {
               )}
             </p>
             {vendors.length > 0 ? (
-              <table className="mt-4 w-full border-collapse border border-stone-300 text-sm">
-                <thead className="bg-stone-100">
+              <table className="mt-4 w-full border-collapse border border-border text-sm">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="border-b border-stone-300 px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Vendor
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Use cases
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Agencies
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Share %
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {vendors.slice(0, 5).map((v) => (
-                    <tr key={v.vendor} className="border-b border-stone-200">
-                      <td className="px-2 py-2 font-display italic text-stone-800">
+                    <tr key={v.vendor} className="border-b border-border">
+                      <td className="px-2 py-2 font-display italic text-foreground">
                         {v.vendor}
                       </td>
                       <td className="px-2 py-2 text-right font-mono tabular-nums">
@@ -309,19 +310,19 @@ export default async function ReadinessPage() {
               )}
             </p>
             {frontier.length > 0 ? (
-              <table className="mt-4 w-full border-collapse border border-stone-300 text-sm">
-                <thead className="bg-stone-100">
+              <table className="mt-4 w-full border-collapse border border-border text-sm">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="border-b border-stone-300 px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Agency
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Frontier UC
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Total UC
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       % Frontier
                     </th>
                   </tr>
@@ -330,17 +331,17 @@ export default async function ReadinessPage() {
                   {frontier.slice(0, 5).map((row) => (
                     <tr
                       key={row.agency_abbreviation}
-                      className="border-b border-stone-200"
+                      className="border-b border-border"
                     >
                       <td className="px-2 py-2">
                         <Link
                           href={`/agencies/${row.agency_abbreviation.toLowerCase()}#scorecard`}
                           className="hover:text-[var(--stamp)]"
                         >
-                          <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-stone-900">
+                          <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-foreground">
                             {row.agency_abbreviation}
                           </span>
-                          <span className="ml-2 font-display italic text-stone-700">
+                          <span className="ml-2 font-display italic text-foreground">
                             {row.agency_name}
                           </span>
                         </Link>
@@ -351,7 +352,7 @@ export default async function ReadinessPage() {
                       <td className="px-2 py-2 text-right font-mono tabular-nums">
                         {formatNumber(row.total_use_case_count)}
                       </td>
-                      <td className="px-2 py-2 text-right font-mono tabular-nums font-semibold text-stone-900">
+                      <td className="px-2 py-2 text-right font-mono tabular-nums font-semibold text-foreground">
                         {row.pct_frontier.toFixed(1)}%
                       </td>
                     </tr>
@@ -380,16 +381,16 @@ export default async function ReadinessPage() {
               )}
             </p>
             {reporting.length > 0 ? (
-              <table className="mt-4 w-full border-collapse border border-stone-300 text-sm">
-                <thead className="bg-stone-100">
+              <table className="mt-4 w-full border-collapse border border-border text-sm">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="border-b border-stone-300 px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Agency
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Fields
                     </th>
-                    <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+                    <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       Avg completion
                     </th>
                   </tr>
@@ -398,17 +399,17 @@ export default async function ReadinessPage() {
                   {reporting.slice(0, 5).map((row) => (
                     <tr
                       key={row.agency_abbreviation}
-                      className="border-b border-stone-200"
+                      className="border-b border-border"
                     >
                       <td className="px-2 py-2">
                         <Link
                           href={`/agencies/${row.agency_abbreviation.toLowerCase()}#scorecard`}
                           className="hover:text-[var(--stamp)]"
                         >
-                          <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-stone-900">
+                          <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-foreground">
                             {row.agency_abbreviation}
                           </span>
-                          <span className="ml-2 font-display italic text-stone-700">
+                          <span className="ml-2 font-display italic text-foreground">
                             {row.agency_name}
                           </span>
                         </Link>
@@ -416,7 +417,7 @@ export default async function ReadinessPage() {
                       <td className="px-2 py-2 text-right font-mono tabular-nums">
                         {formatNumber(row.fields_evaluated)}
                       </td>
-                      <td className="px-2 py-2 text-right font-mono tabular-nums font-semibold text-stone-900">
+                      <td className="px-2 py-2 text-right font-mono tabular-nums font-semibold text-foreground">
                         {row.completion_rate_pct.toFixed(1)}%
                       </td>
                     </tr>
@@ -431,10 +432,10 @@ export default async function ReadinessPage() {
       {/* ----------------------------------------------------------------- */}
       {/* FOOTER                                                             */}
       {/* ----------------------------------------------------------------- */}
-      <footer className="mt-20 border-t-2 border-foreground pt-6 text-sm text-stone-700">
+      <footer className="mt-20 border-t-2 border-foreground pt-6 text-sm text-foreground">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div className="space-y-1">
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone-500">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               Federal AI Readiness Index v1.1 ·{" "}
               <Link
                 href="/readiness/methodology"
@@ -443,11 +444,11 @@ export default async function ReadinessPage() {
                 methodology
               </Link>
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone-500">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               Data as of {formatDate(headline.computed_at)}
             </div>
           </div>
-          <div className="max-w-md border-l-2 border-stone-300 pl-3 font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+          <div className="max-w-md border-l-2 border-border pl-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
             Suggested citation: IFP, &ldquo;Federal AI Readiness Index,&rdquo;
             use-case-inventory.vercel.app/readiness, accessed{" "}
             {formatDate(new Date().toISOString())}.

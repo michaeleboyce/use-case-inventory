@@ -11,15 +11,15 @@
  * One shared panel below the grid; clicking another use-case-tile's chevron
  * swaps the contents; clicking the active chevron again collapses.
  *
- * `MetricTile` is kept purely presentational. The chevron lives in a sibling
- * `<ExpandableMetricTile>` wrapper that composes `<MetricTile>` + a small
+ * `StatTile` is kept purely presentational. The chevron lives in a sibling
+ * `<ExpandableMetricTile>` wrapper that composes `<StatTile>` + a small
  * absolutely-positioned chevron button.
  */
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
-import { MetricTile } from "@/components/metric-tile";
+import { StatTile } from "@/components/stat-tile";
 import { CoverageUseCaseList } from "@/components/coverage/coverage-use-case-list";
 import { Eyebrow } from "@/components/editorial";
 import { formatYoY } from "@/lib/formatting";
@@ -61,7 +61,7 @@ function ExpandableMetricTile({
 }) {
   return (
     <div className="relative">
-      <MetricTile label={label} value={value} href={href} />
+      <StatTile label={label} value={value} href={href} />
       <button
         type="button"
         onClick={(e) => {
@@ -73,7 +73,7 @@ function ExpandableMetricTile({
         aria-label={
           isExpanded ? `Collapse ${label} list` : `Expand ${label} list`
         }
-        className={`absolute right-0 top-2 inline-flex size-6 items-center justify-center rounded-sm border border-transparent text-muted-foreground transition-colors hover:border-[var(--rule)] hover:bg-[var(--paper-warm)]/60 hover:text-[var(--stamp)] ${
+        className={`absolute right-0 top-2 inline-flex size-6 items-center justify-center border border-transparent text-muted-foreground transition-colors hover:border-[var(--rule)] hover:bg-[var(--paper-warm)]/60 hover:text-[var(--stamp)] ${
           isExpanded ? "text-[var(--stamp)]" : ""
         }`}
       >
@@ -171,12 +171,12 @@ export function UseCaseDrillDownLedger({
           isExpanded={active === "individual"}
           onToggleExpand={() => toggle("individual")}
         />
-        <MetricTile
+        <StatTile
           label="Consolidated entries"
           value={counts.consolidated}
           href={hrefs.consolidated}
         />
-        <MetricTile
+        <StatTile
           label="Distinct products"
           value={counts.distinctProducts}
           href={hrefs.distinctProducts}
@@ -202,7 +202,7 @@ export function UseCaseDrillDownLedger({
           isExpanded={active === "agentic"}
           onToggleExpand={() => toggle("agentic")}
         />
-        <MetricTile
+        <StatTile
           label="YoY growth"
           value={counts.yoyGrowth}
           sublabel={formatYoY(counts.yoyGrowth)}
@@ -211,7 +211,7 @@ export function UseCaseDrillDownLedger({
 
       {activeDrill ? (
         <section
-          className="ink-in mt-4 rounded-sm border border-[var(--rule)] bg-[var(--paper-warm)]/40 px-5 py-5"
+          className="ink-in mt-4 border border-[var(--rule)] bg-[var(--paper-warm)]/40 px-5 py-5"
           aria-label={`Drill-down for ${activeDrill.label}`}
         >
           <div className="mb-4 flex items-baseline justify-between gap-3">

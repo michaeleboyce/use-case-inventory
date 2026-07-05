@@ -4,7 +4,8 @@ import { getAgencyMaturity, getGlobalStats } from "@/lib/db";
 import { getFullHierarchyWithCounts } from "@/lib/hierarchy";
 import { AgenciesTable, type AgencyRow } from "@/components/agencies-table";
 import { AgencyHierarchyTree } from "@/components/hierarchy";
-import { MetricTile } from "@/components/metric-tile";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
 import { buildAgenciesUrl } from "@/lib/urls";
@@ -65,64 +66,59 @@ export default async function AgenciesPage({
       {/* ---------------------------------------------------------------- */}
       {/* Editorial masthead                                                */}
       {/* ---------------------------------------------------------------- */}
-      <header
+      <PageMasthead
         id="overview"
-        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12"
-      >
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-3">
-            <div className="eyebrow !text-[var(--stamp)]">§ I · Agencies</div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              Directory · Filing Index
-            </div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              Cycle 2025 · {formatNumber(total)} filing agencies
-            </div>
-            <p className="max-w-xs border-t border-border pt-3 text-sm leading-snug text-muted-foreground">
-              Click any row to open the per-agency detail page. Filters are
-              reflected in the URL so every view is shareable.
-            </p>
-          </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.4rem,6vw,5rem)] italic leading-[0.95] tracking-[-0.03em] text-foreground">
+        kicker="§ I · Agencies"
+        metaLines={[
+          "Directory · Filing Index",
+          `Cycle 2025 · ${formatNumber(total)} filing agencies`,
+        ]}
+        meta={
+          <p className="max-w-xs border-t border-border pt-3 text-sm leading-snug text-muted-foreground">
+            Click any row to open the per-agency detail page. Filters are
+            reflected in the URL so every view is shareable.
+          </p>
+        }
+        title={
+          <>
             {formatNumber(total)} filers,
             <br />
             {formatNumber(globalStats.total_agencies)} tracked.
-          </h1>
-          <p className="mt-8 max-w-prose text-[1.02rem] leading-[1.55] text-foreground/85">
+          </>
+        }
+        lede={
+          <>
             Every agency with loaded 2025 inventory data, side by side. The
             tracker covers {formatNumber(globalStats.total_agencies)} agencies
             overall, including 2024-only and no-file statuses. Sort by volume,
             product breadth, or year-over-year growth; filter by type, maturity
             tier, or capability flags.
-          </p>
-
-          {/* Four-column ledger ------------------------------------------ */}
-          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-4">
-            <MetricTile
+          </>
+        }
+        actions={
+          <div className="grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-4">
+            <StatTile
               label="Enterprise LLM"
               value={`${withLLM}/${total}`}
               sublabel="Have a dept-wide model"
               accent="verified"
               href={buildAgenciesUrl({ hasEnterpriseLlm: true })}
             />
-            <MetricTile
+            <StatTile
               label="Coding tools"
               value={`${withCoding}/${total}`}
               sublabel="Copilot, Claude, etc."
               accent="ink"
               href={buildAgenciesUrl({ hasCoding: true })}
             />
-            <MetricTile
+            <StatTile
               label="Leading tier"
               value={`${leading}/${total}`}
               sublabel="Most mature filings"
               accent="stamp"
               href={buildAgenciesUrl({ tier: "leading" })}
             />
-            <MetricTile
+            <StatTile
               label="Custom-AI heavy"
               value={`${customHeavy}/${total}`}
               sublabel="≥ 10 custom systems"
@@ -130,8 +126,8 @@ export default async function AgenciesPage({
               href={buildAgenciesUrl({ hasCustom: true })}
             />
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* ---------------------------------------------------------------- */}
       {/* Directory table or hierarchy tree                                 */}

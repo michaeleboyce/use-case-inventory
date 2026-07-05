@@ -6,7 +6,8 @@ import {
   Section,
   SourceLegend,
 } from "@/components/editorial";
-import { InsightCard } from "@/components/insight-card";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import {
   collapseWhitespace,
@@ -171,30 +172,23 @@ export default async function SilentlyDroppedPage() {
       {/* ------------------------------------------------------------ */}
       {/* HERO                                                          */}
       {/* ------------------------------------------------------------ */}
-      <header
+      <PageMasthead
         id="overview"
-        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
-      >
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
-            <div>
-              <Link
-                href="/compare-years"
-                className="block font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
-              >
-                ← 2024 ↔ 2025 overview
-              </Link>
-              <div className="eyebrow mt-3 !text-[var(--stamp)]">
-                § Deep Dive
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Silently-dropped finding
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                M-25-21 · Carry-forward rule
-              </div>
-            </div>
-
+        italicTitle={false}
+        kicker="§ Deep Dive"
+        metaLines={[
+          "Silently dropped from the 2025 inventory",
+          "Silently-dropped finding",
+          "M-25-21 · Carry-forward rule",
+        ]}
+        meta={
+          <>
+            <Link
+              href="/compare-years"
+              className="block font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-[var(--stamp)]"
+            >
+              ← 2024 ↔ 2025 overview
+            </Link>
             <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
               <div className="border-t border-border pt-3">
                 <div className="mb-0.5 text-[9px] text-muted-foreground/70">
@@ -213,33 +207,30 @@ export default async function SilentlyDroppedPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.4rem,6vw,5rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
-            <em className="inline font-normal italic">
-              The use cases that vanished
-            </em>
-          </h1>
-          <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Silently dropped from the 2025 inventory
-          </p>
-
-          <div className="mt-10 max-w-prose space-y-5 text-[1.05rem] leading-[1.6] text-foreground/85">
-            <p>
-              <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
-                O
-              </span>
-              MB Memorandum M-25-21 sets a deliberately conservative rule for
-              keeping the federal AI use case inventory honest: if a use case
-              an agency reported last year is no longer in use, it should
-              appear once more in the new filing, marked{" "}
-              <span className="italic">d) Retired</span>. The point isn&apos;t
-              paperwork. It&apos;s so that, reading the inventory across years,
-              the public can see what was tried and stopped — not just what is
-              currently running.
-            </p>
+          </>
+        }
+        title={
+          <em className="inline font-normal italic">
+            The use cases that vanished
+          </em>
+        }
+        lede={
+          <>
+            <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
+              O
+            </span>
+            MB Memorandum M-25-21 sets a deliberately conservative rule for
+            keeping the federal AI use case inventory honest: if a use case
+            an agency reported last year is no longer in use, it should
+            appear once more in the new filing, marked{" "}
+            <span className="italic">d) Retired</span>. The point isn&apos;t
+            paperwork. It&apos;s so that, reading the inventory across years,
+            the public can see what was tried and stopped — not just what is
+            currently running.
+          </>
+        }
+        actions={
+          <div className="max-w-prose space-y-5 text-[1.05rem] leading-[1.6] text-foreground/85">
             <p>
               The 2024 → 2025 cycle did not work that way. Of{" "}
               <span className="font-medium text-foreground">
@@ -272,8 +263,8 @@ export default async function SilentlyDroppedPage() {
               drawn directly from the 2024 filings.
             </p>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* ------------------------------------------------------------ */}
       {/* § I — THE BREAKDOWN                                           */}
@@ -286,14 +277,14 @@ export default async function SilentlyDroppedPage() {
         lede="From the entire 2024 → 2025 retired population down to the compliance gap, in four steps."
       >
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="A · Population"
             value={formatNumber(summary.total)}
             accent="ink"
             headline={
               <>Use cases present in 2024 and absent from 2025.</>
             }
-            subtext={
+            sublabel={
               <>
                 The full <code>retired_2024</code> lineage population — IFP&apos;s
                 deterministic-name + LLM-adjudicated link between the two
@@ -301,14 +292,14 @@ export default async function SilentlyDroppedPage() {
               </>
             }
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="B · Aged-off legitimately"
             value={formatNumber(summary.alreadyRetired)}
             accent="verified"
             headline={
               <>Already filed as Retired in 2024.</>
             }
-            subtext={
+            sublabel={
               <>
                 The M-25-21 carry-forward window had already happened: the
                 agency marked these Retired last year and the prior-year row
@@ -316,7 +307,7 @@ export default async function SilentlyDroppedPage() {
               </>
             }
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="C · Active in 2024"
             value={`~${formatNumber(headlineActive)}`}
             accent="stamp"
@@ -325,7 +316,7 @@ export default async function SilentlyDroppedPage() {
                 Active in 2024 and absent from 2025 with no Retired marker.
               </>
             }
-            subtext={
+            sublabel={
               <>
                 In Deployed, Pilot, or Pre-deployment status when last filed —
                 and then gone. {formatNumber(summary.usaidActiveDropped)} of
@@ -333,7 +324,7 @@ export default async function SilentlyDroppedPage() {
               </>
             }
           />
-          <InsightCard
+          <StatTile variant="boxed"
             kicker="D · The compliance gap"
             value={`~${formatNumber(headlineDrop)}`}
             accent="stamp"
@@ -343,7 +334,7 @@ export default async function SilentlyDroppedPage() {
                 <em className="italic">did</em> file in 2025.
               </>
             }
-            subtext={
+            sublabel={
               <>
                 The non-USAID subset of (C). Each one is an agency that filed
                 a 2025 inventory and left out something it had previously

@@ -62,7 +62,7 @@ export function VisibilityGapList({
           <li key={row.agency_id}>
             <Link
               href={`/agencies/${row.abbreviation.toLowerCase()}`}
-              className="group grid grid-cols-[28px_72px_1fr_120px] items-center gap-2 rounded px-1 py-1 text-xs hover:bg-muted/60"
+              className="group grid grid-cols-[28px_72px_1fr_120px] items-center gap-2 px-1 py-1 text-xs hover:bg-muted/60"
               title={`${row.name} — ${row.unspecified} of ${row.total} general-LLM entries unspecified (${sharePct}%)`}
             >
               <span className="tabular-nums text-muted-foreground">
@@ -73,7 +73,7 @@ export function VisibilityGapList({
               </span>
               <span
                 aria-hidden
-                className="relative h-4 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800"
+                className="relative h-4 overflow-hidden bg-muted"
                 style={{ width: `${totalPct}%` }}
               >
                 <span className="flex h-full w-full">

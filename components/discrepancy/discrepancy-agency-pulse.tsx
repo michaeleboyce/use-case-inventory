@@ -20,12 +20,12 @@ const ACTIONABLE_STATUSES: DiscrepancyStatus[] = [
 ];
 
 const STATUS_BAR_CLASS: Record<DiscrepancyStatus, string> = {
-  omb_only: "bg-amber-400",
-  db_only: "bg-rose-400",
-  consolidated_upstream: "bg-[#d4b97a]",
-  suggested_rename: "bg-violet-400",
-  duplicate_in_omb: "bg-orange-400",
-  matched_fuzzy: "bg-blue-300",
+  omb_only: "bg-[var(--highlight)]",
+  db_only: "bg-[var(--stamp)]",
+  consolidated_upstream: "bg-[var(--highlight)]/60",
+  suggested_rename: "bg-[var(--highlight)]/40",
+  duplicate_in_omb: "bg-[var(--stamp)]/60",
+  matched_fuzzy: "bg-muted-foreground/50",
   matched_exact: "",
 };
 
@@ -85,14 +85,14 @@ export function DiscrepancyAgencyPulse({ rows }: { rows: DiscrepancyRow[] }) {
 
   if (pulses.length === 0) {
     return (
-      <p className="text-sm text-stone-500">
+      <p className="text-sm text-muted-foreground">
         No unresolved discrepancies by agency.
       </p>
     );
   }
 
   return (
-    <ul className="divide-y divide-stone-200 border border-stone-200">
+    <ul className="divide-y divide-border border border-border">
       {pulses.map((pulse) => {
         const inlineCounts = ACTIONABLE_STATUSES.filter(
           (s) => pulse.counts[s] > 0,
@@ -103,14 +103,14 @@ export function DiscrepancyAgencyPulse({ rows }: { rows: DiscrepancyRow[] }) {
           <li key={pulse.agency}>
             <Link
               href={`/discrepancies?agency=${encodeURIComponent(pulse.agency)}`}
-              className="flex items-center gap-4 px-4 py-3 hover:bg-stone-50"
+              className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20"
             >
-              <span className="w-16 font-mono text-xs uppercase tracking-wider text-stone-700">
+              <span className="w-16 font-mono text-xs uppercase tracking-wider text-foreground">
                 {pulse.agency}
               </span>
               <span
                 aria-hidden
-                className="inline-flex h-2 overflow-hidden bg-stone-100"
+                className="inline-flex h-2 overflow-hidden bg-muted"
                 style={{ width: `${BAR_WIDTH_PX}px` }}
               >
                 {ACTIONABLE_STATUSES.map((status) => {
@@ -126,10 +126,10 @@ export function DiscrepancyAgencyPulse({ rows }: { rows: DiscrepancyRow[] }) {
                   );
                 })}
               </span>
-              <span className="flex-1 text-xs text-stone-600 truncate">
+              <span className="flex-1 text-xs text-muted-foreground truncate">
                 {inlineCounts}
               </span>
-              <span className="font-mono text-sm tabular-nums text-stone-900">
+              <span className="font-mono text-sm tabular-nums text-foreground">
                 {pulse.total.toLocaleString()}
               </span>
             </Link>

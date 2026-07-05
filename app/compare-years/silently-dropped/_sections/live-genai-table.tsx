@@ -52,7 +52,7 @@ export function SilentlyDroppedLiveGenAiTable({
                   {g.use_case_name ?? "Untitled"}
                 </span>
                 {g.count > 1 ? (
-                  <span className="ml-2 inline-block rounded-sm bg-[var(--stamp)]/[0.12] px-1.5 py-0.5 align-middle font-mono text-[10px] font-medium not-italic tracking-[0.04em] text-[var(--stamp)]">
+                  <span className="ml-2 inline-block bg-[var(--stamp)]/[0.12] px-1.5 py-0.5 align-middle font-mono text-[10px] font-medium not-italic tracking-[0.04em] text-[var(--stamp)]">
                     ×{g.count}
                   </span>
                 ) : null}

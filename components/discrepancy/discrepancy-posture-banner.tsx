@@ -10,7 +10,7 @@ export function DiscrepancyPostureBanner() {
 
   if (isVercel) {
     return (
-      <aside className="border-l-4 border-stone-400 bg-stone-50 px-4 py-2 text-sm text-stone-700">
+      <aside className="border-l-4 border-border bg-muted/20 px-4 py-2 text-sm text-muted-foreground">
         Published audit log — read-only. To triage, open this page in a local{" "}
         <code className="font-mono">npm run dev</code> session.
       </aside>
@@ -18,7 +18,7 @@ export function DiscrepancyPostureBanner() {
   }
 
   return (
-    <aside className="border-l-4 border-amber-700 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+    <aside className="border-l-4 border-[var(--highlight)] bg-[var(--highlight)]/10 px-4 py-2 text-sm text-foreground">
       Triage workbench — resolutions write to{" "}
       <code className="font-mono">data/discrepancy_resolutions.json</code>.
       Commit and push to publish.

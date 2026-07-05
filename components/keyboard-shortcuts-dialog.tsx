@@ -53,17 +53,17 @@ export function KeyboardShortcutsDialog({ open, onClose }: Props) {
     <dialog
       ref={dialogRef}
       onClick={onClick}
-      className="border border-stone-300 bg-white p-6 backdrop:bg-stone-900/30"
+      className="border border-border bg-background p-6 backdrop:bg-foreground/30"
     >
       <div className="min-w-[20rem] max-w-md space-y-4">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="font-display text-lg text-stone-900">
+          <h2 className="font-display text-lg text-foreground">
             Keyboard shortcuts
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-stone-500 hover:text-stone-900"
+            className="text-sm text-muted-foreground hover:text-foreground"
             aria-label="Close"
           >
             ×
@@ -75,16 +75,16 @@ export function KeyboardShortcutsDialog({ open, onClose }: Props) {
               key={s.keys}
               className="flex items-baseline justify-between gap-4"
             >
-              <dt className="font-mono text-xs text-stone-700">
-                <kbd className="rounded border border-stone-300 bg-stone-50 px-1.5 py-0.5">
+              <dt className="font-mono text-xs text-foreground">
+                <kbd className="border border-border bg-muted px-1.5 py-0.5">
                   {s.keys}
                 </kbd>
               </dt>
-              <dd className="text-stone-700">{s.label}</dd>
+              <dd className="text-foreground">{s.label}</dd>
             </div>
           ))}
         </dl>
-        <p className="text-xs text-stone-500">
+        <p className="text-xs text-muted-foreground">
           Shortcuts are ignored while typing in an input, textarea, or select.
         </p>
       </div>

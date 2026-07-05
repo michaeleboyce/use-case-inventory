@@ -21,28 +21,28 @@ export function DiscrepancyPatternCard({
   pattern: DiscrepancyPattern;
 }) {
   return (
-    <article className="border border-stone-300 bg-[#f6efdf] p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+    <article className="border border-border bg-[var(--highlight)]/10 p-5 flex flex-col gap-3 transition-colors hover:ring-1 hover:ring-[var(--stamp)]">
       <div className="flex items-center justify-between gap-2">
-        <span className="bg-stone-800 text-stone-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-mono">
+        <span className="bg-foreground text-background px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-mono">
           {KIND_LABEL[pattern.kind]}
         </span>
-        <span className="font-mono text-xs text-stone-600 uppercase tracking-wider">
+        <span className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
           {pattern.agency}
         </span>
       </div>
-      <h3 className="font-display text-lg text-stone-900 leading-snug">
+      <h3 className="font-display text-lg text-foreground leading-snug">
         {pattern.title}
       </h3>
-      <p className="text-sm text-stone-700 leading-snug">
+      <p className="text-sm text-foreground leading-snug">
         {pattern.hypothesis}
       </p>
-      <p className="font-mono text-xs text-stone-500">
+      <p className="font-mono text-xs text-muted-foreground">
         Audit IDs:{" "}
         {pattern.sample_audit_ids.map((id) => `#${id}`).join(", ")}
       </p>
       <Link
         href={pattern.filter_url}
-        className="text-sm font-medium text-stone-900 hover:underline mt-auto"
+        className="text-sm font-medium text-foreground hover:underline mt-auto"
       >
         Open {pattern.count} rows →
       </Link>

@@ -7,6 +7,7 @@ import {
   getTemplateById,
 } from "@/lib/db";
 import { Section, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber, humanize, truncate } from "@/lib/formatting";
 import {
   agencyUseCasesUrl,
@@ -118,9 +119,7 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
         lede={`${formatNumber(template.agencies.length)} agencies filed this phrasing at least once.`}
       >
         {template.agencies.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            — No agencies reported this template —
-          </p>
+          <EmptyState variant="bare" message="No agencies reported this template" />
         ) : (
           <ul className="divide-y divide-border border-y-2 border-foreground">
             {template.agencies.map((a, i) => (
@@ -166,9 +165,7 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
         lede={`${formatNumber(template.products.length)} distinct products were named alongside this template.`}
       >
         {template.products.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            — No products are paired with this template —
-          </p>
+          <EmptyState variant="bare" message="No products are paired with this template" />
         ) : (
           <ul className="divide-y divide-border border-y-2 border-foreground">
             {template.products.map((p, i) => (
@@ -211,9 +208,7 @@ export default async function TemplateDetailPage(props: TemplatePageProps) {
         lede={`${formatNumber(entries.length)} individual and consolidated entries reference this template.`}
       >
         {entries.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            — No entries reference this template —
-          </p>
+          <EmptyState variant="bare" message="No entries reference this template" />
         ) : (
           <>
             <ul className="divide-y divide-border border-y-2 border-foreground">

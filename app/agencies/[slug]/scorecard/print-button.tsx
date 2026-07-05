@@ -11,7 +11,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="print:hidden mt-6 bg-stone-900 text-white px-4 py-2 font-display text-sm hover:bg-stone-700 transition-colors"
+      className="print:hidden mt-6 bg-foreground text-background px-4 py-2 font-display text-sm hover:bg-foreground/80 transition-colors"
     >
       Print or save as PDF
     </button>

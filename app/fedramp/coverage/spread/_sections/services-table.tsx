@@ -11,6 +11,7 @@
 
 import { createColumnHelper } from "@tanstack/react-table";
 import { MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber, formatDate } from "@/lib/formatting";
 import { ExpandableCoverageTable } from "@/components/coverage/expandable-coverage-table";
 import type { AiServiceInScopeRow, UnlinkedAiAtoAgencyRow } from "@/lib/types";
@@ -148,9 +149,7 @@ function ExpansionPanel({ row }: { row: ServiceInScopeTableRow }) {
           Agencies holding an ATO on the host package
         </p>
         {row._agencies.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            No mapped authorizing agencies.
-          </p>
+          <EmptyState variant="bare" message="No mapped authorizing agencies." />
         ) : (
           <ul className="space-y-2 pl-1">
             {row._agencies.map((a, i) => (

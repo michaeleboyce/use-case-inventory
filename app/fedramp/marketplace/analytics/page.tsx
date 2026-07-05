@@ -9,6 +9,7 @@
  */
 
 import { Section, Figure, Eyebrow } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import {
   getFedrampProducts,
   getFedrampAuthorizationsForProduct,
@@ -187,9 +188,7 @@ export default function MarketplaceAnalyticsPage() {
           caption={`Initial vs Reuse ATOs by issuance year, ${yearSpan}.`}
         >
           {annual.length === 0 ? (
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              No issuance data on file.
-            </p>
+            <EmptyState variant="bare" message="No issuance data on file." />
           ) : (
             <div className="space-y-1">
               {annual.map((row) => {

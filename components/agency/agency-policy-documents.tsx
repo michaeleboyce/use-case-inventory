@@ -4,6 +4,7 @@
 // and queries lib/db/policy for that agency's documents.
 
 import { getDocumentsForAgency } from "@/lib/db/policy";
+import { EmptyState } from "@/components/empty-state";
 
 interface Props {
   /** Agency abbreviation, e.g. "DHS" — must match agency_ai_policy_documents.agency_abbr. */
@@ -28,9 +29,10 @@ export function AgencyPolicyDocuments({ agencyAbbr }: Props) {
       </header>
 
       {docs.length === 0 ? (
-        <p className="text-sm text-foreground/55">
-          No formal AI strategy or policy document found publicly for this agency.
-        </p>
+        <EmptyState
+          variant="bare"
+          message="No formal AI strategy or policy document found publicly for this agency."
+        />
       ) : (
         <ul className="divide-y divide-border/60">
           {docs.map((d) => (

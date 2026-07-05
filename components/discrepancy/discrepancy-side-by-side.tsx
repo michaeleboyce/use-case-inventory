@@ -54,7 +54,7 @@ function renderDeleteSide(segs: DiffSegment[]) {
       return (
         <del
           key={i}
-          className="bg-rose-50 text-rose-900 line-through decoration-rose-600/40"
+          className="bg-[var(--stamp)]/10 text-[var(--stamp)] line-through decoration-[var(--stamp)]/40"
         >
           {seg.text}
         </del>
@@ -69,7 +69,7 @@ function renderInsertSide(segs: DiffSegment[]) {
     if (seg.type === "delete") return null;
     if (seg.type === "insert") {
       return (
-        <ins key={i} className="bg-emerald-50 text-emerald-900 no-underline">
+        <ins key={i} className="bg-[var(--verified)]/10 text-[var(--verified)] no-underline">
           {seg.text}
         </ins>
       );
@@ -95,10 +95,10 @@ export function DiscrepancySideBySide({ detail }: { detail: DiscrepancyDetail })
       drifted && bothHaveContent && !enumDrift ? diffWords(dbV, ombV) : null;
 
     const labelCell = (
-      <td className="px-3 py-2 align-top text-stone-700">
+      <td className="px-3 py-2 align-top text-foreground">
         {FIELD_LABEL[f] ?? f}
         {drifted ? (
-          <span className="ml-2 rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-900">
+          <span className="ml-2 bg-[var(--highlight)]/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground">
             drift
           </span>
         ) : null}
@@ -106,18 +106,18 @@ export function DiscrepancySideBySide({ detail }: { detail: DiscrepancyDetail })
     );
 
     return (
-      <tr key={f} data-drift={drifted ? "1" : "0"} className={drifted ? "bg-amber-50" : ""}>
+      <tr key={f} data-drift={drifted ? "1" : "0"} className={drifted ? "bg-[var(--highlight)]/10" : ""}>
         {labelCell}
         {enumDrift ? (
           <td
             colSpan={2}
             className="whitespace-pre-wrap px-3 py-2 align-top text-sm"
           >
-            <span className="text-rose-900 line-through decoration-rose-600/40">
+            <span className="text-[var(--stamp)] line-through decoration-[var(--stamp)]/40">
               {dbV}
             </span>
-            <span className="mx-2 text-stone-400">→</span>
-            <span className="text-emerald-900">{ombV}</span>
+            <span className="mx-2 text-muted-foreground">→</span>
+            <span className="text-[var(--verified)]">{ombV}</span>
           </td>
         ) : (
           <>
@@ -127,7 +127,7 @@ export function DiscrepancySideBySide({ detail }: { detail: DiscrepancyDetail })
               ) : dbV != null && dbV.length > 0 ? (
                 dbV
               ) : (
-                <span className="text-stone-400">(empty)</span>
+                <span className="text-muted-foreground/60">(empty)</span>
               )}
             </td>
             <td className="whitespace-pre-wrap px-3 py-2 align-top">
@@ -136,7 +136,7 @@ export function DiscrepancySideBySide({ detail }: { detail: DiscrepancyDetail })
               ) : ombV != null && ombV.length > 0 ? (
                 ombV
               ) : (
-                <span className="text-stone-400">(empty)</span>
+                <span className="text-muted-foreground/60">(empty)</span>
               )}
             </td>
           </>
@@ -152,12 +152,12 @@ export function DiscrepancySideBySide({ detail }: { detail: DiscrepancyDetail })
   const scopeClass = `drift-toggle-scope${defaultDriftOnly ? " drift-only" : ""}`;
 
   return (
-    <div className={`overflow-x-auto rounded border border-stone-200 ${scopeClass}`}>
+    <div className={`overflow-x-auto border border-border ${scopeClass}`}>
       <style>{`
         .drift-toggle-scope.drift-only tr[data-drift="0"] { display: none; }
       `}</style>
       <table className="min-w-full text-sm">
-        <thead className="bg-stone-50 text-left text-xs uppercase tracking-wider text-stone-500">
+        <thead className="bg-muted/20 text-left text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
             <th className="w-1/4 px-3 py-2">
               <div className="flex items-center justify-between gap-3">
@@ -174,11 +174,11 @@ export function DiscrepancySideBySide({ detail }: { detail: DiscrepancyDetail })
             <th className="w-3/8 px-3 py-2">OMB consolidated</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-stone-100">
+        <tbody className="divide-y divide-border">
           {rendered}
           {db_row == null && omb_row == null ? (
             <tr>
-              <td colSpan={3} className="px-3 py-6 text-center text-stone-500">
+              <td colSpan={3} className="px-3 py-6 text-center text-muted-foreground">
                 No row data available for this discrepancy.
               </td>
             </tr>

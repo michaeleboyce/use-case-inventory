@@ -27,7 +27,7 @@ import {
   getServicesInScopeForProduct,
 } from "@/lib/db";
 import { Section, MonoChip, Eyebrow, Figure } from "@/components/editorial";
-import { MetricTile } from "@/components/metric-tile";
+import { StatTile } from "@/components/stat-tile";
 import { StatusStamp } from "@/components/fedramp/status-stamp";
 import { ImpactBadge } from "@/components/fedramp/impact-badge";
 import { AuthorizationsTable } from "@/components/fedramp/authorizations-table";
@@ -150,22 +150,22 @@ export default async function MarketplaceProductDetailPage({
           </h1>
 
           <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-            <MetricTile
+            <StatTile variant="rule"
               label="Authorizations"
               value={product.authorization_count ?? 0}
               accent="verified"
             />
-            <MetricTile
+            <StatTile variant="rule"
               label="Reuse"
               value={product.reuse_count ?? 0}
               sublabel="Marketplace count"
             />
-            <MetricTile
+            <StatTile variant="rule"
               label="Impact level"
               value={product.impact_level ?? "—"}
               accent="ink"
             />
-            <MetricTile
+            <StatTile variant="rule"
               label="Auth date"
               value={formatDate(product.auth_date)}
               sublabel={product.auth_type ?? undefined}
@@ -305,7 +305,7 @@ export default async function MarketplaceProductDetailPage({
                   ) : (
                     <span
                       key={`fwd-${i}`}
-                      className="rounded border border-dotted border-border px-2 py-1 font-mono text-[11px] text-muted-foreground"
+                      className="border border-dotted border-border px-2 py-1 font-mono text-[11px] text-muted-foreground"
                       title="Free-text reference in source filing; no FedRAMP marketplace match"
                     >
                       {row.system_name}

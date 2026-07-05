@@ -15,9 +15,9 @@ import type { AgencyReadinessWithName } from "@/lib/types/inventory";
  * 5 subscores · Tier · View. Subscore cells get a subtle bg tint based
  * on threshold:
  *
- *   ≥ 70  → emerald (strong)
- *   40–69 → amber  (mid)
- *   < 40  → rose   (weak)
+ *   ≥ 70  → verified (strong)
+ *   40–69 → highlight (mid)
+ *   < 40  → stamp (weak)
  *
  * Click any column header to sort by that column (toggles asc/desc). Default
  * sort: rank ascending (1 = best).
@@ -43,17 +43,17 @@ type SortDir = "asc" | "desc";
 const TIER_RANK: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, F: 4 };
 
 const TIER_BADGE: Record<string, string> = {
-  A: "bg-emerald-100 text-emerald-900 border-emerald-300",
-  B: "bg-blue-100 text-blue-900 border-blue-300",
-  C: "bg-amber-100 text-amber-900 border-amber-300",
-  D: "bg-orange-100 text-orange-900 border-orange-300",
-  F: "bg-rose-100 text-rose-900 border-rose-300",
+  A: "bg-[var(--verified)]/15 text-[var(--verified)] border-[var(--verified)]/40",
+  B: "bg-[var(--verified)]/8 text-[var(--verified)] border-[var(--verified)]/25",
+  C: "bg-[var(--highlight)]/25 text-foreground border-[var(--highlight)]/50",
+  D: "bg-[var(--stamp)]/10 text-[var(--stamp)] border-[var(--stamp)]/25",
+  F: "bg-[var(--stamp)]/18 text-[var(--stamp)] border-[var(--stamp)]/45",
 };
 
 function scoreCellClass(score: number): string {
-  if (score >= 70) return "bg-emerald-50 text-emerald-900";
-  if (score >= 40) return "bg-amber-50 text-amber-900";
-  return "bg-rose-50 text-rose-900";
+  if (score >= 70) return "bg-[var(--verified)]/10 text-[var(--verified)]";
+  if (score >= 40) return "bg-[var(--highlight)]/20 text-foreground";
+  return "bg-[var(--stamp)]/8 text-[var(--stamp)]";
 }
 
 function fmt(n: number | null | undefined): string {
@@ -143,11 +143,11 @@ export function ReadinessRankTable({
   }
 
   return (
-    <div className="overflow-x-auto border border-stone-300">
+    <div className="overflow-x-auto border border-border">
       <table className="w-full border-collapse text-sm">
-        <thead className="bg-stone-100">
+        <thead className="bg-muted">
           <tr>
-            <th className="w-7 border-b border-stone-300 px-1 py-2" aria-label="Expand" />
+            <th className="w-7 border-b border-border px-1 py-2" aria-label="Expand" />
             <Th label="#" k="rank" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="right" />
             <Th label="Agency" k="agency" sortKey={sortKey} sortDir={sortDir} onClick={toggle} />
             <Th label="Composite" k="composite" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="right" />
@@ -157,7 +157,7 @@ export function ReadinessRankTable({
             <Th label="Risk Gov" k="risk_gov" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="right" />
             <Th label="Adoption" k="adoption" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="right" />
             <Th label="Tier" k="tier" sortKey={sortKey} sortDir={sortDir} onClick={toggle} align="center" />
-            <th className="border-b border-stone-300 px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-stone-500">
+            <th className="border-b border-border px-2 py-2 text-right font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
               View
             </th>
           </tr>
@@ -168,13 +168,13 @@ export function ReadinessRankTable({
             return (
             <Fragment key={r.agency_id}>
             <tr
-              className={`cursor-pointer border-b border-stone-200 hover:bg-stone-50 ${isOpen ? "bg-stone-50" : ""}`}
+              className={`cursor-pointer border-b border-border hover:bg-muted/20 ${isOpen ? "bg-muted/20" : ""}`}
               onClick={() => toggleExpanded(r.agency_id)}
               aria-expanded={isOpen}
             >
               <td className="w-7 px-1 py-2 align-middle">
                 <span
-                  className="inline-flex size-5 items-center justify-center text-stone-400"
+                  className="inline-flex size-5 items-center justify-center text-muted-foreground/60"
                   aria-hidden
                 >
                   {isOpen ? (
@@ -184,7 +184,7 @@ export function ReadinessRankTable({
                   )}
                 </span>
               </td>
-              <td className="px-2 py-2 text-right font-mono tabular-nums text-stone-600">
+              <td className="px-2 py-2 text-right font-mono tabular-nums text-muted-foreground">
                 {r.rank}
               </td>
               <td className="px-2 py-2">
@@ -194,15 +194,15 @@ export function ReadinessRankTable({
                   title={r.agency_name}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-stone-900">
+                  <span className="font-mono text-xs font-semibold uppercase tracking-[0.04em] text-foreground">
                     {r.agency_abbreviation}
                   </span>
-                  <span className="ml-2 truncate font-display italic text-[0.95rem] text-stone-700">
+                  <span className="ml-2 truncate font-display italic text-[0.95rem] text-foreground">
                     {r.agency_name}
                   </span>
                 </Link>
               </td>
-              <td className="px-2 py-2 text-right font-mono tabular-nums font-semibold text-stone-900">
+              <td className="px-2 py-2 text-right font-mono tabular-nums font-semibold text-foreground">
                 {fmt(r.composite_score)}
               </td>
               <td className={`px-2 py-2 text-right font-mono tabular-nums ${scoreCellClass(r.internal_capacity)}`}>
@@ -242,7 +242,7 @@ export function ReadinessRankTable({
               <td className="px-2 py-2 text-right">
                 <Link
                   href={`/agencies/${r.agency_slug}#scorecard`}
-                  className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500 hover:text-[var(--stamp)]"
+                  className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground hover:text-[var(--stamp)]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   View →
@@ -250,7 +250,7 @@ export function ReadinessRankTable({
               </td>
             </tr>
             {isOpen ? (
-              <tr className="border-b border-stone-200 bg-[#f6efdf]/60">
+              <tr className="border-b border-border bg-[var(--highlight)]/10">
                 <td colSpan={11} className="px-4 py-4 md:px-10">
                   <ReadinessDerivation readiness={r} />
                 </td>
@@ -261,7 +261,7 @@ export function ReadinessRankTable({
           })}
           {sorted.length === 0 ? (
             <tr>
-              <td colSpan={11} className="px-4 py-6 text-center font-mono text-xs uppercase tracking-[0.14em] text-stone-400">
+              <td colSpan={11} className="px-4 py-6 text-center font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground/60">
                 No readiness data available.
               </td>
             </tr>
@@ -293,12 +293,12 @@ function Th({
     align === "right" ? "text-right" : align === "center" ? "text-center" : "text-left";
   return (
     <th
-      className={`border-b border-stone-300 px-2 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${alignClass} ${active ? "text-stone-900" : "text-stone-500"}`}
+      className={`border-b border-border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.12em] ${alignClass} ${active ? "text-foreground" : "text-muted-foreground"}`}
     >
       <button
         type="button"
         onClick={() => onClick(k)}
-        className="cursor-pointer transition-colors hover:text-stone-900"
+        className="cursor-pointer transition-colors hover:text-foreground"
       >
         {label}
         {arrow}

@@ -6,6 +6,8 @@
 
 import { useMemo, useState } from "react";
 import { TemplateCard } from "@/components/template/template-card";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber, humanize } from "@/lib/formatting";
 import type { TemplateWithCounts } from "@/lib/types";
 
@@ -30,9 +32,6 @@ const CAPABILITY_CATEGORIES = [
   "cybersecurity",
   "it_operations",
 ];
-
-const fieldClass =
-  "h-8 min-w-0 border border-border bg-background px-2 font-mono text-[11px] uppercase tracking-[0.08em] text-foreground focus:border-foreground focus:outline-none";
 
 export function TemplatesFilters({ templates }: Props) {
   const [category, setCategory] = useState<string>(ALL);
@@ -65,39 +64,27 @@ export function TemplatesFilters({ templates }: Props) {
   return (
     <div className="flex flex-col gap-8">
       <div className="border-y-2 border-foreground py-3">
-        <div className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-[2fr_1fr]">
-          <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
-              Capability category
-            </span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className={fieldClass + " w-full"}
-            >
-              <option value={ALL}>All categories</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {humanize(c)}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <FilterSelect
+            label="Capability category"
+            value={category}
+            onChange={setCategory}
+            options={[
+              { value: ALL, label: "All categories" },
+              ...categories.map((c) => ({ value: c, label: humanize(c) })),
+            ]}
+          />
 
-          <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
-              Sort
-            </span>
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className={fieldClass + " w-full"}
-            >
-              <option value="use_case_count">Entries, desc</option>
-              <option value="agency_count">Agencies, desc</option>
-              <option value="short_name">Name, A–Z</option>
-            </select>
-          </label>
+          <FilterSelect
+            label="Sort"
+            value={sortKey}
+            onChange={(v) => setSortKey(v as SortKey)}
+            options={[
+              { value: "use_case_count", label: "Entries, desc" },
+              { value: "agency_count", label: "Agencies, desc" },
+              { value: "short_name", label: "Name, A–Z" },
+            ]}
+          />
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-dotted border-border pt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
@@ -120,9 +107,7 @@ export function TemplatesFilters({ templates }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex h-40 items-center justify-center border border-dashed border-border font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-          — No templates match these filters —
-        </div>
+        <EmptyState variant="boxed" message="No templates match these filters" />
       ) : (
         <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((t) => (

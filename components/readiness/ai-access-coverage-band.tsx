@@ -17,44 +17,44 @@ const BANDS: Array<{
     key: "all",
     label: "All staff",
     blurb: "Available to the entire agency workforce",
-    accent: "bg-emerald-600",
+    accent: "bg-[var(--verified)]",
   },
   {
     key: "most",
     label: "Most staff",
     blurb: "Available to a clear majority, rollout still completing",
-    accent: "bg-teal-600",
+    accent: "bg-[var(--verified)]/55",
   },
   {
     key: "partial",
     label: "Partial",
     blurb: "A defined subset only — HQ, certain components, or trained users",
-    accent: "bg-amber-600",
+    accent: "bg-[var(--highlight)]",
   },
   {
     key: "pilot",
     label: "Pilot",
     blurb: "A limited test or demonstrator deployment",
-    accent: "bg-orange-600",
+    accent: "bg-[var(--highlight)]/55",
   },
   {
     key: "latent",
     label: "Latent",
     blurb:
       "Copilot Chat reachable via existing Microsoft 365 licensing — no deliberate rollout",
-    accent: "bg-violet-500",
+    accent: "bg-muted-foreground/40",
   },
   {
     key: "unknown",
     label: "Scope unclear",
     blurb: "A deployment exists but its availability scope is not public",
-    accent: "bg-stone-500",
+    accent: "bg-muted-foreground/25",
   },
   {
     key: "none",
     label: "None / paused",
     blurb: "No general-purpose AI tool available to staff",
-    accent: "bg-rose-700",
+    accent: "bg-[var(--stamp)]",
   },
 ];
 
@@ -93,35 +93,35 @@ export function AiAccessCoverageBand({ rows }: { rows: AgencyAiAccessRow[] }) {
         return (
           <li
             key={band.key}
-            className="flex items-stretch border border-stone-300 bg-background"
+            className="flex items-stretch border border-border bg-background"
           >
             <div
               aria-hidden
               className={`w-1.5 shrink-0 ${band.accent}`}
             />
-            <div className="flex w-36 shrink-0 flex-col justify-center border-r border-stone-300 bg-stone-100 p-3">
-              <div className="font-display text-xl italic leading-tight text-stone-900">
+            <div className="flex w-36 shrink-0 flex-col justify-center border-r border-border bg-muted p-3">
+              <div className="font-display text-xl italic leading-tight text-foreground">
                 {band.label}
               </div>
-              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-stone-400 tabular-nums">
+              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/60 tabular-nums">
                 {agencies.length}{" "}
                 {agencies.length === 1 ? "agency" : "agencies"}
               </div>
             </div>
             <div className="flex flex-1 flex-col gap-2 p-3">
-              <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-stone-500">
+              <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
                 {band.blurb}
               </p>
               <div className="flex flex-wrap items-center gap-1.5">
                 {agencies.length === 0 ? (
-                  <span className="font-mono text-xs uppercase tracking-[0.14em] text-stone-400">
+                  <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground/60">
                     none
                   </span>
                 ) : (
                   agencies.map((abbr) => (
                     <span
                       key={abbr}
-                      className="border border-stone-200 bg-white px-2 py-1 font-mono text-xs uppercase tracking-[0.06em] text-stone-700"
+                      className="border border-border bg-background px-2 py-1 font-mono text-xs uppercase tracking-[0.06em] text-foreground"
                     >
                       {abbr}
                     </span>

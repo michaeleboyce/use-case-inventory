@@ -17,13 +17,13 @@ const STATUS_LABEL: Record<DiscrepancyStatus, string> = {
 };
 
 const STATUS_TONE: Record<DiscrepancyStatus, string> = {
-  matched_exact: "bg-stone-100 text-stone-700",
-  matched_fuzzy: "bg-blue-50 text-blue-800",
-  suggested_rename: "bg-violet-50 text-violet-800",
-  omb_only: "bg-amber-50 text-amber-900",
-  db_only: "bg-rose-50 text-rose-900",
-  duplicate_in_omb: "bg-orange-50 text-orange-900",
-  consolidated_upstream: "bg-[#f6efdf] text-stone-800",
+  matched_exact: "bg-muted text-muted-foreground",
+  matched_fuzzy: "bg-muted text-foreground",
+  suggested_rename: "bg-[var(--highlight)]/15 text-foreground",
+  omb_only: "bg-[var(--highlight)]/25 text-foreground",
+  db_only: "bg-[var(--stamp)]/10 text-[var(--stamp)]",
+  duplicate_in_omb: "bg-[var(--stamp)]/15 text-[var(--stamp)]",
+  consolidated_upstream: "bg-[var(--highlight)]/15 text-foreground",
 };
 
 const STATUS_OPTIONS: DiscrepancyStatus[] = [
@@ -170,24 +170,24 @@ export function DiscrepancyTable({
             { value: "all", label: "Both" },
           ]}
         />
-        <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-stone-500">
+        <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-muted-foreground">
           Search name
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="filter by use-case name"
-            className="rounded border border-stone-300 px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+            className="border border-border px-2 py-1 text-sm font-normal normal-case tracking-normal text-foreground"
           />
         </label>
-        <p className="ml-auto text-sm tabular-nums text-stone-500">
+        <p className="ml-auto text-sm tabular-nums text-muted-foreground">
           {filtered.length.toLocaleString()} shown
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded border border-stone-200">
+      <div className="overflow-x-auto border border-border">
         <table className="min-w-full text-sm">
-          <thead className="bg-stone-50 text-left text-xs uppercase tracking-wider text-stone-500">
+          <thead className="bg-muted/20 text-left text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2">Agency</th>
@@ -200,12 +200,12 @@ export function DiscrepancyTable({
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-100">
+          <tbody className="divide-y divide-border">
             {filtered.map((r) => (
-              <tr key={r.audit_id} className="hover:bg-stone-50">
+              <tr key={r.audit_id} className="hover:bg-muted/20">
                 <td className="px-3 py-2">
                   <span
-                    className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                    className={`inline-block px-2 py-0.5 text-xs font-medium ${
                       STATUS_TONE[r.match_status]
                     }`}
                   >
@@ -219,7 +219,7 @@ export function DiscrepancyTable({
                   {r.db_use_case_slug ? (
                     <Link
                       href={`/use-cases/${r.db_use_case_slug}`}
-                      className="text-stone-900 hover:underline"
+                      className="text-foreground hover:underline"
                     >
                       {r.use_case_name ?? "—"}
                     </Link>
@@ -227,31 +227,31 @@ export function DiscrepancyTable({
                     (r.use_case_name ?? "—")
                   )}
                 </td>
-                <td className="px-3 py-2 font-mono text-xs text-stone-600">
+                <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
                   {r.db_use_case_id_text ?? "—"}
                 </td>
-                <td className="px-3 py-2 font-mono text-xs text-stone-600">
+                <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
                   {r.omb_use_case_id ?? "—"}
                 </td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {r.drift_field_count > 0 ? r.drift_field_count : "—"}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums text-stone-600">
+                <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                   {r.match_score != null ? r.match_score.toFixed(2) : "—"}
                 </td>
                 <td className="px-3 py-2">
                   {r.resolved_at ? (
-                    <span className="inline-block rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                    <span className="inline-block bg-[var(--verified)]/10 px-2 py-0.5 text-xs font-medium text-[var(--verified)]">
                       ✓
                     </span>
                   ) : (
-                    <span className="text-stone-300">—</span>
+                    <span className="text-muted-foreground/50">—</span>
                   )}
                 </td>
                 <td className="px-3 py-2">
                   <Link
                     href={`/discrepancies/${r.audit_id}`}
-                    className="text-sm text-stone-700 underline-offset-4 hover:underline"
+                    className="text-sm text-foreground underline-offset-4 hover:underline"
                   >
                     View →
                   </Link>
@@ -260,7 +260,7 @@ export function DiscrepancyTable({
             ))}
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-stone-500">
+                <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">
                   No rows match the current filters.
                 </td>
               </tr>
@@ -284,12 +284,12 @@ function FilterSelect({
   options: Array<{ value: string; label: string }>;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-stone-500">
+    <label className="flex flex-col gap-1 text-xs uppercase tracking-wider text-muted-foreground">
       {label}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded border border-stone-300 px-2 py-1 text-sm font-normal normal-case tracking-normal text-stone-900"
+        className="border border-border px-2 py-1 text-sm font-normal normal-case tracking-normal text-foreground"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

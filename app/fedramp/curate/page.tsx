@@ -15,6 +15,7 @@
 import Link from "next/link";
 import { getLinkQueueGroups } from "@/lib/db";
 import { Section, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/lib/formatting";
 
 export const metadata = {
@@ -82,7 +83,7 @@ export default async function FedrampCuratePage({
   const blurb = GROUPS.find((g) => g.key === group)?.blurb ?? "";
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 py-12 md:px-8 md:py-16">
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10">
         <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--stamp)]">
@@ -90,7 +91,7 @@ export default async function FedrampCuratePage({
           </div>
         </aside>
         <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display italic text-[2.4rem] leading-[0.95] tracking-[-0.02em] md:text-[3.2rem]">
+          <h1 className="font-display italic text-[2.4rem] leading-[1] tracking-[-0.02em] text-foreground md:text-[3.6rem]">
             Adjudicate the link queue.
           </h1>
           <p className="mt-4 max-w-prose text-base text-muted-foreground md:text-lg">
@@ -158,12 +159,10 @@ export default async function FedrampCuratePage({
             </p>
           </div>
         ) : rows.length === 0 ? (
-          <div className="border border-border bg-background p-6">
-            <p className="text-sm text-muted-foreground">
-              No pending rows in this grouping. Either the queue is empty or
-              every row has been resolved.
-            </p>
-          </div>
+          <EmptyState
+            variant="boxed"
+            message="No pending rows in this grouping. Either the queue is empty or every row has been resolved."
+          />
         ) : (
           <div className="border border-border">
             <table className="w-full text-sm">

@@ -55,19 +55,19 @@ export default async function ScorecardPrintPage({
       <nav className="mb-4 print:hidden">
         <Link
           href={`/agencies/${slug}`}
-          className="font-mono text-[10px] uppercase tracking-[0.18em] text-stone-500 hover:text-stone-900"
+          className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
         >
           ← {agency.abbreviation} agency page
         </Link>
       </nav>
-      <header className="border-b border-stone-300 pb-4 mb-6">
-        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-stone-500">
+      <header className="border-b border-border pb-4 mb-6">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           Federal AI Use Case Inventory · IFP
         </div>
-        <h1 className="mt-1 font-display italic text-3xl text-stone-900">
+        <h1 className="mt-1 font-display italic text-3xl text-foreground">
           Federal AI Readiness Scorecard
         </h1>
-        <p className="font-mono text-sm text-stone-600 mt-1">
+        <p className="font-mono text-sm text-muted-foreground mt-1">
           {agency.name} ({agency.abbreviation}) · {readiness.computed_at}
         </p>
       </header>
@@ -75,17 +75,17 @@ export default async function ScorecardPrintPage({
       <AgencyScorecardCard readiness={readiness} />
 
       <section className="mt-8 max-w-prose">
-        <h2 className="font-display italic text-xl text-stone-900">
+        <h2 className="font-display italic text-xl text-foreground">
           About this scorecard
         </h2>
-        <p className="mt-3 font-body text-sm leading-relaxed text-stone-700">
+        <p className="mt-3 font-body text-sm leading-relaxed text-muted-foreground">
           Federal AI Readiness is a 5-dimension rubric scoring U.S. federal
           agencies on adoption breadth, frontier capability, procurement
           hygiene, reporting quality, and governance documentation. Weights and
           definitions are published at{" "}
           <Link
             href="/readiness/methodology"
-            className="underline underline-offset-2 hover:text-stone-900"
+            className="underline underline-offset-2 hover:text-foreground"
           >
             use-case-inventory.vercel.app/readiness/methodology
           </Link>
@@ -93,7 +93,7 @@ export default async function ScorecardPrintPage({
         </p>
       </section>
 
-      <footer className="mt-8 pt-4 border-t border-stone-200 font-mono text-xs text-stone-500">
+      <footer className="mt-8 pt-4 border-t border-border font-mono text-xs text-muted-foreground">
         Source: use-case-inventory.vercel.app · Institute for Progress · Federal
         AI Use Case Inventory
       </footer>

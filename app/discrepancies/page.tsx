@@ -20,6 +20,8 @@ import Link from "next/link";
 import { getDiscrepancySummary } from "@/lib/discrepancies";
 import type { DiscrepancyStatus } from "@/lib/types";
 import { Section, MonoChip } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { BulkResolveBar } from "@/components/bulk-resolve-bar";
 import { DiscrepancyTable } from "@/components/discrepancy/discrepancy-table";
 import { DiscrepancyPatternCard } from "@/components/discrepancy/discrepancy-pattern-card";
@@ -84,41 +86,45 @@ export default async function DiscrepanciesPage({
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 space-y-12">
-      <DiscrepancyPostureBanner />
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+      <div className="mb-12">
+        <DiscrepancyPostureBanner />
+      </div>
 
-      <header className="space-y-4">
-        <p className="eyebrow !text-[var(--stamp)]">§ Provenance audit</p>
-        <h1 className="font-serif text-4xl font-medium leading-tight">
-          Discrepancies
-        </h1>
-        <p className="max-w-prose text-stone-600">
-          The 2025 OMB consolidated file
-          {" "}
-          (<MonoChip size="xs" tone="muted">2025_individually_reported_AI_use_cases.xlsx</MonoChip>)
-          {" "}is OMB&rsquo;s normalized snapshot of agency filings. We keep our
-          own row-for-row ingest of each agency&rsquo;s raw file. This page
-          lists every place the two disagree — by row presence, by name, and by
-          field value on matched pairs.
-        </p>
-        {canWrite ? (
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            {firstUnresolvedId != null ? (
-              <Link
-                href={`/discrepancies/${firstUnresolvedId}`}
-                className="inline-block bg-stone-900 text-white px-4 py-2 font-display text-sm hover:bg-stone-700"
-              >
-                Begin triage →
-              </Link>
-            ) : null}
-            <BulkResolveBar />
-            <SessionCounterPill
-              totalUnresolved={totalUnresolved}
-              resetOnMount
-            />
-          </div>
-        ) : null}
-      </header>
+      <PageMasthead
+        kicker="§ Audit · Discrepancies"
+        metaLines={["OMB consolidated 2025 vs IFP DB", "Provenance audit"]}
+        title="Discrepancies"
+        lede={
+          <>
+            The 2025 OMB consolidated file{" "}
+            (<MonoChip size="xs" tone="muted">2025_individually_reported_AI_use_cases.xlsx</MonoChip>)
+            {" "}is OMB&rsquo;s normalized snapshot of agency filings. We keep our
+            own row-for-row ingest of each agency&rsquo;s raw file. This page
+            lists every place the two disagree — by row presence, by name, and by
+            field value on matched pairs.
+          </>
+        }
+        actions={
+          canWrite ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {firstUnresolvedId != null ? (
+                <Link
+                  href={`/discrepancies/${firstUnresolvedId}`}
+                  className="inline-block bg-foreground text-background px-4 py-2 font-display text-sm hover:opacity-80"
+                >
+                  Begin triage →
+                </Link>
+              ) : null}
+              <BulkResolveBar />
+              <SessionCounterPill
+                totalUnresolved={totalUnresolved}
+                resetOnMount
+              />
+            </div>
+          ) : null
+        }
+      />
 
       {patterns.length > 0 ? (
         <Section
@@ -176,50 +182,30 @@ function CondensedStatGrid({
       : 0;
 
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
-      <CondensedStat
+    <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
+      <StatTile
+        variant="cell"
         label="OMB only (new)"
         value={summary.omb_only}
-        highlight
+        accent="stamp"
       />
-      <CondensedStat
+      <StatTile
+        variant="cell"
         label="DB only (vanished)"
         value={summary.db_only}
-        highlight
+        accent="stamp"
       />
-      <CondensedStat
+      <StatTile
+        variant="cell"
         label="Consolidated upstream"
         value={summary.consolidated_upstream}
       />
-      <CondensedStat
+      <StatTile
+        variant="cell"
         label="Pairs with field drift"
         value={summary.total_with_drift}
-        sub={`${driftPct.toFixed(1)}% of ${summary.total_pairs_compared.toLocaleString()} matched`}
+        sublabel={`${driftPct.toFixed(1)}% of ${summary.total_pairs_compared.toLocaleString()} matched`}
       />
-    </dl>
-  );
-}
-
-function CondensedStat({
-  label,
-  value,
-  sub,
-  highlight,
-}: {
-  label: string;
-  value: number;
-  sub?: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className={`space-y-1 ${highlight ? "text-amber-700" : ""}`}>
-      <dt className="text-xs uppercase tracking-wider text-stone-500">
-        {label}
-      </dt>
-      <dd className="font-serif text-2xl font-medium tabular-nums">
-        {value.toLocaleString()}
-      </dd>
-      {sub ? <dd className="text-xs text-stone-500">{sub}</dd> : null}
     </div>
   );
 }

@@ -155,15 +155,15 @@ function ExampleRow({ entry }: { entry: FlatEntry }) {
     entry.source === "consolidated" ? "Appendix B" : "Filing";
   const tone =
     entry.source === "consolidated"
-      ? "bg-stone-100 text-stone-700"
-      : "bg-amber-50 text-amber-800 border border-amber-200";
+      ? "bg-muted text-muted-foreground"
+      : "bg-[var(--highlight)]/15 text-foreground border border-[var(--highlight)]/30";
 
   const content = (
     <>
       <span className="flex items-baseline gap-2">
         <span
           className={cn(
-            "inline-block rounded px-1 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em]",
+            "inline-block px-1 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em]",
             tone,
           )}
         >
@@ -193,7 +193,7 @@ function ExampleRow({ entry }: { entry: FlatEntry }) {
     return (
       <Link
         href={`/use-cases/${entry.slug}`}
-        className="block rounded px-2 py-1.5 hover:bg-accent focus:bg-accent focus:outline-none"
+        className="block px-2 py-1.5 hover:bg-accent focus:bg-accent focus:outline-none"
       >
         {content}
       </Link>

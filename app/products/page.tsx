@@ -4,6 +4,8 @@ import { ProductsFilters } from "@/components/product/products-filters";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
 import { CategoryDistributionChart } from "@/components/charts/category-distribution-chart";
 import { Section, Figure } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
@@ -40,66 +42,52 @@ export default async function ProductsPage() {
       {/* ------------------------------------------------------------ */}
       {/* HERO — editorial nameplate                                   */}
       {/* ------------------------------------------------------------ */}
-      <header
+      <PageMasthead
         id="overview"
-        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16"
-      >
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
+        kicker="No. 002 · Catalogue"
+        metaLines={["Commercial Inventory", "Vendor × Product × Agency"]}
+        meta={
+          <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
+            <div className="border-t border-border pt-3">
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Canonical
+              </div>
+              <Link
+                href="/products"
+                className="text-foreground transition-colors hover:text-[var(--stamp)]"
+              >
+                {formatNumber(products.length)} products
+              </Link>
+            </div>
             <div>
-              <div className="eyebrow mb-1.5 !text-[var(--stamp)]">
-                No. 002 · Catalogue
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Vendors
               </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Commercial Inventory
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Vendor × Product × Agency
+              <div className="text-foreground">
+                {formatNumber(catalogStats.distinct_vendors)}
               </div>
             </div>
-
-            <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
-              <div className="border-t border-border pt-3">
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Canonical
-                </div>
-                <Link
-                  href="/products"
-                  className="text-foreground transition-colors hover:text-[var(--stamp)]"
-                >
-                  {formatNumber(products.length)} products
-                </Link>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Linked attributions
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Vendors
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(catalogStats.distinct_vendors)}
-                </div>
+              <div className="text-foreground">
+                {formatNumber(catalogStats.linked_entry_product_edges)}
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Linked attributions
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(catalogStats.linked_entry_product_edges)}
-                </div>
+            </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Frontier LLMs
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Frontier LLMs
-                </div>
-                <div className="text-foreground">
-                  {formatNumber(frontierCount)}
-                </div>
+              <div className="text-foreground">
+                {formatNumber(frontierCount)}
               </div>
             </div>
           </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.6rem,7vw,6rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
+        }
+        italicTitle={false}
+        title={
+          <>
             All AI{" "}
             <em className="inline font-normal italic">products</em>{" "}
             across
@@ -113,87 +101,69 @@ export default async function ProductsPage() {
               />
               <span className="relative">normalised&nbsp;and&nbsp;deduped.</span>
             </span>
-          </h1>
-
-          <div className="mt-10 grid grid-cols-12 gap-x-6 gap-y-6">
-            <p className="col-span-12 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85 md:col-span-7">
-              <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
-                F
-              </span>
-              ederal agencies name the commercial tools they run in hundreds of
-              slightly different ways — &ldquo;M365 Copilot,&rdquo;
-              &ldquo;Microsoft 365 Copilot,&rdquo; &ldquo;Copilot for M365.&rdquo;
-              This catalogue tracks{" "}
-              <span className="font-medium text-foreground">
-                {formatNumber(catalogStats.linked_entry_product_edges)} product
-                attributions
-              </span>{" "}
-              across {formatNumber(catalogStats.linked_entries)} inventory
-              entries and {formatNumber(products.length)} canonical products.
-              Agency-internal platforms are labeled separately from commercial
-              tools, and {formatNumber(catalogStats.pending_product_reviews)}
-              rows remain in the product review queue. Filter below by vendor
-              or by{" "}
-              <span
-                title="IFP-curated category (general_llm, security_tool, productivity, etc.). Distinct from OMB's ai_classification field, which is recorded per use case."
-                className="cursor-help underline decoration-dotted underline-offset-2"
-              >
-                category
-              </span>
-              ; click any card to open agency-level adoption.
-            </p>
-
-            <div className="col-span-12 md:col-span-4 md:col-start-9 md:self-end">
-              <div className="editorial-rule-left space-y-3">
-                <div className="eyebrow">By the numbers</div>
-                <dl className="space-y-2 font-mono text-sm">
-                  <Link
-                    href="/products"
-                    className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5 transition-colors hover:text-[var(--stamp)]"
-                  >
-                    <dt className="text-muted-foreground">Products</dt>
-                    <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
-                      {formatNumber(products.length)}
-                    </dd>
-                  </Link>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5">
-                    <dt className="text-muted-foreground">Vendors</dt>
-                    <dd className="tabular-nums text-foreground">
-                      {formatNumber(catalogStats.distinct_vendors)}
-                    </dd>
-                  </div>
-                  <Link
-                    href={buildUseCasesUrl({})}
-                    className="flex items-baseline justify-between gap-3 border-b border-dotted border-border pb-1.5 transition-colors hover:text-[var(--stamp)]"
-                  >
-                    <dt className="text-muted-foreground">
-                      Agency × product
-                    </dt>
-                    <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
-                      {formatNumber(totalAgencyMentions)}
-                    </dd>
-                  </Link>
-                  <Link
-                    href={buildUseCasesUrl({})}
-                    className="flex items-baseline justify-between gap-3 transition-colors hover:text-[var(--stamp)]"
-                  >
-                    <dt className="text-muted-foreground">Attributions</dt>
-                    <dd className="tabular-nums text-foreground transition-colors hover:text-[var(--stamp)]">
-                      {formatNumber(catalogStats.linked_entry_product_edges)}
-                    </dd>
-                  </Link>
-                </dl>
-                <Link
-                  href="#catalogue"
-                  className="mt-4 inline-flex items-baseline gap-1 border border-border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
-                >
-                  Jump to catalogue ↓
-                </Link>
-              </div>
+          </>
+        }
+        lede={
+          <>
+            <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
+              F
+            </span>
+            ederal agencies name the commercial tools they run in hundreds of
+            slightly different ways — &ldquo;M365 Copilot,&rdquo;
+            &ldquo;Microsoft 365 Copilot,&rdquo; &ldquo;Copilot for M365.&rdquo;
+            This catalogue tracks{" "}
+            <span className="font-medium text-foreground">
+              {formatNumber(catalogStats.linked_entry_product_edges)} product
+              attributions
+            </span>{" "}
+            across {formatNumber(catalogStats.linked_entries)} inventory
+            entries and {formatNumber(products.length)} canonical products.
+            Agency-internal platforms are labeled separately from commercial
+            tools, and {formatNumber(catalogStats.pending_product_reviews)}
+            rows remain in the product review queue. Filter below by vendor
+            or by{" "}
+            <span
+              title="IFP-curated category (general_llm, security_tool, productivity, etc.). Distinct from OMB's ai_classification field, which is recorded per use case."
+              className="cursor-help underline decoration-dotted underline-offset-2"
+            >
+              category
+            </span>
+            ; click any card to open agency-level adoption.
+          </>
+        }
+        actions={
+          <div>
+            <div className="eyebrow mb-4">By the numbers</div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+              <StatTile
+                label="Products"
+                value={products.length}
+                href="/products"
+              />
+              <StatTile
+                label="Vendors"
+                value={catalogStats.distinct_vendors}
+              />
+              <StatTile
+                label="Agency × product"
+                value={totalAgencyMentions}
+                href={buildUseCasesUrl({})}
+              />
+              <StatTile
+                label="Attributions"
+                value={catalogStats.linked_entry_product_edges}
+                href={buildUseCasesUrl({})}
+              />
             </div>
+            <Link
+              href="#catalogue"
+              className="mt-6 inline-flex items-baseline gap-1 border border-border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground transition-colors hover:border-foreground hover:text-[var(--stamp)]"
+            >
+              Jump to catalogue ↓
+            </Link>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* ------------------------------------------------------------ */}
       {/* § I — VENDOR MARKET SHARE                                    */}

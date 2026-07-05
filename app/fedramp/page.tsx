@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { Eyebrow, Section, Figure, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import {
   getFedrampSnapshot,
   hasAiClassification,
@@ -149,9 +150,7 @@ export default function FedrampLandingPage() {
               caption="Agencies holding the most ATOs for AI products their own inventory never names."
             >
               {byAgency.length === 0 ? (
-                <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                  No data.
-                </p>
+                <EmptyState variant="bare" message="No data." />
               ) : (
                 <ul className="space-y-1.5 pt-1">
                   {byAgency.map((a) => (

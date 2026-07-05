@@ -8,6 +8,8 @@ import {
   maturityTierLabel,
 } from "@/lib/formatting";
 import { ComparePicker } from "@/components/compare-picker";
+import { PageMasthead } from "@/components/page-masthead";
+import { EmptyState } from "@/components/empty-state";
 import { ArrowRight, Check, Minus, X } from "lucide-react";
 import { DonutChart } from "@/components/charts/donut-chart";
 import {
@@ -297,38 +299,30 @@ export default async function ComparePage({
       {/* ---------------------------------------------------------------- */}
       {/* Editorial masthead                                                */}
       {/* ---------------------------------------------------------------- */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12">
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-3">
-            <div className="eyebrow !text-[var(--stamp)]">§ II · Compare</div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              Cross-section · Up to 4
-            </div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              {selected.length === 0
-                ? "None selected"
-                : `${selected.length} selected`}
-            </div>
-            <p className="max-w-xs border-t border-border pt-3 text-sm leading-snug text-muted-foreground">
-              Pick two to four agencies and line them up across volume,
-              capability mix, entry types, and the key flags. The URL carries
-              the selection.
-            </p>
-          </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.8rem,7vw,5.6rem)] italic leading-[0.95] tracking-[-0.03em] text-foreground">
-            Side by side.
-          </h1>
-          <p className="mt-8 max-w-prose text-[1.02rem] leading-[1.55] text-foreground/85">
+      <PageMasthead
+        kicker="§ II · Compare"
+        metaLines={[
+          "Cross-section · Up to 4",
+          selected.length === 0
+            ? "None selected"
+            : `${selected.length} selected`,
+        ]}
+        meta={
+          <p className="max-w-xs border-t border-border pt-3 text-sm leading-snug text-muted-foreground">
+            Pick two to four agencies and line them up across volume,
+            capability mix, entry types, and the key flags. The URL carries
+            the selection.
+          </p>
+        }
+        title="Side by side."
+        lede={
+          <>
             A ledger-style comparison of agencies&rsquo; 2025 AI inventories.
             Agencies run across the top; metrics run down the left. Numbers
-            are in tabular mono; charts reveal the shape of each
-            portfolio.
-          </p>
-        </div>
-      </header>
+            are in tabular mono; charts reveal the shape of each portfolio.
+          </>
+        }
+      />
 
       {/* ---------------------------------------------------------------- */}
       {/* Picker                                                            */}
@@ -344,7 +338,7 @@ export default async function ComparePage({
       </section>
 
       {compareData.length === 0 ? (
-        <EmptyState />
+        <CompareEmptyState />
       ) : (
         <div className="mt-16 space-y-16">
           {/* Metric ledger ------------------------------------------------ */}
@@ -524,9 +518,7 @@ export default async function ComparePage({
                     </MonoChip>
                   </div>
                   {d.top_products.length === 0 ? (
-                    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                      No product-linked use cases.
-                    </p>
+                    <EmptyState variant="bare" message="No product-linked use cases." />
                   ) : (
                     <ul className="space-y-1.5 text-sm">
                       {d.top_products.map((p) => (
@@ -567,7 +559,7 @@ export default async function ComparePage({
  * Empty state shown when no agencies are selected. Uses outlined, mono,
  * `border-2 border-foreground` quick-start buttons.
  */
-function EmptyState() {
+function CompareEmptyState() {
   return (
     <div className="mt-16 border-t-2 border-foreground pt-8">
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">

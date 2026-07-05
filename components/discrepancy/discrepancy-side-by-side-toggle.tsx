@@ -41,7 +41,7 @@ export function DriftToggleWrapper({ defaultDriftOnly, nonDriftCount }: TogglePr
       ref={buttonRef}
       type="button"
       onClick={() => setShowAll((v) => !v)}
-      className="text-xs font-mono text-stone-600 hover:text-stone-900"
+      className="text-xs font-mono text-muted-foreground hover:text-foreground"
     >
       {showAll ? "Hide non-drifted fields" : `Show all fields (${nonDriftCount} more)`}
     </button>

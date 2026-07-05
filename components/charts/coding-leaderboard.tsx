@@ -78,13 +78,13 @@ export function CodingLeaderboard({
               </span>
               <span
                 className={cn(
-                  "relative h-4 w-full overflow-hidden rounded",
-                  "bg-zinc-100 dark:bg-zinc-800",
+                  "relative h-4 w-full overflow-hidden",
+                  "bg-muted",
                 )}
               >
                 <span
                   aria-hidden
-                  className="block h-full rounded transition-opacity group-hover:opacity-85"
+                  className="block h-full transition-opacity group-hover:opacity-85"
                   style={{ width: `${pct}%`, background: color }}
                 />
               </span>

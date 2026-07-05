@@ -13,6 +13,7 @@ import {
   getFedrampProductsByAssessor,
 } from "@/lib/db";
 import { Section, Eyebrow, MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import { formatNumber } from "@/lib/formatting";
 
 export const metadata = {
@@ -163,9 +164,7 @@ export default async function MarketplaceAssessorsPage({
         lede="Sorted by offerings covered. Click a column to re-sort."
       >
         {sorted.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            No assessors match {`"${qRaw}"`}.
-          </p>
+          <EmptyState variant="bare" message={`No assessors match "${qRaw}".`} />
         ) : (
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-sm">

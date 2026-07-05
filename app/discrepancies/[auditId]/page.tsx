@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import { getDiscrepancyDetail, getDiscrepancyRows } from "@/lib/discrepancies";
 import { canWriteResolutions } from "@/lib/resolutions";
 import { Section, MonoChip } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { DiscrepancySideBySide } from "@/components/discrepancy/discrepancy-side-by-side";
 import { KeyboardShortcutHost } from "@/components/keyboard-shortcut-host";
 import { ResolutionForm } from "@/components/resolution-form";
@@ -47,11 +48,11 @@ export default async function DiscrepancyDetailPage({
     : [];
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12 space-y-8">
-      <div className="flex items-center justify-between gap-4">
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <Link
           href="/discrepancies"
-          className="text-sm text-stone-600 hover:text-stone-900"
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
         >
           ← All discrepancies
         </Link>
@@ -60,52 +61,52 @@ export default async function DiscrepancyDetailPage({
         ) : null}
       </div>
 
-      <header className="space-y-2">
-        <p className="eyebrow !text-[var(--stamp)]">§ {statusLabel}</p>
-        <h1 className="font-serif text-3xl font-medium leading-tight">
-          {audit.use_case_name ?? "(unnamed use case)"}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-stone-600">
-          {audit.agency_abbreviation ? (
-            <MonoChip
-              size="sm"
-              tone="stamp"
-              href={`/agencies/${audit.agency_abbreviation}`}
-            >
-              {audit.agency_abbreviation}
-            </MonoChip>
-          ) : null}
-          <span>·</span>
-          <span>
-            IFP ID:{" "}
-            <span className="font-mono">
-              {audit.db_use_case_id_text ?? "—"}
-            </span>
-          </span>
-          <span>·</span>
-          <span>
-            OMB ID:{" "}
-            <span className="font-mono">{audit.omb_use_case_id ?? "—"}</span>
-          </span>
-          {audit.match_score != null ? (
-            <>
-              <span>·</span>
-              <span>match score {audit.match_score.toFixed(2)}</span>
-            </>
-          ) : null}
-          {audit.db_use_case_slug ? (
-            <>
-              <span>·</span>
-              <Link
-                href={`/use-cases/${audit.db_use_case_slug}`}
-                className="text-stone-700 underline-offset-4 hover:underline"
+      <PageMasthead
+        kicker={`§ ${statusLabel}`}
+        title={audit.use_case_name ?? "(unnamed use case)"}
+        actions={
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            {audit.agency_abbreviation ? (
+              <MonoChip
+                size="sm"
+                tone="stamp"
+                href={`/agencies/${audit.agency_abbreviation}`}
               >
-                Open use case →
-              </Link>
-            </>
-          ) : null}
-        </div>
-      </header>
+                {audit.agency_abbreviation}
+              </MonoChip>
+            ) : null}
+            <span>·</span>
+            <span>
+              IFP ID:{" "}
+              <span className="font-mono">
+                {audit.db_use_case_id_text ?? "—"}
+              </span>
+            </span>
+            <span>·</span>
+            <span>
+              OMB ID:{" "}
+              <span className="font-mono">{audit.omb_use_case_id ?? "—"}</span>
+            </span>
+            {audit.match_score != null ? (
+              <>
+                <span>·</span>
+                <span>match score {audit.match_score.toFixed(2)}</span>
+              </>
+            ) : null}
+            {audit.db_use_case_slug ? (
+              <>
+                <span>·</span>
+                <Link
+                  href={`/use-cases/${audit.db_use_case_slug}`}
+                  className="text-foreground underline-offset-4 hover:underline"
+                >
+                  Open use case →
+                </Link>
+              </>
+            ) : null}
+          </div>
+        }
+      />
 
       <Section
         number="I"
@@ -120,8 +121,8 @@ export default async function DiscrepancyDetailPage({
         <DiscrepancySideBySide detail={detail} />
 
         {detail.consolidated_into_omb_id != null ? (
-          <aside className="border-l-4 border-[#d4b97a] bg-[#f6efdf] px-4 py-3 mt-6">
-            <p className="text-sm text-stone-800">
+          <aside className="border-l-4 border-[var(--highlight)] bg-[var(--highlight)]/10 px-4 py-3 mt-6">
+            <p className="text-sm text-foreground">
               <strong className="font-display">
                 OMB rolled this into a generic category row.
               </strong>{" "}
@@ -142,11 +143,11 @@ export default async function DiscrepancyDetailPage({
         ) : null}
 
         {(detail.db_source_file || detail.omb_source_file) ? (
-          <footer className="mt-6 border-t border-stone-200 pt-3 font-mono text-[11px] text-stone-500 leading-relaxed">
+          <footer className="mt-6 border-t border-border pt-3 font-mono text-[11px] text-muted-foreground leading-relaxed">
             {detail.db_source_file ? (
               <div>
                 IFP DB row · source:{" "}
-                <span className="text-stone-700">{detail.db_source_file}</span>
+                <span className="text-foreground">{detail.db_source_file}</span>
                 {detail.db_ingested_at ? (
                   <>
                     {" "}· ingested{" "}
@@ -158,7 +159,7 @@ export default async function DiscrepancyDetailPage({
             {detail.omb_source_file ? (
               <div>
                 OMB row · source:{" "}
-                <span className="text-stone-700">{detail.omb_source_file}</span>
+                <span className="text-foreground">{detail.omb_source_file}</span>
                 {detail.omb_source_row ? (
                   <> · row {detail.omb_source_row}</>
                 ) : null}

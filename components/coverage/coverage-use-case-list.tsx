@@ -12,6 +12,7 @@
 
 import Link from "next/link";
 import { MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import type { CoverageUseCaseRow } from "@/lib/types";
 
 function stageBucket(stage: string | null):
@@ -53,11 +54,7 @@ export function CoverageUseCaseList({
   heading?: string;
 }) {
   if (rows.length === 0) {
-    return (
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-        {emptyMessage}
-      </p>
-    );
+    return <EmptyState variant="bare" message={emptyMessage} />;
   }
 
   const hidden = Math.max(0, totalCount - rows.length);

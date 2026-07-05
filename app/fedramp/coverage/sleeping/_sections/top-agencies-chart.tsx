@@ -2,15 +2,17 @@
 
 import type { SleepingByAgencyRow } from "@/lib/types";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
+import { EmptyState } from "@/components/empty-state";
 
 const BAR_COLOR = "#1f5c8b";
 
 export function TopSleepingAgenciesChart({ rows }: { rows: SleepingByAgencyRow[] }) {
   if (rows.length === 0) {
     return (
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-        No agencies with sleeping authorizations.
-      </p>
+      <EmptyState
+        variant="bare"
+        message="No agencies with sleeping authorizations."
+      />
     );
   }
   // Use agency abbreviation as the bar label so the chart stays narrow; the

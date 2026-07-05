@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatNumber, formatYoY } from "@/lib/formatting";
-import { InsightCard } from "@/components/insight-card";
+import { PageMasthead } from "@/components/page-masthead";
+import { StatTile } from "@/components/stat-tile";
 import { YoYGrowthChart } from "@/components/charts/yoy-growth-chart";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
 import { ProductHeatmap } from "@/components/charts/product-heatmap";
@@ -44,56 +45,39 @@ export default async function AnalyticsPage() {
       {/* ------------------------------------------------------------ */}
       {/* HERO — nameplate + drop-cap lede                              */}
       {/* ------------------------------------------------------------ */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-12 md:pb-16">
-        <aside className="col-span-12 mb-8 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-4">
-            <div>
-              <div className="eyebrow mb-1.5 !text-[var(--stamp)]">
-                § Analytics / Volume I
+      <PageMasthead
+        kicker="§ Analytics / Volume I"
+        metaLines={["Data Supplement", "Cycle 2025 · Ten Figures"]}
+        meta={
+          <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
+            <div className="border-t border-border pt-3">
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Corpus
               </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Data Supplement
-              </div>
-              <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Cycle 2025 · Ten Figures
+              <div className="text-foreground">
+                <Link
+                  href={buildUseCasesUrl({})}
+                  className="hover:text-[var(--stamp)]"
+                >
+                  {formatNumber(globalStats.total_use_cases)} uc
+                </Link>
+                {" · "}
+                <Link href="/agencies" className="hover:text-[var(--stamp)]">
+                  {globalStats.total_agencies_with_data} ag
+                </Link>
               </div>
             </div>
-
-            <div className="hidden space-y-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:block">
-              <div className="border-t border-border pt-3">
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Corpus
-                </div>
-                <div className="text-foreground">
-                  <Link
-                    href={buildUseCasesUrl({})}
-                    className="hover:text-[var(--stamp)]"
-                  >
-                    {formatNumber(globalStats.total_use_cases)} uc
-                  </Link>
-                  {" · "}
-                  <Link
-                    href="/agencies"
-                    className="hover:text-[var(--stamp)]"
-                  >
-                    {globalStats.total_agencies_with_data} ag
-                  </Link>
-                </div>
+            <div>
+              <div className="mb-0.5 text-[9px] text-muted-foreground/70">
+                Method
               </div>
-              <div>
-                <div className="mb-0.5 text-[9px] text-muted-foreground/70">
-                  Method
-                </div>
-                <div className="text-foreground">
-                  live from sqlite
-                </div>
-              </div>
+              <div className="text-foreground">live from sqlite</div>
             </div>
           </div>
-        </aside>
-
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2.6rem,6.5vw,5.4rem)] leading-[0.95] tracking-[-0.03em] text-foreground">
+        }
+        italicTitle={false}
+        title={
+          <>
             Ten{" "}
             <em className="inline font-normal italic">figures</em>{" "}
             that describe
@@ -107,9 +91,10 @@ export default async function AnalyticsPage() {
               />
               <span className="relative">deployment.</span>
             </span>
-          </h1>
-
-          <p className="mt-10 max-w-prose text-[1.05rem] leading-[1.55] text-foreground/85">
+          </>
+        }
+        lede={
+          <>
             <span className="float-left mr-2 font-display italic text-[3.6rem] leading-[0.82] text-foreground">
               {formatNumber(globalStats.total_use_cases).slice(0, 1)}
             </span>
@@ -128,9 +113,9 @@ export default async function AnalyticsPage() {
               how fast
             </em>
             , and <em className="italic">how widely</em>.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* ------------------------------------------------------------ */}
       {/* Left-rail index                                               */}
@@ -175,7 +160,8 @@ export default async function AnalyticsPage() {
           id="insights"
           className="scroll-mt-36 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="A · Enterprise LLM"
             value={`${insights.cfo_act_with_enterprise_llm}/${insights.cfo_act_total}`}
             accent="ink"
@@ -185,21 +171,23 @@ export default async function AnalyticsPage() {
                 inventory.
               </>
             }
-            subtext="Having an enterprise-wide chatbot is nearly table stakes now — but far from universal."
+            sublabel="Having an enterprise-wide chatbot is nearly table stakes now — but far from universal."
             href={buildAgenciesUrl({
               type: "CFO_ACT",
               hasEnterpriseLlm: true,
             })}
           />
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="B · Coding"
             value={formatNumber(insights.github_copilot_agencies)}
             accent="verified"
             headline={<>Agencies that reported deploying GitHub Copilot.</>}
-            subtext="Coding copilots are the single fastest-adopted AI category in government."
+            sublabel="Coding copilots are the single fastest-adopted AI category in government."
             href={buildAgenciesUrl({ hasCoding: true })}
           />
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="C · Top product"
             value={formatNumber(insights.top_product_agencies)}
             accent="ink"
@@ -212,24 +200,26 @@ export default async function AnalyticsPage() {
                 — more than any other product.
               </>
             }
-            subtext="COTS dominance is concentrated at the very top of the long tail."
+            sublabel="COTS dominance is concentrated at the very top of the long tail."
             href={
               insights.top_product_id != null
                 ? `/products/${insights.top_product_id}`
                 : undefined
             }
           />
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="D · Gap"
             value={formatNumber(insights.zero_coding_agencies)}
             accent="stamp"
             headline={
               <>Agencies reported zero coding tools in their inventory.</>
             }
-            subtext="Whether that means truly zero adoption or under-reporting is one of the biggest open questions in the data."
+            sublabel="Whether that means truly zero adoption or under-reporting is one of the biggest open questions in the data."
             href={buildAgenciesUrl({ hasCoding: false })}
           />
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="E · Catalogue"
             value={formatNumber(insights.distinct_products_total)}
             accent="ink"
@@ -239,10 +229,11 @@ export default async function AnalyticsPage() {
                 government.
               </>
             }
-            subtext="Resolved by canonical-name deduplication. Linkage coverage is improving but not complete."
+            sublabel="Resolved by canonical-name deduplication. Linkage coverage is improving but not complete."
             href="/products"
           />
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="F · Outlier"
             value={
               insights.nasa_yoy_growth != null
@@ -251,10 +242,11 @@ export default async function AnalyticsPage() {
             }
             accent="stamp"
             headline={<>NASA&apos;s year-over-year growth in reported use cases.</>}
-            subtext="The largest outlier in the dataset — see Fig. 02 and Fig. 05."
+            sublabel="The largest outlier in the dataset — see Fig. 02 and Fig. 05."
             href="/agencies/NASA"
           />
-          <InsightCard
+          <StatTile
+            variant="boxed"
             kicker="G · Visibility gap"
             value={
               insights.general_llm_total > 0
@@ -269,7 +261,7 @@ export default async function AnalyticsPage() {
                 of general-LLM-access entries don&apos;t name a vendor or product.
               </>
             }
-            subtext={`${insights.general_llm_unspecified} of ${insights.general_llm_total} entries report agency-wide LLM access without specifying the underlying tool — even after recovering vendor info from the OMB-filed vendor_name and system_name columns. See Fig. 07's "Vendor unspecified" slice.`}
+            sublabel={`${insights.general_llm_unspecified} of ${insights.general_llm_total} entries report agency-wide LLM access without specifying the underlying tool — even after recovering vendor info from the OMB-filed vendor_name and system_name columns. See Fig. 07's "Vendor unspecified" slice.`}
             href={buildUseCasesUrl({
               aiSophistications: ["general_llm"],
               vendorUnspecified: true,

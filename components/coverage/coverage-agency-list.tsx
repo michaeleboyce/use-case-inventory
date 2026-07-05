@@ -6,6 +6,7 @@
  */
 
 import { MonoChip } from "@/components/editorial";
+import { EmptyState } from "@/components/empty-state";
 import type { AgencyAtoRow } from "@/lib/types";
 
 export function CoverageAgencyList({
@@ -18,11 +19,7 @@ export function CoverageAgencyList({
   emptyMessage?: string;
 }) {
   if (rows.length === 0) {
-    return (
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-        {emptyMessage}
-      </p>
-    );
+    return <EmptyState variant="bare" message={emptyMessage} />;
   }
   return (
     <div className="space-y-3">

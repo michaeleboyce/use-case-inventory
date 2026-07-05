@@ -2,6 +2,7 @@ import { formatNumber } from "@/lib/formatting";
 import type { UseCaseFilterInput } from "@/lib/types";
 import { UseCaseFilters } from "@/components/use-case/filters";
 import { MobileFiltersSheet } from "@/components/mobile-filters-sheet";
+import { PageMasthead } from "@/components/page-masthead";
 import { PageSubnav } from "@/components/page-subnav";
 import { UseCaseTable } from "@/components/use-case/use-case-table";
 import { UseCaseGrid } from "@/components/use-case/use-case-grid";
@@ -214,15 +215,11 @@ export default async function UseCasesPage({
       {/* ------------------------------------------------------------ */}
       {/* EDITORIAL HEADER — filing meta + big italic counter           */}
       {/* ------------------------------------------------------------ */}
-      <header
+      <PageMasthead
         id="overview"
-        className="ink-in grid scroll-mt-36 grid-cols-12 gap-x-6 border-b border-border pb-10 md:pb-14"
-      >
-        <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-3">
-            <div className="eyebrow !text-[var(--stamp)]">
-              § II · Use Cases
-            </div>
+        kicker="§ II · Use Cases"
+        meta={
+          <div className="space-y-3">
             <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               N = <span className="tabular-nums">{formatNumber(totalInDb)}</span>
             </div>
@@ -236,22 +233,24 @@ export default async function UseCasesPage({
               OMB M-25-21 · Cycle 2025
             </div>
           </div>
-        </aside>
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display italic text-[2.6rem] leading-[0.98] tracking-[-0.02em] text-foreground md:text-[4.2rem]">
+        }
+        title={
+          <>
             {spellOut(totalInDb)}
-          </h1>
-          <p className="mt-3 font-display italic text-[1.4rem] leading-tight tracking-[-0.01em] text-muted-foreground md:text-[1.8rem]">
-            uses of artificial intelligence, reported by federal agencies.
-          </p>
-          <p className="mt-6 max-w-[56ch] text-[0.95rem] leading-relaxed text-foreground/80">
+            <span className="mt-3 block text-[1.4rem] leading-tight tracking-[-0.01em] text-muted-foreground md:text-[1.8rem]">
+              uses of artificial intelligence, reported by federal agencies.
+            </span>
+          </>
+        }
+        lede={
+          <>
             Every entry disclosed under OMB Memorandum M-25-21 — {formatNumber(stats.total_use_cases)} individual
             use cases plus {formatNumber(stats.total_consolidated)} consolidated
             rows. The explorer below shows individual use cases by default; use the entry-kind
             toggle in the left rail to include consolidated entries.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* ------------------------------------------------------------ */}
       {/* EXPLORER — filter rail + results pane                         */}

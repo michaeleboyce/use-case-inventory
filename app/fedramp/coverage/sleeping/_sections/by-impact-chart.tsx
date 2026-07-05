@@ -2,6 +2,7 @@
 
 import type { SleepingByImpactRow } from "@/lib/types";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
+import { EmptyState } from "@/components/empty-state";
 
 // Impact-level → bar color. Higher impact = warmer / louder; mirrors the
 // MonoChip impactTone treatment used elsewhere on coverage pages.
@@ -15,11 +16,7 @@ const IMPACT_COLOR: Record<string, string> = {
 
 export function SleepingByImpactChart({ rows }: { rows: SleepingByImpactRow[] }) {
   if (rows.length === 0) {
-    return (
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-        No sleeping authorizations.
-      </p>
-    );
+    return <EmptyState variant="bare" message="No sleeping authorizations." />;
   }
   const data = rows.map((r) => ({ label: r.impact_level, count: r.sleeping_count }));
   const colorMap = Object.fromEntries(

@@ -11,11 +11,11 @@ import type { ReadinessTierSummaryRow } from "@/lib/readiness";
  * per-agency scorecard rendered by Agent B.
  */
 const TIER_ACCENT: Record<string, string> = {
-  A: "bg-emerald-600",
-  B: "bg-blue-600",
-  C: "bg-amber-600",
-  D: "bg-orange-600",
-  F: "bg-rose-700",
+  A: "bg-[var(--verified)]",
+  B: "bg-[var(--verified)]/55",
+  C: "bg-[var(--highlight)]",
+  D: "bg-[var(--stamp)]/55",
+  F: "bg-[var(--stamp)]",
 };
 
 export function ReadinessTierBand({
@@ -28,29 +28,29 @@ export function ReadinessTierBand({
       {tiers.map((tier) => (
         <li
           key={tier.tier}
-          className="flex items-stretch border border-stone-300 bg-background"
+          className="flex items-stretch border border-border bg-background"
         >
           {/* Left accent stripe — subtle color signal per tier */}
           <div
             aria-hidden
-            className={`w-1.5 shrink-0 ${TIER_ACCENT[tier.tier] ?? "bg-stone-400"}`}
+            className={`w-1.5 shrink-0 ${TIER_ACCENT[tier.tier] ?? "bg-muted-foreground/40"}`}
           />
           {/* Tier letter + label column */}
-          <div className="flex w-24 shrink-0 flex-col items-center justify-center border-r border-stone-300 bg-stone-100 p-3">
-            <div className="font-display text-3xl italic text-stone-900">
+          <div className="flex w-24 shrink-0 flex-col items-center justify-center border-r border-border bg-muted p-3">
+            <div className="font-display text-3xl italic text-foreground">
               {tier.tier}
             </div>
-            <div className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-stone-500">
+            <div className="mt-1 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               {tier.label}
             </div>
-            <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-stone-400 tabular-nums">
+            <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/60 tabular-nums">
               {tier.count} {tier.count === 1 ? "agency" : "agencies"}
             </div>
           </div>
           {/* Agency chip row */}
           <div className="flex flex-1 flex-wrap items-center gap-1.5 p-3">
             {tier.count === 0 ? (
-              <span className="font-mono text-xs uppercase tracking-[0.14em] text-stone-400">
+              <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground/60">
                 0 agencies in this tier
               </span>
             ) : (
@@ -58,7 +58,7 @@ export function ReadinessTierBand({
                 <Link
                   key={abbr}
                   href={`/agencies/${abbr.toLowerCase()}#scorecard`}
-                  className="border border-stone-200 bg-white px-2 py-1 font-mono text-xs uppercase tracking-[0.06em] text-stone-700 transition-colors hover:border-stone-900 hover:bg-stone-50 hover:text-stone-900"
+                  className="border border-border bg-background px-2 py-1 font-mono text-xs uppercase tracking-[0.06em] text-foreground transition-colors hover:border-foreground hover:bg-muted/20 hover:text-foreground"
                 >
                   {abbr}
                 </Link>

@@ -48,7 +48,9 @@ import {
 } from "@/components/agency/agency-use-cases-table";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
-import { MetricTile } from "@/components/metric-tile";
+import { StatTile } from "@/components/stat-tile";
+import { PageMasthead } from "@/components/page-masthead";
+import { EmptyState } from "@/components/empty-state";
 import { UseCaseDrillDownLedger } from "./_sections/use-case-drilldown-ledger";
 
 import {
@@ -455,9 +457,10 @@ function TopLevelOrgPage({
         lede="FedRAMP-authorized cloud products linked to this agency's curated AI inventory. Shows only AI-relevant products (linked to a use-case via the curation queue), not the agency's full ATO portfolio."
       >
         {fedrampScope.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            — No AI-linked FedRAMP authorizations on file for this agency —
-          </p>
+          <EmptyState
+            variant="bare"
+            message="No AI-linked FedRAMP authorizations on file for this agency"
+          />
         ) : (
           <div className="space-y-8">
             <div className="grid grid-cols-3 gap-x-6 border-y-2 border-foreground py-4">
@@ -557,57 +560,57 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
       />
       <HierarchyBreadcrumbs breadcrumbs={breadcrumbs} className="mb-6" />
 
-      <header className="ink-in border-b border-border pb-10 md:pb-12">
-        <div className="flex items-baseline gap-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--stamp)]">
-            § {org.level.replace(/_/g, " ")}
-          </span>
-          {org.abbreviation && (
-            <MonoChip tone="muted" size="xs">
-              {org.abbreviation}
-            </MonoChip>
-          )}
-          {orgMaturity?.maturity_tier && (
-            <MonoChip tone="stamp" size="xs">
-              {maturityTierLabel(orgMaturity.maturity_tier)}
-            </MonoChip>
-          )}
-        </div>
-        <h1 className="mt-3 font-display italic text-[clamp(2.4rem,5vw,4rem)] leading-[0.98] tracking-[-0.02em] text-foreground">
-          {org.name}
-        </h1>
-        {org.description && !org.description.includes("[seeded:") ? (
-          <p className="mt-4 max-w-prose text-[1rem] leading-relaxed text-foreground/85">
-            {org.description}
-          </p>
-        ) : null}
-      </header>
+      <PageMasthead
+        kicker={`§ ${org.level.replace(/_/g, " ")}`}
+        meta={
+          org.abbreviation || orgMaturity?.maturity_tier ? (
+            <div className="flex flex-wrap gap-2">
+              {org.abbreviation && (
+                <MonoChip tone="muted" size="xs">
+                  {org.abbreviation}
+                </MonoChip>
+              )}
+              {orgMaturity?.maturity_tier && (
+                <MonoChip tone="stamp" size="xs">
+                  {maturityTierLabel(orgMaturity.maturity_tier)}
+                </MonoChip>
+              )}
+            </div>
+          ) : undefined
+        }
+        title={org.name}
+        lede={
+          org.description && !org.description.includes("[seeded:")
+            ? org.description
+            : undefined
+        }
+      />
 
       <SourceLegend />
 
       {/* Maturity ledger if computed for this org */}
       {orgMaturity ? (
         <section className="ink-in mt-10 grid grid-cols-2 gap-4 md:mt-14 md:grid-cols-4">
-          <MetricTile
+          <StatTile
             label="Use cases (subtree)"
             value={useCases.length}
           />
-          <MetricTile
+          <StatTile
             label="General LLM"
             value={orgMaturity.general_llm_count ?? 0}
           />
-          <MetricTile
+          <StatTile
             label="Coding tools"
             value={orgMaturity.coding_tool_count ?? 0}
           />
-          <MetricTile
+          <StatTile
             label="Agentic AI"
             value={orgMaturity.agentic_ai_count ?? 0}
           />
         </section>
       ) : (
         <section className="ink-in mt-10 grid grid-cols-2 gap-4 md:mt-14 md:grid-cols-4">
-          <MetricTile label="Use cases (subtree)" value={useCases.length} />
+          <StatTile label="Use cases (subtree)" value={useCases.length} />
         </section>
       )}
 
@@ -631,9 +634,10 @@ function SubOrgPage({ org }: { org: FederalOrganization }) {
         lede="Every 2025 entry whose bureau matches this organization or any of its descendants."
       >
         {useCases.length === 0 ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-            — No bureau-tagged use cases found for this organization —
-          </p>
+          <EmptyState
+            variant="bare"
+            message="No bureau-tagged use cases found for this organization"
+          />
         ) : (
           <IndividualUseCasesTable rows={useCases} />
         )}

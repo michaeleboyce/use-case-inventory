@@ -12,6 +12,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/product/product-card";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { EmptyState } from "@/components/empty-state";
 import { humanize, formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
 import type { ProductWithCounts } from "@/lib/types";
@@ -183,69 +185,49 @@ export function ProductsFilters({ products, parentNames }: Props) {
             />
           </FilterField>
 
-          <FilterField label="Vendor">
-            <select
-              value={vendor}
-              onChange={(e) => setVendor(e.target.value)}
-              className={fieldClass + " w-full"}
-            >
-              <option value={ALL}>All vendors</option>
-              {vendors.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </FilterField>
+          <FilterSelect
+            label="Vendor"
+            value={vendor}
+            onChange={setVendor}
+            options={[
+              { value: ALL, label: "All vendors" },
+              ...vendors.map((v) => ({ value: v, label: v })),
+            ]}
+          />
 
-          <FilterField
-            label="Category"
-            hint="IFP-curated"
-            title="Internal product category curated by IFP (e.g. general_llm, security_tool). Not the OMB M-25-21 ai_classification field, which lives on individual use cases."
-          >
-            <select
-              value={productType}
-              onChange={(e) => setProductType(e.target.value)}
-              className={fieldClass + " w-full"}
-            >
-              <option value={ALL}>All categories</option>
-              {productTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t === UNCLASSIFIED ? "Uncategorized" : humanize(t)}
-                </option>
-              ))}
-            </select>
-          </FilterField>
+          <FilterSelect
+            label="Category (IFP-curated)"
+            value={productType}
+            onChange={setProductType}
+            options={[
+              { value: ALL, label: "All categories" },
+              ...productTypes.map((t) => ({
+                value: t,
+                label: t === UNCLASSIFIED ? "Uncategorized" : humanize(t),
+              })),
+            ]}
+          />
 
-          <FilterField label="Sort">
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className={fieldClass + " w-full"}
-            >
-              <option value="agency_count">Agencies, desc</option>
-              <option value="use_case_count">Entries, desc</option>
-              <option value="name">Name, A-Z</option>
-            </select>
-          </FilterField>
+          <FilterSelect
+            label="Sort"
+            value={sortKey}
+            onChange={(v) => setSortKey(v as SortKey)}
+            options={[
+              { value: "agency_count", label: "Agencies, desc" },
+              { value: "use_case_count", label: "Entries, desc" },
+              { value: "name", label: "Name, A-Z" },
+            ]}
+          />
 
-          <FilterField
+          <FilterSelect
             label="Min entries"
-            hint="Hide tail"
-            title="Hide products with fewer than N reporting entries. Defaults to 2+ to drop the long tail of seed-only products and singletons that often reflect filer typos or near-duplicates. Set to All to see the full catalog."
-          >
-            <select
-              value={String(minEntries)}
-              onChange={(e) => setMinEntries(Number(e.target.value))}
-              className={fieldClass + " w-full"}
-            >
-              {MIN_ENTRIES_OPTIONS.map((o) => (
-                <option key={o.value} value={String(o.value)}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </FilterField>
+            value={String(minEntries)}
+            onChange={(v) => setMinEntries(Number(v))}
+            options={MIN_ENTRIES_OPTIONS.map((o) => ({
+              value: String(o.value),
+              label: o.label,
+            }))}
+          />
         </div>
 
         <div className="mt-4 space-y-3 border-t border-dotted border-border pt-4 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
@@ -304,9 +286,7 @@ export function ProductsFilters({ products, parentNames }: Props) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="flex h-40 items-center justify-center border border-dashed border-border font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-            — No products match these filters —
-          </div>
+          <EmptyState variant="boxed" message="No products match these filters" />
         ) : (
           <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((p) => (

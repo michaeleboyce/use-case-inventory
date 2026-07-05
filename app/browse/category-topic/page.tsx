@@ -19,6 +19,7 @@
 
 import { getCategoryTopicCrossTab } from "@/lib/db";
 import { Section, MonoChip } from "@/components/editorial";
+import { PageMasthead } from "@/components/page-masthead";
 import { CategoryTopicHeatmap } from "@/components/category-topic-heatmap";
 import { DIMENSION_PROVENANCE } from "@/lib/cross-cuts";
 
@@ -48,34 +49,28 @@ export default async function BrowseCategoryTopicPage() {
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-14 md:px-8 md:py-20">
       {/* Editorial header */}
-      <header className="ink-in grid grid-cols-12 gap-x-6 border-b border-border pb-10">
-        <aside className="col-span-12 mb-6 md:col-span-3 md:mb-0">
-          <div className="sticky top-32 space-y-2">
-            <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--stamp)]">
-              § Browse
-            </div>
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-              Cross-tab · Category × Topic
-            </div>
-          </div>
-        </aside>
-        <div className="col-span-12 md:col-span-9">
-          <h1 className="font-display text-[clamp(2rem,5.5vw,4.2rem)] leading-[0.98] tracking-[-0.02em] text-foreground">
+      <PageMasthead
+        kicker="§ Browse"
+        metaLines={["Cross-tab · Category × Topic"]}
+        italicTitle={false}
+        title={
+          <>
             Browse ·{" "}
             <em className="inline font-normal italic">
               Category × Topic
             </em>
-          </h1>
-          <p className="mt-4 max-w-prose text-[1rem] leading-[1.55] text-foreground/85">
+          </>
+        }
+        lede={
+          <>
             IFP-curated product categories on rows × OMB-filed topic areas on
             columns. Cell counts are distinct use cases at the intersection —
             useful for asking &ldquo;which kinds of AI tools are agencies pointing at
             which kinds of problems?&rdquo;
-          </p>
-
-          {/* Provenance — this view pairs an IFP-derived axis with an
-              OMB-filed axis, so we surface BOTH chips. */}
-          <div className="mt-5 max-w-prose space-y-2 border-l-2 border-border pl-3">
+          </>
+        }
+        actions={
+          <div className="max-w-prose space-y-2 border-l-2 border-border pl-3">
             <div className="flex items-baseline gap-3">
               <MonoChip tone="stamp" size="xs">
                 IFP × OMB
@@ -103,8 +98,8 @@ export default async function BrowseCategoryTopicPage() {
               </p>
             </div>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Heatmap */}
       <Section

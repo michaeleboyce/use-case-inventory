@@ -189,7 +189,7 @@ function LegendSwatch({ color, label }: { color: string; label: string }) {
     <span className="inline-flex items-center gap-1.5">
       <span
         aria-hidden
-        className="inline-block h-2.5 w-3 rounded-sm"
+        className="inline-block h-2.5 w-3"
         style={{ background: color }}
       />
       {label}
