@@ -61,7 +61,8 @@ function humanize(v: string | null | undefined): string {
 }
 
 type IndividualRow = UseCaseWithTags & {
-  product_id: number | null;
+  /** Primary product from the entry_primary_products view (m020). */
+  primary_product_id?: number | null;
   product_name?: string | null;
 };
 
@@ -192,9 +193,9 @@ export function IndividualUseCasesTable({
                     {r.vendor_name ?? "—"}
                   </TableCell>
                   <TableCell className="text-xs">
-                    {r.product_id && r.product_name ? (
+                    {r.primary_product_id && r.product_name ? (
                       <Link
-                        href={`/products/${r.product_id}`}
+                        href={`/products/${r.primary_product_id}`}
                         className="text-foreground hover:underline"
                       >
                         {r.product_name}

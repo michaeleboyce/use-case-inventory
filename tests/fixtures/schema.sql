@@ -1080,3 +1080,24 @@ CREATE TABLE readiness_headline (
     computed_at TEXT NOT NULL
 );
 CREATE UNIQUE INDEX idx_use_case_tags_uc_unique ON use_case_tags(use_case_id) WHERE use_case_id IS NOT NULL;
+
+-- m020: primary-product view (cache-order equivalent: strong before
+-- inferred, then lowest product_id, one row per entry).
+CREATE VIEW entry_primary_products AS
+SELECT entry_kind, entry_id, product_id, product_name FROM (
+    SELECT 'use_case' AS entry_kind, ucp.use_case_id AS entry_id,
+           ucp.product_id, p.canonical_name AS product_name,
+           ROW_NUMBER() OVER (PARTITION BY ucp.use_case_id
+             ORDER BY CASE ucp.confidence WHEN 'strong' THEN 0 ELSE 1 END,
+                      ucp.product_id) AS rn
+    FROM use_case_products ucp JOIN products p ON p.id = ucp.product_id
+) WHERE rn = 1
+UNION ALL
+SELECT entry_kind, entry_id, product_id, product_name FROM (
+    SELECT 'consolidated' AS entry_kind, cucp.consolidated_use_case_id AS entry_id,
+           cucp.product_id, p.canonical_name AS product_name,
+           ROW_NUMBER() OVER (PARTITION BY cucp.consolidated_use_case_id
+             ORDER BY CASE cucp.confidence WHEN 'strong' THEN 0 ELSE 1 END,
+                      cucp.product_id) AS rn
+    FROM consolidated_use_case_products cucp JOIN products p ON p.id = cucp.product_id
+) WHERE rn = 1;

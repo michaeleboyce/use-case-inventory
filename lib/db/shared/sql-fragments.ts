@@ -23,20 +23,31 @@ export const STAGE_BUCKET_SQL = `
 `;
 
 /**
- * Canonical SELECT for joined use-case rows: use_cases + agency + product +
- * template (left-joined). The shape matches the `JoinedUseCaseRow` type in
- * the use-cases domain module.
+ * Canonical SELECT for joined use-case rows: use_cases + agency + primary
+ * product. The shape matches the `JoinedUseCaseRow` type in the use-cases
+ * domain module.
+ *
+ * The primary product comes from the `entry_primary_products` view (ETL
+ * m020) — derived from the authoritative edge tables with the exact
+ * ordering the legacy scalar `use_cases.product_id` cache used (strong
+ * before inferred, then lowest product_id), so the displayed product name
+ * is unchanged by the cutover. The scalar cache column and the dead
+ * `use_cases.template_id` (0 rows ever populated; templates attach only to
+ * consolidated entries) are scheduled for physical drop.
+ * `template_short_name` is kept in the row shape as a constant NULL until
+ * the type sheds it.
  */
 export const USE_CASE_SELECT = `
   SELECT uc.*,
          a.name AS agency_name,
          a.abbreviation AS agency_abbreviation,
-         p.canonical_name AS product_name,
-         t.short_name AS template_short_name
+         epp.product_id AS primary_product_id,
+         epp.product_name AS product_name,
+         NULL AS template_short_name
     FROM use_cases uc
     JOIN agencies a ON a.id = uc.agency_id
-    LEFT JOIN products p ON p.id = uc.product_id
-    LEFT JOIN use_case_templates t ON t.id = uc.template_id
+    LEFT JOIN entry_primary_products epp
+      ON epp.entry_kind = 'use_case' AND epp.entry_id = uc.id
 `;
 
 /**

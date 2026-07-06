@@ -113,11 +113,12 @@ export function getConsolidatedBySlug(
       `SELECT c.*,
               a.name AS agency_name,
               a.abbreviation AS agency_abbreviation,
-              p.canonical_name AS product_name,
+              epp.product_name AS product_name,
               t.short_name AS template_short_name
          FROM consolidated_use_cases c
          JOIN agencies a ON a.id = c.agency_id
-         LEFT JOIN products p ON p.id = c.product_id
+         LEFT JOIN entry_primary_products epp
+                ON epp.entry_kind = 'consolidated' AND epp.entry_id = c.id
          LEFT JOIN use_case_templates t ON t.id = c.template_id
         WHERE c.slug = ? LIMIT 1`,
     )

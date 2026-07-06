@@ -15,13 +15,18 @@ beforeAll(() => installTestDb());
 afterAll(() => uninstallTestDb());
 
 describe("getUseCaseBySlug", () => {
-  it("returns the row + joined agency/product/template fields", () => {
+  it("returns the row + joined agency/primary-product fields", () => {
     const uc = getUseCaseBySlug("va-clinical-summary");
     expect(uc).not.toBeNull();
     expect(uc!.use_case_name).toBe("Clinical Note Summarization");
     expect(uc!.agency_abbreviation).toBe("VA");
+    // Primary product resolved via the entry_primary_products view (m020),
+    // equivalent to the legacy scalar cache while it still exists.
     expect(uc!.product_name).toBe("ChatGPT");
-    expect(uc!.template_short_name).toBe("GenAI productivity");
+    expect(uc!.primary_product_id).toBe(1);
+    // Individual rows never carry a template (consolidated-only concept);
+    // the SELECT emits a constant NULL until the field leaves the type.
+    expect(uc!.template_short_name).toBeNull();
     expect(uc!.tags).not.toBeNull();
     expect(uc!.tags!.deployment_scope).toBe("enterprise");
   });

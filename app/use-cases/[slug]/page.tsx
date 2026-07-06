@@ -96,27 +96,28 @@ export default async function UseCaseDetailPage({
 function IndividualDetail({ data }: { data: UseCaseWithTags }) {
   const tags = data.tags;
   const related = getRelatedByAgency(data.agency_id, data.id, 5);
+  // All products linked via use_case_products (strongest evidence first);
+  // the first element serves as the primary product for related-entry
+  // lookups. The legacy scalar use_cases.product_id is no longer read —
+  // it is scheduled for physical drop.
+  const linkedProducts = getProductsForUseCase(data.id);
+  const primaryProductId = linkedProducts[0]?.id ?? null;
   const productRelated =
-    data.product_id != null
-      ? getRelatedByProduct(data.product_id, data.id, 5)
+    primaryProductId != null
+      ? getRelatedByProduct(primaryProductId, data.id, 5)
       : [];
-  const templateRelated =
-    data.template_id != null
-      ? getRelatedByTemplate(data.template_id, data.id, 5)
-      : [];
+  // Templates attach only to consolidated entries — individual rows never
+  // carry one, so there is no template-related list here.
+  const templateRelated: ReturnType<typeof getRelatedByTemplate> = [];
 
   const agency = data.agency_abbreviation
     ? getAgencyByAbbr(data.agency_abbreviation)
     : null;
-  // Agent D (plan §D.6): render all products linked via use_case_products,
-  // not just the single use_cases.product_id. The legacy ``product`` value
-  // remains the primary linkage for the section header; ``linkedProducts``
-  // covers multi-product cases (e.g. "AWS (Textract + Bedrock)").
-  const linkedProducts = getProductsForUseCase(data.id);
   const product =
-    data.product_id != null ? getProductById(data.product_id) : null;
-  const template =
-    data.template_id != null ? getTemplateById(data.template_id) : null;
+    primaryProductId != null ? getProductById(primaryProductId) : null;
+  // Individual rows never carry a template (consolidated-only concept);
+  // typed to keep the guarded render block compiling until it is removed.
+  const template: ReturnType<typeof getTemplateById> = null;
   const externalEvidence = getExternalEvidenceForUseCase(data.id);
   const fedrampCoverage = getUseCaseFedrampCoverage(data.id);
   const peerUseCases = getPeerUseCases(data.id, 6);
@@ -586,34 +587,8 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
         </Section>
       )}
 
-      {template && (
-        <Section
-          number={product ? "X" : "IX"}
-          title="Linked template"
-          source="derived"
-          lede="The canonical phrasing this entry matches — a useful handle for discovering similar work elsewhere."
-        >
-          <div className="flex flex-col gap-3 border-t-2 border-foreground pt-4">
-            <p className="font-display italic text-[1.4rem] leading-tight tracking-[-0.01em] text-foreground">
-              “{template.template_text}”
-            </p>
-            <div className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              <span>
-                {template.short_name ?? "Template"}
-                {template.capability_category
-                  ? ` · ${template.capability_category}`
-                  : ""}
-              </span>
-              <Link
-                href={`/templates/${template.id}`}
-                className="text-foreground hover:text-[var(--stamp)]"
-              >
-                View template →
-              </Link>
-            </div>
-          </div>
-        </Section>
-      )}
+      {/* (Linked-template section removed: individual rows never carry a
+          template — that concept is consolidated-entry-only.) */}
 
       <Section
         number={templateOrProductNextNumber(!!product, !!template)}

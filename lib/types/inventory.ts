@@ -235,6 +235,8 @@ export interface UseCaseWithTags extends UseCase {
   tags: UseCaseTag | null;
   agency_name?: string;
   agency_abbreviation?: string;
+  /** Primary product from the entry_primary_products view (m020). */
+  primary_product_id?: number | null;
   product_name?: string | null;
   template_short_name?: string | null;
 }

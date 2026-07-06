@@ -34,16 +34,13 @@ export function getAllTemplates(): TemplateWithCounts[] {
            COALESCE(counts.agency_count, 0) AS agency_count
       FROM use_case_templates t
       LEFT JOIN (
+        -- Templates attach ONLY to consolidated entries (use_cases.
+        -- template_id was never populated and is scheduled for drop).
         SELECT template_id,
                COUNT(*) AS use_case_count,
                COUNT(DISTINCT agency_id) AS agency_count
-          FROM (
-            SELECT template_id, agency_id FROM use_cases
-              WHERE template_id IS NOT NULL
-            UNION ALL
-            SELECT template_id, agency_id FROM consolidated_use_cases
-              WHERE template_id IS NOT NULL
-          )
+          FROM consolidated_use_cases
+         WHERE template_id IS NOT NULL
          GROUP BY template_id
       ) counts ON counts.template_id = t.id
      ORDER BY use_case_count DESC, t.short_name COLLATE NOCASE ASC
@@ -60,26 +57,19 @@ export function getTemplateById(id: number): TemplateDetail | null {
     .get(id);
   if (!template) return null;
 
-  // Templates can be referenced from either `use_cases` or
-  // `consolidated_use_cases` (the Appendix B COTS table is the common case).
-  // Both must be unioned so the stats on the template detail page reflect
-  // actual usage — otherwise template_id references that only exist on the
-  // consolidated side are silently dropped.
+  // Templates attach ONLY to consolidated entries (the Appendix B COTS
+  // table); use_cases.template_id was never populated and is scheduled
+  // for physical drop.
   const agencies = db
-    .prepare<[number, number], { id: number; name: string; abbreviation: string; count: number }>(`
-      SELECT a.id, a.name, a.abbreviation, SUM(n) AS count
-        FROM (
-          SELECT agency_id, COUNT(*) AS n FROM use_cases
-            WHERE template_id = ? GROUP BY agency_id
-          UNION ALL
-          SELECT agency_id, COUNT(*) AS n FROM consolidated_use_cases
-            WHERE template_id = ? GROUP BY agency_id
-        ) sub
-        JOIN agencies a ON a.id = sub.agency_id
+    .prepare<[number], { id: number; name: string; abbreviation: string; count: number }>(`
+      SELECT a.id, a.name, a.abbreviation, COUNT(*) AS count
+        FROM consolidated_use_cases c
+        JOIN agencies a ON a.id = c.agency_id
+       WHERE c.template_id = ?
        GROUP BY a.id
        ORDER BY count DESC, a.name COLLATE NOCASE ASC
     `)
-    .all(id, id);
+    .all(id);
 
   const products = db
     .prepare<[number], { id: number; canonical_name: string; vendor: string | null; count: number }>(`
@@ -97,46 +87,23 @@ export function getTemplateById(id: number): TemplateDetail | null {
 
   const use_case_count = (
     db
-      .prepare<[number, number], { c: number }>(
-        `SELECT
-           (SELECT COUNT(*) FROM use_cases WHERE template_id = ?)
-           +
-           (SELECT COUNT(*) FROM consolidated_use_cases WHERE template_id = ?)
-           AS c`,
+      .prepare<[number], { c: number }>(
+        `SELECT COUNT(*) AS c FROM consolidated_use_cases WHERE template_id = ?`,
       )
-      .get(id, id) ?? { c: 0 }
+      .get(id) ?? { c: 0 }
   ).c;
 
   return { ...template, agencies, products, use_case_count };
 }
 
 /**
- * Per-entry rows for a template — combines use_cases and any consolidated
- * rows for the same agency/template that don't already appear in use_cases.
+ * Per-entry rows for a template. Templates attach only to consolidated
+ * entries (the former use_cases arm matched 0 rows by construction —
+ * use_cases.template_id was never populated). Primary product resolved
+ * via the m020 entry_primary_products view.
  */
 export function getEntriesForTemplate(templateId: number): TemplateEntryRow[] {
-  const stmt = getDb().prepare<[number, number], TemplateEntryRow>(`
-    SELECT uc.id AS use_case_id,
-           uc.use_case_name AS use_case_name,
-           uc.slug AS slug,
-           a.id AS agency_id,
-           a.name AS agency_name,
-           a.abbreviation AS agency_abbreviation,
-           p.id AS product_id,
-           p.canonical_name AS product_name,
-           p.vendor AS vendor,
-           c.commercial_examples AS commercial_examples,
-           c.estimated_licenses_users AS estimated_licenses_users
-      FROM use_cases uc
-      JOIN agencies a ON a.id = uc.agency_id
-      LEFT JOIN products p ON p.id = uc.product_id
-      LEFT JOIN consolidated_use_cases c
-             ON c.agency_id = uc.agency_id
-            AND c.template_id = uc.template_id
-     WHERE uc.template_id = ?
-
-    UNION ALL
-
+  const stmt = getDb().prepare<[number], TemplateEntryRow>(`
     SELECT NULL AS use_case_id,
            c.ai_use_case AS use_case_name,
            c.slug AS slug,
@@ -150,14 +117,11 @@ export function getEntriesForTemplate(templateId: number): TemplateEntryRow[] {
            c.estimated_licenses_users AS estimated_licenses_users
       FROM consolidated_use_cases c
       JOIN agencies a ON a.id = c.agency_id
-      LEFT JOIN products p ON p.id = c.product_id
+      LEFT JOIN entry_primary_products epp
+             ON epp.entry_kind = 'consolidated' AND epp.entry_id = c.id
+      LEFT JOIN products p ON p.id = epp.product_id
      WHERE c.template_id = ?
-       AND NOT EXISTS (
-         SELECT 1 FROM use_cases uc2
-          WHERE uc2.template_id = c.template_id
-            AND uc2.agency_id = c.agency_id
-       )
      ORDER BY agency_name COLLATE NOCASE ASC
   `);
-  return stmt.all(templateId, templateId);
+  return stmt.all(templateId);
 }
