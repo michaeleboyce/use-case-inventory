@@ -308,11 +308,21 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       >
         <DL>
           <Row label="Bureau / component" value={data.bureau_component} />
-          <Row label="Stage of development" value={data.stage_of_development} />
+          <Row
+            label="Stage (normalized)"
+            value={data.stage_normalized?.replace(/_/g, " ") ?? null}
+            source="derived"
+          />
+          <Row label="Stage (as filed)" value={data.stage_of_development} />
           <Row label="Topic area" value={data.topic_area} />
           <Row label="Operational date" value={data.operational_date} />
           <Row
-            label="High-impact (reported)"
+            label="High-impact (normalized)"
+            value={data.high_impact_normalized?.replace(/_/g, " ") ?? null}
+            source="derived"
+          />
+          <Row
+            label="High-impact (as filed)"
             value={data.is_high_impact}
           />
           <Row label="Justification" value={data.justification} multiline />
