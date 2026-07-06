@@ -34,7 +34,7 @@ export {
   getAgencyGenAiCounts,
 } from "./timeline";
 export { getSeatExtrapolationByAgency } from "./seats";
-export { getAgencyToolMatrix } from "./tool-matrix";
+export { getAgencyToolMatrix, TIER_SHARE_PRIOR } from "./tool-matrix";
 export {
   getYearCompareGenAi,
   getYearCompareGenAiByAgency,
@@ -45,8 +45,10 @@ export {
   type CapabilityLadderData,
 } from "./capability";
 export {
+  getAgencyEligibleWorkforce,
   getAgencyOccupationCaps,
   getStratifiedSeatInputs,
+  type AgencyEligibleWorkforceRow,
   type LabeledBandRow,
   type OccupationCapRow,
   type SeatModelSourceData,

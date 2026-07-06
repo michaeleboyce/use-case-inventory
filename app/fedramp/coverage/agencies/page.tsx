@@ -12,9 +12,12 @@ import type {
   FrontierReachAgencyRow,
 } from "@/lib/types";
 import { formatNumber, formatDate } from "@/lib/formatting";
-import { Section, MonoChip } from "@/components/editorial";
+import { Section, MonoChip, Figure } from "@/components/editorial";
 import { EmptyState } from "@/components/empty-state";
 import { AgenciesCoverageTable } from "./_sections/agencies-table";
+import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
+import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
+import { PeopleWaffle } from "@/components/charts/people-waffle";
 
 // Availability tiers, least-available first — the sort puts high-reach /
 // low-access agencies (the article's laggard cases) at the top.
@@ -168,9 +171,11 @@ export default function FedrampCoverageAgenciesPage() {
 function FrontierReachSection() {
   let reach: FrontierReachAgencyRow[] = [];
   let tiers: Record<string, AgencyAccessTier> = {};
+  let accessModel: ReturnType<typeof buildFrontierAccessModel> = null;
   try {
     reach = getFrontierReachByAgency();
     tiers = getAgencyAccessTiers();
+    accessModel = buildFrontierAccessModel();
   } catch {
     return null;
   }
@@ -190,10 +195,33 @@ function FrontierReachSection() {
   return (
     <Section
       number="II"
+      id="reach-access"
       title="Frontier capability in reach vs. staff access"
       source="mixed"
       lede="Agencies holding an ATO on at least one package whose scope catalog contains a core-AI service, against IFP's estimate of how widely staff can actually use a general-purpose AI tool. In scope of an authorization the agency already holds — not evidence the agency enabled anything. IFP access estimates are web-corroborated assessments, not OMB data."
     >
+      {accessModel ? (
+        <>
+          <Figure
+            eyebrow="Fig. A · The decoupling"
+            caption={`Each dot is one agency: core-AI services in scope of packages it holds an ATO for (x) against IFP's estimated share of eligible staff with a general-purpose AI tool (y); dot area is the AI-eligible workforce. Hollow dots are tier-prior imputations, not corroborated shares. Red = at or above the median reach of ${accessModel.medianReach} services with ≤10% estimated access. Marketplace snapshot 2026-06-12. Static figure: /figures/decoupling-scatter`}
+          >
+            <DecouplingScatter
+              points={accessModel.scatter}
+              medianReach={accessModel.medianReach}
+              droppedNoAbbr={accessModel.droppedNoAbbr}
+            />
+          </Figure>
+          <Figure
+            eyebrow="Fig. B · The same gap, in workers"
+            caption={`One square ≈ ${formatNumber(accessModel.waffle.unit)} AI-eligible federal workers across ${accessModel.waffle.agencyCount} profiled agencies. Red squares are workers with no general-purpose tool at an agency that already holds an ATO on a package with a core-AI service in scope. Access shares are IFP estimates (${accessModel.waffle.imputedAgencyCount} agencies tier-imputed). Static figure: /figures/people-waffle`}
+            className="mt-10"
+          >
+            <PeopleWaffle waffle={accessModel.waffle} />
+          </Figure>
+          <div className="mt-10" />
+        </>
+      ) : null}
       <table className="w-full border-t-2 border-foreground text-sm">
         <thead>
           <tr className="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">

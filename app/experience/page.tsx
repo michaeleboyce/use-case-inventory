@@ -31,6 +31,8 @@ import { buildSeatNarrative } from "@/lib/seat-narrative";
 import { EstimatorScatter } from "@/components/experience/estimator-scatter";
 import { SensitivityRange } from "@/components/experience/sensitivity-range";
 import { PopulationTelescope } from "@/components/experience/population-telescope";
+import { PeopleWaffle } from "@/components/charts/people-waffle";
+import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
 import { DefinitionEuler } from "@/components/experience/definition-euler";
 import { PageNav } from "@/components/experience/page-nav";
 import {
@@ -86,6 +88,15 @@ export default async function ExperiencePage() {
 
   const ombHeadline = headlines.find((h) => h.definition === "omb");
   const ifpHeadline = headlines.find((h) => h.definition === "ifp_genai");
+
+  // FedRAMP reach-vs-access sidecar — this page has no other FedRAMP
+  // dependency, so the waffle renders only when those tables are present.
+  let frontierAccess: ReturnType<typeof buildFrontierAccessModel> = null;
+  try {
+    frontierAccess = buildFrontierAccessModel();
+  } catch {
+    frontierAccess = null;
+  }
   const enterpriseHeadline = headlines.find(
     (h) => h.definition === "ifp_enterprise",
   );
@@ -501,6 +512,27 @@ export default async function ExperiencePage() {
             <PopulationTelescope agencies={seatModel.agencies} />
           </div>
         </div>
+
+        {frontierAccess ? (
+          <div className="mt-8 border-t border-border pt-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Where the eligible workforce stands
+            </p>
+            <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              The same eligible population, cross-referenced with FedRAMP:
+              red squares are workers with no general-purpose tool at an
+              agency that already holds an ATO on a package with a core-AI
+              service in scope — capability in reach, nobody at the keyboard.
+            </p>
+            <div className="mt-5">
+              <PeopleWaffle
+                waffle={frontierAccess.waffle}
+                compact
+                crossLinkHref="/fedramp/coverage/agencies#reach-access"
+              />
+            </div>
+          </div>
+        ) : null}
 
         <p className="mt-10 max-w-prose border-t border-border pt-6 text-sm leading-relaxed text-foreground/85">
           The waterfall starts from the naive sum of every filed band — the

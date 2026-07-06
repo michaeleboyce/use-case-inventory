@@ -19,6 +19,7 @@ import type {
   AiServiceInScopeRow,
   AiServiceShelfCounts,
   CoreAiSpreadRow,
+  FirstCoreAiAtoRow,
   FrontierProductStatus,
   FrontierReachAgencyRow,
   SpreadCounts,
@@ -307,6 +308,33 @@ export function getFrontierReachByAgency(): FrontierReachAgencyRow[] {
          JOIN agencies ia ON ia.id = al.inventory_agency_id
         GROUP BY ia.id
         ORDER BY core_ai_services_in_reach DESC, ia.name`,
+    )
+    .all();
+}
+
+/**
+ * Earliest agency ATO on any package whose scope catalog carries a core-AI
+ * service — the "capability first legally in reach" clock, one row per
+ * inventory agency, ordered by date. Feeds the divergence timeline; says
+ * nothing about enablement or staff access.
+ */
+export function getFirstCoreAiAtoByAgency(): FirstCoreAiAtoRow[] {
+  if (!hasServiceClassification()) return [];
+  return getDb()
+    .prepare<[], FirstCoreAiAtoRow>(
+      `SELECT ia.id AS inventory_agency_id,
+              ia.name AS agency_name,
+              ia.abbreviation AS agency_abbreviation,
+              MIN(a.ato_issuance_date) AS first_ato_date
+         FROM fedramp_authorized_services s
+         JOIN fedramp_ai_service_classification c
+           ON c.service = s.service AND c.category = 'core_ai'
+         JOIN fedramp_authorizations a ON a.fedramp_id = s.fedramp_id
+         JOIN fedramp_agency_links al ON al.fedramp_agency_id = a.agency_id
+         JOIN agencies ia ON ia.id = al.inventory_agency_id
+        WHERE a.ato_issuance_date IS NOT NULL
+        GROUP BY ia.id
+        ORDER BY first_ato_date, ia.name`,
     )
     .all();
 }

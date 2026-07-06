@@ -170,6 +170,7 @@ export {
   getServicesInScopeForProduct,
   getAiServicesInReachForAgency,
   getFrontierReachByAgency,
+  getFirstCoreAiAtoByAgency,
   hasSleepingServices,
   bucketTiming,
   getSleepingServicePairs,
@@ -194,7 +195,9 @@ export {
   GENAI_DEFINITION_SHORT,
   GENAI_DEFINITION_SOURCE,
   MATRIX_PRODUCT_BUCKETS,
+  TIER_SHARE_PRIOR,
   getStratifiedSeatInputs,
+  getAgencyEligibleWorkforce,
   getAgencyOccupationCaps,
   computeAgencySeatModel,
   computeSeatModel,
@@ -218,6 +221,7 @@ export type {
   LabeledBandRow,
   OccupationCapRow,
   SeatModelSourceData,
+  AgencyEligibleWorkforceRow,
   ProvenanceRollup,
 } from "./experience";
 export {

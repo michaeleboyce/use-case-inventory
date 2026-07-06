@@ -481,6 +481,15 @@ export interface FrontierReachAgencyRow {
   host_packages: number;
 }
 
+/** First agency ATO on any package with a core-AI service in scope. */
+export interface FirstCoreAiAtoRow {
+  inventory_agency_id: number;
+  agency_name: string;
+  agency_abbreviation: string | null;
+  /** MIN(ato_issuance_date) across the agency's core-AI-bearing packages. */
+  first_ato_date: string;
+}
+
 /** Status snapshot for one named frontier product (resolved by cso name). */
 export interface FrontierProductStatus {
   fedramp_id: string;

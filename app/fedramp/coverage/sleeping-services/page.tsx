@@ -6,6 +6,7 @@ import { Section, MonoChip } from "@/components/editorial";
 import { EmptyState } from "@/components/empty-state";
 import {
   buildViewModel,
+  buildDivergenceTimeline,
   parseBoardFilters,
   CAPABILITY_LABELS,
 } from "./_view-model";
@@ -14,6 +15,11 @@ import { FrontierGrid } from "./_sections/frontier-grid";
 import { SleepingServicesBoard } from "./_sections/board-table";
 import { CapabilityMatrix } from "./_sections/capability-matrix";
 import { TimingChart } from "./_sections/timing";
+import { TimingBeeswarm } from "./_sections/timing-beeswarm";
+import { DivergenceTimeline } from "./_sections/divergence-timeline";
+import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
+import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
+import { Figure } from "@/components/editorial";
 
 export const metadata = {
   title: "Sleeping services · FedRAMP × AI Inventory",
@@ -39,7 +45,10 @@ export default async function SleepingServicesPage({
 
   // Local roman-numeral chain — sections render conditionally.
   let n = 0;
-  const nextSection = () => ["I", "II", "III", "IV", "V"][n++] ?? `${n}`;
+  const nextSection = () =>
+    ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"][n++] ?? `${n}`;
+  const accessModel = safeFrontierAccessModel();
+  const divergence = safeDivergenceTimeline();
 
   const leadsByProduct: Record<string, string[]> = {};
   for (const row of vm.board) {
@@ -201,6 +210,41 @@ export default async function SleepingServicesPage({
             </Section>
           ) : null}
 
+          {accessModel ? (
+            <Section
+              number={nextSection()}
+              title="Reach without access"
+              source="mixed"
+              lede="Zooming out from services to agencies: everything in reach, against IFP's estimate of how widely staff can actually use a general-purpose AI tool. If reach produced access, the dots would climb to the right. They don't."
+            >
+              <div className="border-t-2 border-foreground pt-4">
+                <Figure
+                  eyebrow="Fig. A · The decoupling"
+                  caption={`Each dot is one agency: core-AI services in scope of packages it holds an ATO for (x) vs IFP's estimated staff access share (y); dot area = AI-eligible workforce; hollow = tier-prior imputed, not corroborated. Full agency table: /fedramp/coverage/agencies#reach-access · Static figure: /figures/decoupling-scatter`}
+                >
+                  <DecouplingScatter
+                    points={accessModel.scatter}
+                    medianReach={accessModel.medianReach}
+                    droppedNoAbbr={accessModel.droppedNoAbbr}
+                  />
+                </Figure>
+              </div>
+            </Section>
+          ) : null}
+
+          {divergence ? (
+            <Section
+              number={nextSection()}
+              title="Two clocks"
+              source="mixed"
+              lede="When frontier capability first came legally in reach (earliest agency ATO on a package with a core-AI service in scope) versus when staff access is first corroborated in public evidence. The shelf stocked for years on both sides of the LLM mandate; the access clock barely ticks."
+            >
+              <div className="border-t-2 border-foreground pt-4">
+                <DivergenceTimeline data={divergence} />
+              </div>
+            </Section>
+          ) : null}
+
           <Section
             number={nextSection()}
             title="Is it just too new?"
@@ -232,6 +276,12 @@ export default async function SleepingServicesPage({
                   available the whole time.
                 </p>
               </div>
+            </div>
+            <div className="mt-8">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                The same pairs, one dot each — click a dot for its board row
+              </p>
+              <TimingBeeswarm pairs={vm.pairs} />
             </div>
           </Section>
 
@@ -313,6 +363,22 @@ function FilterChip({
 function safeSnapshot(): FedrampSnapshot | null {
   try {
     return getFedrampSnapshot();
+  } catch {
+    return null;
+  }
+}
+
+function safeFrontierAccessModel(): ReturnType<typeof buildFrontierAccessModel> {
+  try {
+    return buildFrontierAccessModel();
+  } catch {
+    return null;
+  }
+}
+
+function safeDivergenceTimeline(): ReturnType<typeof buildDivergenceTimeline> {
+  try {
+    return buildDivergenceTimeline();
   } catch {
     return null;
   }

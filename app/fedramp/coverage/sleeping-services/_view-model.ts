@@ -323,3 +323,89 @@ function hasReach(pairs: SleepingPair[], product: string, agencyId: number): boo
     (p) => p.product === product && p.agency_id === agencyId && p.has_reach === 1,
   );
 }
+
+// ---------------------------------------------------------------------------
+// Divergence timeline (§ "the two clocks")
+//
+// Two cumulative step curves plotted against the same year axis:
+//   1. ATO clock — for each inventory agency, the earliest ATO it holds on
+//      any package whose scope catalog carries a core-AI service. This is
+//      "capability first legally in reach," not enablement or staff access.
+//   2. Rollout clock — for each agency, the earliest DATED, web-corroborated
+//      IFP evidence row that it actually stood a general-purpose AI tool up
+//      for its workforce. Sparse by construction (a few dozen rows at most).
+//
+// The gap between the curves is the point of the figure: reach arrived years
+// before rollout did. Guarded-degrade to null so the page can drop the whole
+// section when the FedRAMP service classification sidecar is absent.
+// ---------------------------------------------------------------------------
+import { getAgencyAiAccessEvidence, getFirstCoreAiAtoByAgency } from "@/lib/db";
+
+export interface DivergenceTimelinePoint {
+  /** ISO date */
+  date: string;
+  cumulative: number;
+  abbr: string | null;
+  name: string;
+  /** rollout anchors only */
+  tool?: string | null;
+}
+
+export interface DivergenceTimelineData {
+  /** Cumulative agencies whose FIRST agency ATO on a core-AI-in-scope package ≤ date. */
+  atoSteps: DivergenceTimelinePoint[];
+  /** Cumulative agencies with a dated, corroborated GenAI rollout evidence row ≤ date. */
+  anchorSteps: DivergenceTimelinePoint[];
+  snapshotDate: string; // "2026-06-12"
+}
+
+// The FedRAMP marketplace snapshot the frontier reach is drawn from. Distinct
+// from SLEEPING_INVENTORY_CUTOFF (the OMB inventory reporting cutoff); this is
+// the right edge of the timeline's x-domain.
+const DIVERGENCE_SNAPSHOT_DATE = "2026-06-12";
+
+export function buildDivergenceTimeline(): DivergenceTimelineData | null {
+  try {
+    // Ordered by first_ato_date already; re-sort defensively before running
+    // the cumulative so the step curve is monotonic regardless of query order.
+    const atoRows = getFirstCoreAiAtoByAgency();
+    if (atoRows.length === 0) return null;
+
+    const atoSteps: DivergenceTimelinePoint[] = atoRows
+      .slice()
+      .sort((a, b) => a.first_ato_date.localeCompare(b.first_ato_date))
+      .map((r, i) => ({
+        date: r.first_ato_date,
+        cumulative: i + 1,
+        abbr: r.agency_abbreviation,
+        name: r.agency_name,
+      }));
+
+    // Rollout clock: earliest dated, corroborated evidence row per agency.
+    // Undated or unsourced ("searched_no_source") rows carry no temporal
+    // signal and are skipped — the anchors mark discrete, sourced dates only.
+    const bestByAgency = new Map<
+      string,
+      { date: string; name: string; tool: string | null }
+    >();
+    for (const e of getAgencyAiAccessEvidence()) {
+      if (e.status !== "corroborated" || !e.source_date) continue;
+      const prev = bestByAgency.get(e.agency_abbreviation);
+      if (!prev || e.source_date < prev.date) {
+        bestByAgency.set(e.agency_abbreviation, {
+          date: e.source_date,
+          name: e.agency_name ?? e.agency_abbreviation,
+          tool: e.tool_name,
+        });
+      }
+    }
+    const anchorSteps: DivergenceTimelinePoint[] = [...bestByAgency.entries()]
+      .map(([abbr, v]) => ({ abbr, date: v.date, name: v.name, tool: v.tool }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((p, i) => ({ ...p, cumulative: i + 1 }));
+
+    return { atoSteps, anchorSteps, snapshotDate: DIVERGENCE_SNAPSHOT_DATE };
+  } catch {
+    return null;
+  }
+}

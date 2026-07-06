@@ -55,8 +55,10 @@ const TAG_TO_BUCKET: Array<[string, MatrixProductKey]> = [
   ["is_aws_ai", "amazon_q"],
 ];
 
-/** Hand-set fallback share-of-eligible when Wave-0 priors have n=0. */
-const PRIOR_FALLBACK: Record<string, number> = {
+/** Hand-set fallback share-of-eligible when Wave-0 priors have n=0.
+ *  Exported as the tier→share prior for reach-vs-access views (the
+ *  decoupling scatter / people waffle impute from this same map). */
+export const TIER_SHARE_PRIOR: Record<string, number> = {
   all: 0.50,
   most: 0.30,
   partial: 0.12,
@@ -65,6 +67,7 @@ const PRIOR_FALLBACK: Record<string, number> = {
   unknown: 0.05,
   none: 0.0,
 };
+const PRIOR_FALLBACK = TIER_SHARE_PRIOR;
 
 export function getAgencyToolMatrix(): AgencyToolMatrixRow[] {
   // (A) Pull consolidated_use_cases rows with a band.

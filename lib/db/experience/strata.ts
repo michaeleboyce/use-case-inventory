@@ -159,6 +159,75 @@ export interface SeatModelSourceData {
 
 export type { LabeledBandRow };
 
+/** denominator_basis-aware workforce base: contractors count when the
+ *  profile says the AI-eligible share was assessed over that basis. */
+function workforceBase(
+  total: number | null,
+  contractors: number | null,
+  basis: string | null,
+): number {
+  return basis === "incl_contractors"
+    ? (total ?? 0) + (contractors ?? 0)
+    : (total ?? 0);
+}
+
+/** Lean per-agency AI-eligible workforce row for reach-vs-access joins. */
+export interface AgencyEligibleWorkforceRow {
+  agency_id: number;
+  abbreviation: string | null;
+  name: string;
+  total_headcount: number;
+  /** round(base × ai_eligible_share), same arithmetic as the seat model. */
+  eligible: number;
+}
+
+/**
+ * Per-agency AI-eligible workforce denominators without the seat-model
+ * band machinery — for callers (FedRAMP coverage pages) that only need
+ * "how many eligible workers does this agency have".
+ */
+export function getAgencyEligibleWorkforce(): AgencyEligibleWorkforceRow[] {
+  const out: AgencyEligibleWorkforceRow[] = [];
+  for (const r of getDb()
+    .prepare<
+      [],
+      {
+        agency_id: number | null;
+        abbreviation: string | null;
+        name: string | null;
+        total_headcount: number | null;
+        contractor_headcount: number | null;
+        denominator_basis: string | null;
+        ai_eligible_share: number | null;
+      }
+    >(`
+      SELECT w.agency_id, a.abbreviation, a.name,
+             w.total_headcount, w.contractor_headcount,
+             w.denominator_basis, w.ai_eligible_share
+        FROM agency_workforce_profile w
+        JOIN agencies a ON a.id = w.agency_id
+       WHERE w.level = 'agency'
+         AND w.total_headcount IS NOT NULL
+         AND w.ai_eligible_share IS NOT NULL
+    `)
+    .all()) {
+    if (r.agency_id == null || r.name == null) continue;
+    const base = workforceBase(
+      r.total_headcount,
+      r.contractor_headcount,
+      r.denominator_basis,
+    );
+    out.push({
+      agency_id: r.agency_id,
+      abbreviation: r.abbreviation,
+      name: r.name,
+      total_headcount: r.total_headcount ?? 0,
+      eligible: Math.round(base * (r.ai_eligible_share ?? 0)),
+    });
+  }
+  return out.sort((a, b) => b.eligible - a.eligible);
+}
+
 export function getStratifiedSeatInputs(): SeatModelSourceData {
   const rows = fetchLabeledRows();
 
@@ -207,10 +276,11 @@ export function getStratifiedSeatInputs(): SeatModelSourceData {
     `)
     .all()) {
     if (r.agency_id == null) continue;
-    const base =
-      r.denominator_basis === "incl_contractors"
-        ? (r.total_headcount ?? 0) + (r.contractor_headcount ?? 0)
-        : (r.total_headcount ?? 0);
+    const base = workforceBase(
+      r.total_headcount,
+      r.contractor_headcount,
+      r.denominator_basis,
+    );
     workforce.set(r.agency_id, {
       eligible: Math.round(base * (r.ai_eligible_share ?? 0)),
       total_headcount: r.total_headcount ?? 0,

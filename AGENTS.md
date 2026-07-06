@@ -81,6 +81,18 @@ Dynamic `[slug]` pages are exempt — they're parameterized and don't fit a
 static nav. Per-page in-page sub-navs and breadcrumbs do not replace the top
 nav; they complement it.
 
+## Article figures (`/figures/[slug]`)
+
+`app/figures/_registry.tsx` maps slugs to fixed-width, capture-ready renders
+of article-grade charts (the same server assembly + client component as the
+live page, mounted with `exportMode`). To publish a new chart as a static
+figure, register it there — the `[slug]` route and `generateStaticParams`
+pick it up automatically (no nav registration; dynamic-route exemption).
+Capture with a Playwright **element** screenshot of `#figure-frame`; page
+chrome is irrelevant to an element screenshot. Keep captions self-contained
+(IFP attribution + marketplace snapshot date) so exported images retain
+provenance.
+
 ## Multi-agent safety: DB and deploy
 
 Multiple agents often work this branch in parallel. The dashboard reads

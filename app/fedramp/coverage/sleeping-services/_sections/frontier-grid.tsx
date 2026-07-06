@@ -15,9 +15,15 @@
  * pattern; glyph vocabulary follows category-topic-heatmap.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { GridColumn, GridRow, GridCell } from "../_shared";
+import { applyPermutation, seriate, type CellWeight } from "../_seriation";
 import { formatDate } from "@/lib/formatting";
+
+/** Cell severity as a seriation weight: void heaviest, similar lighter. */
+function cellWeight(state: GridCell["state"]): CellWeight {
+  return state === "sleeping_void" ? 2 : state === "sleeping_similar" ? 1 : 0;
+}
 
 const STATE_GLYPH: Record<GridCell["state"], string> = {
   lead: "■",
@@ -54,16 +60,58 @@ export function FrontierGrid({
   leadsByProduct: Record<string, string[]>;
 }) {
   const [pinned, setPinned] = useState<string | null>(null);
+  const [ordering, setOrdering] = useState<"gap_block" | "severity">(
+    "gap_block",
+  );
+
+  // Seriation permutes into the ORIGINAL columns/rows; recompute only when
+  // the underlying rows change identity, not on pin/hover state. (Columns
+  // always change together with rows — the cells are column-parallel.)
+  const { rowOrder, colOrder } = useMemo(() => {
+    const weights: CellWeight[][] = rows.map((r) =>
+      r.cells.map((cell) => cellWeight(cell.state)),
+    );
+    return seriate(weights);
+  }, [rows]);
+
+  // "gap_block" = the seriated (default) view; "severity" = props order,
+  // bit-for-bit the server's original ordering (the preserved regression case).
+  const seriated = ordering === "gap_block";
+  const displayColumns = seriated
+    ? applyPermutation(columns, colOrder)
+    : columns;
+  const displayRows = seriated ? applyPermutation(rows, rowOrder) : rows;
+  const maxGap = Math.max(...rows.map((x) => x.sleeping_count), 1);
 
   return (
     <div className="relative overflow-x-auto">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="mr-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+          Order
+        </span>
+        <OrderChip
+          active={seriated}
+          onClick={() => setOrdering("gap_block")}
+          label="By gap block"
+        />
+        <OrderChip
+          active={!seriated}
+          onClick={() => setOrdering("severity")}
+          label="By severity"
+        />
+      </div>
+      <p className="mb-3 font-mono text-[10px] text-muted-foreground">
+        {seriated
+          ? "ordered so sleeping/void mass forms a contiguous block"
+          : "ordered by void count (original)"}
+      </p>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
             <th className="sticky left-0 bg-background py-2 pr-3 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               Agency
             </th>
-            {columns.map((c) => (
+            {displayColumns.map((c) => (
               <th
                 key={c.product}
                 className="px-1 pb-2 text-center align-bottom font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground"
@@ -84,15 +132,17 @@ export function FrontierGrid({
           </tr>
         </thead>
         <tbody className="divide-y divide-border/50">
-          {rows.map((r) => {
-            const maxGap = Math.max(...rows.map((x) => x.sleeping_count), 1);
+          {displayRows.map((r) => {
+            const cells = seriated
+              ? applyPermutation(r.cells, colOrder)
+              : r.cells;
             return (
               <tr key={r.agency_id} className="hover:bg-muted/20">
                 <th className="sticky left-0 bg-background py-1 pr-3 text-left font-mono text-[11px] font-medium text-foreground">
                   <span title={r.agency_name}>{r.agency_abbr}</span>
                 </th>
-                {r.cells.map((cell, i) => {
-                  const col = columns[i];
+                {cells.map((cell, i) => {
+                  const col = displayColumns[i];
                   const key = `${r.agency_id}|${col.product}`;
                   return (
                     <td key={col.product} className="relative px-1 py-1 text-center">
@@ -163,6 +213,31 @@ export function FrontierGrid({
         for dates and hosts; click to jump to its board row.
       </p>
     </div>
+  );
+}
+
+function OrderChip({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  const base =
+    "inline-flex items-center border bg-background font-mono font-semibold uppercase tracking-[0.06em] transition-colors px-2 py-0.5 text-[11px]";
+  const activeRing = "border-foreground text-foreground";
+  const idle = "border-border text-muted-foreground hover:text-foreground";
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`${base} ${active ? activeRing : idle}`}
+    >
+      {label}
+    </button>
   );
 }
 
