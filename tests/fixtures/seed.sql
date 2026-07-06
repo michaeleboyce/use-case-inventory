@@ -46,19 +46,19 @@ INSERT INTO use_case_templates (id, template_text, short_name, capability_catego
 -- --------------------------------------------------------------------
 -- use_cases — VA (1..5), DHS (6..9), GSA (10..12)
 -- --------------------------------------------------------------------
-INSERT INTO use_cases (id, agency_id, source_file, slug, use_case_id, use_case_name, bureau_component, stage_of_development, is_high_impact, topic_area, ai_classification, vendor_name, product_id, template_id) VALUES
-  ( 1, 1, 'va-2025.csv', 'va-clinical-summary',         'VA-001', 'Clinical Note Summarization',     'Veterans Health Admin', 'Deployed',       'No',  'Health',       'Generative AI', 'OpenAI',    1, 1),
-  ( 2, 1, 'va-2025.csv', 'va-claims-triage',            'VA-002', 'Claims Triage Assistant',          'Veterans Benefits',     'Pilot',          'Yes', 'Benefits',     'Classical ML',  NULL,        NULL, NULL),
-  ( 3, 1, 'va-2025.csv', 'va-coding-assistants',        'VA-003', 'GitHub Copilot for VA Engineers',  'OIT',                   'Deployed',       'No',  'IT',           'Generative AI', 'GitHub',    4, 2),
-  ( 4, 1, 'va-2025.csv', 'va-gpt-chatbot',              'VA-004', 'VA GPT Internal Chatbot',          'OIT',                   'Pre-Deployment', 'No',  'IT',           'Generative AI', 'VA',        5, NULL),
-  ( 5, 1, 'va-2025.csv', 'va-retired-tool',             'VA-005', 'Retired Imaging Tool',             'Veterans Health Admin', 'Retired',        'No',  'Health',       'Classical ML',  NULL,        NULL, NULL),
-  ( 6, 2, 'dhs-2025.csv','dhs-border-vision',           'DHS-001','Border Camera Image Analysis',    'CBP',                    'Deployed',       'Yes', 'Security',     'Computer Vision', NULL,      NULL, NULL),
-  ( 7, 2, 'dhs-2025.csv','dhs-copilot-pilot',           'DHS-002','Microsoft Copilot Pilot',         'HQ',                     'Pilot',          'No',  'IT',           'Generative AI', 'Microsoft', 2, 1),
-  ( 8, 2, 'dhs-2025.csv','dhs-claude-research',         'DHS-003','Claude for Policy Research',      'Policy',                 'Deployed',       'No',  'Policy',       'Generative AI', 'Anthropic', 3, 3),
-  ( 9, 2, 'dhs-2025.csv','dhs-pre-deployment-fraud',    'DHS-004','Fraud Detection (in development)','HQ',                     'Development or Acquisition', 'No', 'Security', 'Classical ML', NULL, NULL, NULL),
-  (10, 3, 'gsa-2025.csv','gsa-chatgpt',                 'GSA-001','ChatGPT Enterprise',              'GSA IT',                 'Deployed',       'No',  'IT',           'Generative AI', 'OpenAI',    1, 1),
-  (11, 3, 'gsa-2025.csv','gsa-cursor',                  'GSA-002','Cursor IDE for Engineers',        'GSA IT',                 'Deployed',       'No',  'IT',           'Generative AI', 'Anysphere', 6, 2),
-  (12, 3, 'gsa-2025.csv','gsa-doc-search',              'GSA-003','Document Search Pilot',           'GSA IT',                 'Pilot',          'No',  'IT',           'Generative AI', 'OpenAI',    1, 3);
+INSERT INTO use_cases (id, agency_id, source_file, slug, use_case_id, use_case_name, bureau_component, stage_of_development, is_high_impact, topic_area, ai_classification, vendor_name) VALUES
+  ( 1, 1, 'va-2025.csv', 'va-clinical-summary',         'VA-001', 'Clinical Note Summarization',     'Veterans Health Admin', 'Deployed',       'No',  'Health',       'Generative AI', 'OpenAI'),
+  ( 2, 1, 'va-2025.csv', 'va-claims-triage',            'VA-002', 'Claims Triage Assistant',          'Veterans Benefits',     'Pilot',          'Yes', 'Benefits',     'Classical ML',  NULL),
+  ( 3, 1, 'va-2025.csv', 'va-coding-assistants',        'VA-003', 'GitHub Copilot for VA Engineers',  'OIT',                   'Deployed',       'No',  'IT',           'Generative AI', 'GitHub'),
+  ( 4, 1, 'va-2025.csv', 'va-gpt-chatbot',              'VA-004', 'VA GPT Internal Chatbot',          'OIT',                   'Pre-Deployment', 'No',  'IT',           'Generative AI', 'VA'),
+  ( 5, 1, 'va-2025.csv', 'va-retired-tool',             'VA-005', 'Retired Imaging Tool',             'Veterans Health Admin', 'Retired',        'No',  'Health',       'Classical ML',  NULL),
+  ( 6, 2, 'dhs-2025.csv','dhs-border-vision',           'DHS-001','Border Camera Image Analysis',    'CBP',                    'Deployed',       'Yes', 'Security',     'Computer Vision', NULL),
+  ( 7, 2, 'dhs-2025.csv','dhs-copilot-pilot',           'DHS-002','Microsoft Copilot Pilot',         'HQ',                     'Pilot',          'No',  'IT',           'Generative AI', 'Microsoft'),
+  ( 8, 2, 'dhs-2025.csv','dhs-claude-research',         'DHS-003','Claude for Policy Research',      'Policy',                 'Deployed',       'No',  'Policy',       'Generative AI', 'Anthropic'),
+  ( 9, 2, 'dhs-2025.csv','dhs-pre-deployment-fraud',    'DHS-004','Fraud Detection (in development)','HQ',                     'Development or Acquisition', 'No', 'Security', 'Classical ML', NULL),
+  (10, 3, 'gsa-2025.csv','gsa-chatgpt',                 'GSA-001','ChatGPT Enterprise',              'GSA IT',                 'Deployed',       'No',  'IT',           'Generative AI', 'OpenAI'),
+  (11, 3, 'gsa-2025.csv','gsa-cursor',                  'GSA-002','Cursor IDE for Engineers',        'GSA IT',                 'Deployed',       'No',  'IT',           'Generative AI', 'Anysphere'),
+  (12, 3, 'gsa-2025.csv','gsa-doc-search',              'GSA-003','Document Search Pilot',           'GSA IT',                 'Pilot',          'No',  'IT',           'Generative AI', 'OpenAI');
 
 -- Normalized enum columns (mirrors the ETL's normalize_use_case_fields
 -- CASE logic for the seed's raw values).
@@ -97,11 +97,11 @@ INSERT INTO use_case_tags (use_case_id, entry_type, is_general_llm_access, is_co
 -- --------------------------------------------------------------------
 -- consolidated_use_cases — 4 OMB rollups (VA x2, DHS x1, GSA x1)
 -- --------------------------------------------------------------------
-INSERT INTO consolidated_use_cases (id, agency_id, source_file, slug, ai_use_case, commercial_product, agency_uses, product_id, template_id) VALUES
-  (1, 1, 'omb-consolidated-2025.csv', 'va-genai-productivity-consolidated', 'GenAI productivity tools', 'Microsoft Copilot', 'Various VA staff use Microsoft Copilot for drafting', 2, 1),
-  (2, 1, 'omb-consolidated-2025.csv', 'va-coding-consolidated',             'Coding assistants',         'GitHub Copilot',     'Engineering teams use GitHub Copilot',                4, 2),
-  (3, 2, 'omb-consolidated-2025.csv', 'dhs-genai-consolidated',             'GenAI productivity tools', 'Microsoft Copilot', 'DHS staff use Copilot for drafting',                   2, 1),
-  (4, 3, 'omb-consolidated-2025.csv', 'gsa-genai-consolidated',             'GenAI productivity tools', 'ChatGPT',           'GSA staff use ChatGPT Enterprise',                     1, 1);
+INSERT INTO consolidated_use_cases (id, agency_id, source_file, slug, ai_use_case, commercial_product, agency_uses, template_id) VALUES
+  (1, 1, 'omb-consolidated-2025.csv', 'va-genai-productivity-consolidated', 'GenAI productivity tools', 'Microsoft Copilot', 'Various VA staff use Microsoft Copilot for drafting', 1),
+  (2, 1, 'omb-consolidated-2025.csv', 'va-coding-consolidated',             'Coding assistants',         'GitHub Copilot',     'Engineering teams use GitHub Copilot', 2),
+  (3, 2, 'omb-consolidated-2025.csv', 'dhs-genai-consolidated',             'GenAI productivity tools', 'Microsoft Copilot', 'DHS staff use Copilot for drafting', 1),
+  (4, 3, 'omb-consolidated-2025.csv', 'gsa-genai-consolidated',             'GenAI productivity tools', 'ChatGPT',           'GSA staff use ChatGPT Enterprise', 1);
 
 -- Tags for consolidated rows (use_case_id is null; consolidated_use_case_id set)
 INSERT INTO use_case_tags (consolidated_use_case_id, entry_type, is_general_llm_access, is_coding_tool, is_generative_ai, deployment_scope, ai_sophistication) VALUES

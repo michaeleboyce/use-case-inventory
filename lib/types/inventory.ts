@@ -110,8 +110,9 @@ export interface UseCase {
   hi_appeal_process: string | null;
   hi_public_consultation: string | null;
 
-  product_id: number | null;
-  template_id: number | null;
+  // (Scalar product_id/template_id dropped by ETL m025 — product linkage
+  // lives in use_case_products / the entry_primary_products view;
+  // templates are consolidated-entry-only.)
 
   // Hierarchy FKs (populated by scripts/backfill_bureau_orgs.py)
   organization_id: number | null;
@@ -141,7 +142,8 @@ export interface ConsolidatedUseCase {
   agency_uses: string | null;
   estimated_licenses_users: string | null;
 
-  product_id: number | null;
+  // (product_id dropped by ETL m025 — linkage in
+  // consolidated_use_case_products.)
   template_id: number | null;
 
   organization_id: number | null;

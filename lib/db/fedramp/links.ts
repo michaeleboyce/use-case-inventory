@@ -341,8 +341,8 @@ export function getUseCaseFedrampCoverage(
 } {
   const db = getDb();
   const useCase = db
-    .prepare<[number], { product_id: number | null; agency_id: number }>(
-      `SELECT product_id, agency_id FROM use_cases WHERE id = ? LIMIT 1`,
+    .prepare<[number], { agency_id: number }>(
+      `SELECT agency_id FROM use_cases WHERE id = ? LIMIT 1`,
     )
     .get(useCaseId);
   if (!useCase) {

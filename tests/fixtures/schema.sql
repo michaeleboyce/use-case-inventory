@@ -96,16 +96,12 @@ CREATE TABLE use_cases (
     hi_public_consultation TEXT,
 
     -- Product/template linking
-    product_id INTEGER REFERENCES products(id),
-    template_id INTEGER REFERENCES use_case_templates(id),
 
     -- Lossless preservation
     raw_json TEXT,
     created_at TEXT DEFAULT (datetime('now'))
 , id_provenance TEXT, organization_id INTEGER REFERENCES federal_organizations(id), bureau_organization_id INTEGER REFERENCES federal_organizations(id), omb_consolidated_id TEXT, omb_consolidated_source TEXT, omb_consolidated_first_seen TEXT, omb_consolidated_last_seen TEXT, stage_normalized TEXT, ai_classification_normalized TEXT, high_impact_normalized TEXT);
 CREATE INDEX idx_use_cases_agency ON use_cases(agency_id);
-CREATE INDEX idx_use_cases_product ON use_cases(product_id);
-CREATE INDEX idx_use_cases_template ON use_cases(template_id);
 CREATE INDEX idx_use_cases_stage ON use_cases(stage_of_development);
 CREATE INDEX idx_use_cases_high_impact ON use_cases(is_high_impact);
 CREATE INDEX idx_use_cases_ai_class ON use_cases(ai_classification);
@@ -122,7 +118,6 @@ CREATE TABLE consolidated_use_cases (
     estimated_licenses_users TEXT,  -- "1-100", "101-1000", etc.
 
     -- Product/template linking
-    product_id INTEGER REFERENCES products(id),
     template_id INTEGER REFERENCES use_case_templates(id),
 
     -- Lossless preservation
@@ -130,7 +125,6 @@ CREATE TABLE consolidated_use_cases (
     created_at TEXT DEFAULT (datetime('now'))
 , organization_id INTEGER REFERENCES federal_organizations(id), bureau_organization_id INTEGER REFERENCES federal_organizations(id), source_format TEXT);
 CREATE INDEX idx_consolidated_agency ON consolidated_use_cases(agency_id);
-CREATE INDEX idx_consolidated_product ON consolidated_use_cases(product_id);
 CREATE INDEX idx_consolidated_template ON consolidated_use_cases(template_id);
 CREATE TABLE use_case_tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -489,7 +483,7 @@ SELECT
     agency_id,
     organization_id,
     bureau_organization_id,
-    template_id,
+    NULL AS template_id,
     slug,
     use_case_name AS title,
     source_file,
