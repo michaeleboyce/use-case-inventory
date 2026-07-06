@@ -113,7 +113,7 @@ export default async function StoriesPage() {
           <StatTile variant="rule" label="Coding filings / enterprise" value="70 / 4" sublabel="individual coding-assistant filings vs. agencies at enterprise breadth" />
         </div>
         <div className="bg-card p-4">
-          <StatTile variant="rule" label="Claude Code mentions" value="1" sublabel="in 3,660 use cases — one Interior line item" href={productUrl("Claude Code")} />
+          <StatTile variant="rule" label="Claude Code mentions" value="1" sublabel="in 4,561 filed entries — one Interior Appendix-B line" href={productUrl("Claude Code")} />
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -719,8 +719,8 @@ export default async function StoriesPage() {
             coding agent, were still living in 2023. The coding gap is the
             next frontier: 70 individual coding-assistant filings, only four
             agencies at enterprise breadth, and a single mention of Claude
-            Code in 3,660 use cases — one Interior line item filed alongside
-            GitHub Copilot.
+            Code across all 4,561 filed entries — one Interior Appendix-B
+            line item filed alongside GitHub Copilot.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <MonoChip href="/analytics#coding" tone="stamp" size="xs">
