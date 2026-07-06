@@ -102,7 +102,6 @@ export {
   getUseCaseOrConsolidatedBySlug,
   getRelatedByAgency,
   getRelatedByProduct,
-  getRelatedByTemplate,
   getUseCaseFacets,
   getUseCasesForProduct,
   getConsolidatedCountForProduct,

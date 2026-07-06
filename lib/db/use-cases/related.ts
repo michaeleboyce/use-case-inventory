@@ -57,30 +57,8 @@ export function getRelatedByProduct(
 }
 
 /** Small list of related use cases that share the same template. */
-export function getRelatedByTemplate(
-  templateId: number,
-  excludeId: number,
-  limit = 5,
-): Array<{
-  id: number;
-  slug: string | null;
-  use_case_name: string;
-  agency_abbreviation: string;
-}> {
-  return getDb()
-    .prepare<
-      [number, number, number],
-      { id: number; slug: string | null; use_case_name: string; agency_abbreviation: string }
-    >(`
-      SELECT uc.id, uc.slug, uc.use_case_name, a.abbreviation AS agency_abbreviation
-        FROM use_cases uc
-        JOIN agencies a ON a.id = uc.agency_id
-       WHERE uc.template_id = ? AND uc.id <> ?
-       ORDER BY uc.use_case_name COLLATE NOCASE ASC
-       LIMIT ?
-    `)
-    .all(templateId, excludeId, limit);
-}
+// (getRelatedByTemplate removed: individual rows never carry a template —
+// use_cases.template_id was 0-populated and is scheduled for physical drop.)
 
 // -----------------------------------------------------------------------------
 // Peer use cases (similarity sidebar on the detail page)

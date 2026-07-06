@@ -9,7 +9,6 @@ import {
   getAgencyByAbbr,
   getRelatedByAgency,
   getRelatedByProduct,
-  getRelatedByTemplate,
   getExternalEvidenceForUseCase,
   getExternalEvidenceForConsolidated,
   getUseCaseFedrampCoverage,
@@ -108,7 +107,7 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       : [];
   // Templates attach only to consolidated entries — individual rows never
   // carry one, so there is no template-related list here.
-  const templateRelated: ReturnType<typeof getRelatedByTemplate> = [];
+  const templateRelated: Array<{ id: number; slug: string | null; use_case_name: string; agency_abbreviation: string }> = [];
 
   const agency = data.agency_abbreviation
     ? getAgencyByAbbr(data.agency_abbreviation)
