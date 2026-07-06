@@ -8,6 +8,23 @@ This `AGENTS.md` file is the authoritative project guidance for the dashboard.
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+## DB model rules (read before writing SQL)
+
+Two project skills in `.claude/skills/` cover the database — they are
+mirrors of the ETL repo's copies (edit both together):
+`omb-ai-use-case-inventory` (what the OMB source columns mean) and
+`inventory-db-model` (the DB's own structure). The three rules queries
+here get wrong most often:
+
+1. **Filter/compute on the normalized enum columns** (`stage_normalized`,
+   `ai_classification_normalized`, `high_impact_normalized`), never on the
+   raw free-text OMB fields; render raw only as "(as filed)".
+2. **Product linkage is edge-only.** There is no `use_cases.product_id` /
+   `template_id` (dropped, ETL m025) — join `entry_primary_products` for
+   "the" product, `entry_product_edges` for all links. Templates attach
+   only to consolidated entries.
+3. **`agency_ai_maturity` is a VIEW** over `org_ai_maturity` — read-only.
+
 ## Route-local conventions
 
 Two underscore-prefixed folder names carry meaning inside an `app/<route>/`
