@@ -4,6 +4,7 @@ import { PageMasthead } from "@/components/page-masthead";
 import { StatTile } from "@/components/stat-tile";
 import { YoYGrowthChart } from "@/components/charts/yoy-growth-chart";
 import { VendorShareChart } from "@/components/charts/vendor-share-chart";
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart";
 import { ProductHeatmap } from "@/components/charts/product-heatmap";
 import { MaturityScatter } from "@/components/charts/maturity-scatter";
 import {
@@ -34,6 +35,7 @@ export default async function AnalyticsPage() {
     scatter,
     architecture,
     llmVendors,
+    curatedVendorFlags,
     llmVisibilityGap,
     entryMix,
     codingRows,
@@ -373,6 +375,32 @@ export default async function AnalyticsPage() {
                 <LLMVendorDonut data={llmVendors} />
               </div>
             </Figure>
+
+            {/* Fig. 07b — same question, different method. Kept ALONGSIDE
+                Fig. 07 (never replacing it): the donut buckets narrative
+                vendor strings (heuristic), the bars below count the audited
+                per-row vendor flags from the IFP tagging pipeline. Where the
+                two disagree, that disagreement is itself the finding. */}
+            <div id="llm-vendor-flags" className="scroll-mt-36 mt-10">
+              <Figure
+                eyebrow="Fig. 07b · Curated vendor flags"
+                caption="The same vendor question measured the second way: per-entry vendor flags from the audited IFP tagging pipeline (a row can carry several — e.g. Copilot on Azure OpenAI), versus Fig. 07's narrative-text bucketing (heuristic). Counts cover all entries, not just general-LLM access."
+              >
+                <HorizontalBarChart
+                  data={curatedVendorFlags}
+                  height={220}
+                  labelWidth={150}
+                  labelMap={{
+                    "Microsoft Copilot": "Microsoft Copilot",
+                    "GitHub Copilot": "GitHub Copilot",
+                    OpenAI: "OpenAI",
+                    Google: "Google",
+                    "AWS AI": "AWS AI",
+                    Anthropic: "Anthropic",
+                  }}
+                />
+              </Figure>
+            </div>
 
             {/* Companion to Fig. 07 — surfaces who's contributing the
                 "Vendor unspecified" slice. Same SQL bucketing as the

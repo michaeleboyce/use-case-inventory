@@ -79,6 +79,7 @@ export {
   getProductAgencyMatrix,
   getArchitectureDistribution,
   getLLMVendorShare,
+  getCuratedVendorFlagShare,
   getLLMVendorVisibilityByAgency,
   getEntryTypeMixByAgency,
   getAnalyticsInsights,

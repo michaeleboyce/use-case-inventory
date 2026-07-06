@@ -81,6 +81,39 @@ export function getLLMVendorVisibilityByAgency(): Array<{
   }));
 }
 
+/**
+ * Vendor share by the CURATED per-row vendor flags (is_microsoft_copilot,
+ * is_openai, ...) — the IFP-tagged companion to `getLLMVendorShare`'s
+ * narrative-text bucketing. The two are rendered side by side with explicit
+ * method labels: the heuristic buckets free-text vendor strings (catching
+ * rows the flag pass never reviewed), while the flags come from the audited
+ * tagging pipeline (catching rows whose narrative names a product the
+ * string-bucketer misses, e.g. "M365" without "Microsoft"). A row can carry
+ * multiple flags (Copilot on Azure OpenAI), so shares are of flagged rows,
+ * not exclusive buckets.
+ */
+export function getCuratedVendorFlagShare(): BreakdownRow[] {
+  const stmt = getDb().prepare<[], BreakdownRow>(`
+    SELECT label, count FROM (
+      SELECT 'Microsoft Copilot' AS label,
+             SUM(is_microsoft_copilot) AS count FROM use_case_tags
+      UNION ALL
+      SELECT 'GitHub Copilot', SUM(is_github_copilot) FROM use_case_tags
+      UNION ALL
+      SELECT 'OpenAI', SUM(is_openai) FROM use_case_tags
+      UNION ALL
+      SELECT 'Google', SUM(is_google) FROM use_case_tags
+      UNION ALL
+      SELECT 'AWS AI', SUM(is_aws_ai) FROM use_case_tags
+      UNION ALL
+      SELECT 'Anthropic', SUM(is_anthropic) FROM use_case_tags
+    )
+    WHERE count > 0
+    ORDER BY count DESC
+  `);
+  return stmt.all();
+}
+
 /** Agencies that have enterprise-wide LLM access. */
 export function getEnterpriseLLMAgencies(): Array<{
   agency_id: number;

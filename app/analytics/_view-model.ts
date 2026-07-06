@@ -19,6 +19,7 @@ import {
   getEntryTypeMixByAgency,
   getGlobalStats,
   getLLMVendorShare,
+  getCuratedVendorFlagShare,
   getLLMVendorVisibilityByAgency,
   getMaturityScatterData,
   getProductAgencyMatrix,
@@ -99,6 +100,7 @@ export interface AnalyticsViewModel {
   scatter: ReturnType<typeof getMaturityScatterData>;
   architecture: ReturnType<typeof getArchitectureDistribution>;
   llmVendors: ReturnType<typeof getLLMVendorShare>;
+  curatedVendorFlags: ReturnType<typeof getCuratedVendorFlagShare>;
   llmVisibilityGap: ReturnType<typeof getLLMVendorVisibilityByAgency>;
   entryMix: ReturnType<typeof getEntryTypeMixByAgency>;
   codingRows: LeaderboardRow[];
@@ -116,6 +118,7 @@ export async function buildAnalyticsViewModel(): Promise<AnalyticsViewModel> {
   const scatter = getMaturityScatterData();
   const architecture = getArchitectureDistribution();
   const llmVendors = getLLMVendorShare();
+  const curatedVendorFlags = getCuratedVendorFlagShare();
   const llmVisibilityGap = getLLMVendorVisibilityByAgency();
   const coding = getCodingToolAgencies();
   const enterpriseLLM = getEnterpriseLLMAgencies();
@@ -137,6 +140,7 @@ export async function buildAnalyticsViewModel(): Promise<AnalyticsViewModel> {
     scatter,
     architecture,
     llmVendors,
+    curatedVendorFlags,
     llmVisibilityGap,
     entryMix,
     codingRows,
