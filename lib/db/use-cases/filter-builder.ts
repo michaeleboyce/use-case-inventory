@@ -180,7 +180,9 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
     rowParams.push(filters.agencyAbbr);
   }
   if (filters.stage) {
-    rowWhere.push("uc.stage_of_development = ?");
+    // Compares against the normalized column (m016) — values are the
+    // canonical buckets, matching the `stages` facet list.
+    rowWhere.push("uc.stage_normalized = ?");
     rowParams.push(filters.stage);
   }
   if (filters.stageBuckets && filters.stageBuckets.length > 0) {
@@ -194,11 +196,11 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
     for (const b of filters.stageBuckets) rowParams.push(b);
   }
   if (filters.aiClassification) {
-    rowWhere.push("uc.ai_classification = ?");
+    rowWhere.push("uc.ai_classification_normalized = ?");
     rowParams.push(filters.aiClassification);
   }
   if (filters.isHighImpact) {
-    rowWhere.push("uc.is_high_impact = ?");
+    rowWhere.push("uc.high_impact_normalized = ?");
     rowParams.push(filters.isHighImpact);
   }
   if (filters.productId != null) {
@@ -211,8 +213,10 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
     rowParams.push(filters.productId);
   }
   if (filters.templateId != null) {
-    rowWhere.push("uc.template_id = ?");
-    rowParams.push(filters.templateId);
+    // Templates attach ONLY to consolidated entries (use_cases.template_id
+    // was 0/3660 populated and is scheduled for physical drop) — a template
+    // filter matches no individual rows by construction.
+    rowWhere.push("0 = 1");
   }
   if (filters.vendor) {
     rowWhere.push("LOWER(uc.vendor_name) LIKE LOWER(?)");
@@ -254,10 +258,8 @@ export function buildUseCaseBranch(filters: UseCaseFilterInput): FilterBranch {
     rowParams.push(...filters.productIds);
   }
   if (filters.templateIds && filters.templateIds.length > 0) {
-    rowWhere.push(
-      `uc.template_id IN (${filters.templateIds.map(() => "?").join(",")})`,
-    );
-    rowParams.push(...filters.templateIds);
+    // See templateId above — no individual row ever carries a template.
+    rowWhere.push("0 = 1");
   }
   if (filters.bureaus && filters.bureaus.length > 0) {
     rowWhere.push(

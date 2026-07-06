@@ -48,8 +48,10 @@ describe("getUseCasesFiltered", () => {
     }
   });
 
-  it("filters by stage_of_development", () => {
-    const { rows, total } = getUseCasesFiltered({ stage: "Pilot" });
+  it("filters by normalized stage bucket", () => {
+    // `stage` compares against stage_normalized (m016) — canonical
+    // snake_case buckets, not the raw free-text variants.
+    const { rows, total } = getUseCasesFiltered({ stage: "pilot" });
     expect(total).toBe(3);
     expect(rows).toHaveLength(3);
   });
@@ -110,12 +112,13 @@ describe("getUseCasesFiltered", () => {
 });
 
 describe("getUseCaseFacets", () => {
-  it("returns distinct stage / classification / agency-type values from the seed", () => {
+  it("returns distinct NORMALIZED stage / classification / agency-type values", () => {
     const facets = getUseCaseFacets();
     expect(facets.stages.length).toBeGreaterThan(0);
-    expect(facets.stages).toContain("Deployed");
-    expect(facets.stages).toContain("Pilot");
+    expect(facets.stages).toContain("deployed");
+    expect(facets.stages).toContain("pilot");
     expect(facets.aiClassifications).toContain("Generative AI");
+    expect(facets.highImpact).toContain("high_impact");
     expect(facets.agencyTypes).toContain("CFO Act");
   });
 

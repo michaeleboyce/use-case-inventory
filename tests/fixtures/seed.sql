@@ -60,6 +60,23 @@ INSERT INTO use_cases (id, agency_id, source_file, slug, use_case_id, use_case_n
   (11, 3, 'gsa-2025.csv','gsa-cursor',                  'GSA-002','Cursor IDE for Engineers',        'GSA IT',                 'Deployed',       'No',  'IT',           'Generative AI', 'Anysphere', 6, 2),
   (12, 3, 'gsa-2025.csv','gsa-doc-search',              'GSA-003','Document Search Pilot',           'GSA IT',                 'Pilot',          'No',  'IT',           'Generative AI', 'OpenAI',    1, 3);
 
+-- Normalized enum columns (mirrors the ETL's normalize_use_case_fields
+-- CASE logic for the seed's raw values).
+UPDATE use_cases SET
+  stage_normalized = CASE
+    WHEN stage_of_development LIKE '%Retired%' THEN 'retired'
+    WHEN stage_of_development LIKE '%Pilot%' THEN 'pilot'
+    WHEN stage_of_development LIKE '%Deployed%' AND stage_of_development NOT LIKE 'Pre%' THEN 'deployed'
+    ELSE 'pre_deployment' END,
+  ai_classification_normalized = CASE
+    WHEN ai_classification LIKE '%Generative%' THEN 'Generative AI'
+    WHEN ai_classification LIKE '%Computer Vision%' THEN 'Computer Vision'
+    ELSE 'Classical/Predictive Machine Learning' END,
+  high_impact_normalized = CASE
+    WHEN is_high_impact = 'Yes' THEN 'high_impact'
+    WHEN is_high_impact = 'No' THEN 'not_high_impact'
+    ELSE 'unknown' END;
+
 -- --------------------------------------------------------------------
 -- use_case_tags — one per use_case, varied so filter tests find data
 -- --------------------------------------------------------------------

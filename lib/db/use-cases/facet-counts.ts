@@ -143,9 +143,11 @@ export function getUseCaseFacets(): {
     .map((r) => r.v);
 
   return {
-    stages: distinct("use_cases", "stage_of_development"),
-    aiClassifications: distinct("use_cases", "ai_classification"),
-    highImpact: distinct("use_cases", "is_high_impact"),
+    // Normalized enum columns (ETL m016/m019) — the raw source columns
+    // carry 40+ formatting variants each and must never drive a facet.
+    stages: distinct("use_cases", "stage_normalized"),
+    aiClassifications: distinct("use_cases", "ai_classification_normalized"),
+    highImpact: distinct("use_cases", "high_impact_normalized"),
     agencyTypes: distinct("agencies", "agency_type"),
     tagEntryTypes: distinct("use_case_tags", "entry_type"),
     tagDeploymentScopes: distinct("use_case_tags", "deployment_scope"),

@@ -152,16 +152,27 @@ export function UseCaseTable({ rows, showTopicArea = false }: UseCaseTableProps)
                   {isConsolidated ? "—" : row.bureau_component ?? "—"}
                 </td>
                 <td className="px-3 py-3">
-                  {!isConsolidated && row.stage_of_development ? (
-                    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground">
-                      {truncate(stageLabel(row.stage_of_development), 28)}
+                  {!isConsolidated && (row.stage_normalized || row.stage_of_development) ? (
+                    <span
+                      className="font-mono text-[10px] uppercase tracking-[0.08em] text-foreground"
+                      title={row.stage_of_development ?? undefined}
+                    >
+                      {row.stage_normalized
+                        ? row.stage_normalized.replace(/_/g, " ")
+                        : truncate(stageLabel(row.stage_of_development!), 28)}
                     </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
-                <td className="px-3 py-3 text-[12px] text-muted-foreground">
-                  {isConsolidated ? "—" : truncate(row.ai_classification ?? "—", 32)}
+                <td
+                  className="px-3 py-3 text-[12px] text-muted-foreground"
+                  title={isConsolidated ? undefined : row.ai_classification ?? undefined}
+                >
+                  {isConsolidated
+                    ? "—"
+                    : row.ai_classification_normalized ??
+                      truncate(row.ai_classification ?? "—", 32)}
                 </td>
                 <td className="px-3 py-3 font-mono text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
                   {isConsolidated ? row.commercial_product ?? "—" : row.vendor_name ?? "—"}
@@ -305,9 +316,13 @@ function compareRows(
       case "bureau":
         return r.kind === "consolidated" ? "" : r.bureau_component ?? "";
       case "stage":
-        return r.kind === "consolidated" ? "" : r.stage_of_development ?? "";
+        return r.kind === "consolidated"
+          ? ""
+          : r.stage_normalized ?? r.stage_of_development ?? "";
       case "classification":
-        return r.kind === "consolidated" ? "" : r.ai_classification ?? "";
+        return r.kind === "consolidated"
+          ? ""
+          : r.ai_classification_normalized ?? r.ai_classification ?? "";
       case "vendor":
         return r.kind === "consolidated"
           ? r.commercial_product ?? ""

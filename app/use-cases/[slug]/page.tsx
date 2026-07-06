@@ -336,7 +336,12 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
       >
         <DL>
           <Row
-            label="Classification (reported)"
+            label="Classification (normalized)"
+            value={data.ai_classification_normalized}
+            source="derived"
+          />
+          <Row
+            label="Classification (as filed)"
             value={data.ai_classification}
             multiline
             source="omb"

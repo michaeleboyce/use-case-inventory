@@ -70,6 +70,12 @@ export interface UseCase {
   is_high_impact: string | null;
   justification: string | null;
 
+  // Normalized enum columns (ETL m016/m019) — canonical buckets derived
+  // from the free-text OMB fields above; recomputed every rebuild.
+  stage_normalized: string | null;
+  ai_classification_normalized: string | null;
+  high_impact_normalized: string | null;
+
   // Section 2
   topic_area: string | null;
   ai_classification: string | null;
