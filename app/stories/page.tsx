@@ -98,22 +98,22 @@ export default async function StoriesPage() {
       {/* Stat strip */}
       <div className="mt-12 grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-3 lg:grid-cols-6">
         <div className="bg-card p-4">
-          <StatTile variant="rule" label="Use cases filed" value="2,133 → 3,549" sublabel="2024 → 2025; 2025 moved most COTS to a separate 900-row appendix" />
+          <StatTile variant="rule" label="Use cases filed" value="2,133 → 3,660" sublabel="2024 → 2025; 2025 moved most COTS to a separate 901-row appendix" />
         </div>
         <div className="bg-card p-4">
-          <StatTile variant="rule" label="Tagged GenAI" value="527 → 999" sublabel="IFP tags, both years re-audited" />
+          <StatTile variant="rule" label="Tagged GenAI" value="527 → 1,005" sublabel="IFP tags, both years re-audited" />
         </div>
         <div className="bg-card p-4">
-          <StatTile variant="rule" label="Enterprise-wide GenAI" value="44 → 242" accent="stamp" sublabel="rows; agencies with any went 21 → 24" />
+          <StatTile variant="rule" label="Enterprise-wide GenAI" value="44 → 248" accent="stamp" sublabel="rows; agencies with any went 21 → 24" />
         </div>
         <div className="bg-card p-4">
           <StatTile variant="rule" label="Operated internal services" value="27% → 69%" accent="stamp" sublabel="share of enterprise GenAI run as an in-house service, not a permission slip" />
         </div>
         <div className="bg-card p-4">
-          <StatTile variant="rule" label="Coding filings / enterprise" value="57 / 4" sublabel="individual coding-assistant filings vs. agencies at enterprise breadth" />
+          <StatTile variant="rule" label="Coding filings / enterprise" value="70 / 4" sublabel="individual coding-assistant filings vs. agencies at enterprise breadth" />
         </div>
         <div className="bg-card p-4">
-          <StatTile variant="rule" label="Claude Code mentions" value="1" sublabel="in 3,549 use cases — one Interior line item" href={productUrl("Claude Code")} />
+          <StatTile variant="rule" label="Claude Code mentions" value="1" sublabel="in 3,660 use cases — one Interior line item" href={productUrl("Claude Code")} />
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -717,9 +717,9 @@ export default async function StoriesPage() {
             approved for the actual documents on their desk — while colleagues
             at DOJ, HUD, and SBA, and nearly every developer waiting for a
             coding agent, were still living in 2023. The coding gap is the
-            next frontier: 57 individual coding-assistant filings, only four
+            next frontier: 70 individual coding-assistant filings, only four
             agencies at enterprise breadth, and a single mention of Claude
-            Code in 3,549 use cases — one Interior line item filed alongside
+            Code in 3,660 use cases — one Interior line item filed alongside
             GitHub Copilot.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
