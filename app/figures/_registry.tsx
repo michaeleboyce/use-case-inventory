@@ -21,6 +21,7 @@ import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
 import { PeopleWaffle } from "@/components/charts/people-waffle";
 import { IntegrationDepthChart } from "@/components/charts/integration-depth-chart";
 import { BureauDivergenceChart } from "@/components/charts/bureau-divergence-chart";
+import { AdoptionComparatorsChart } from "@/components/charts/adoption-comparators-chart";
 import { DivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_sections/divergence-timeline";
 import { getBureauDivergence, getIntegrationDepthAnalysis } from "@/lib/db";
 import { ADOPTION_SERIES } from "@/lib/data/adoption-series";
@@ -116,6 +117,15 @@ export const FIGURES: Record<string, FigureDef> = {
       node: <AdoptionCurveChart series={ADOPTION_SERIES} exportMode />,
       caption:
         "Adoption re-based to years since each technology's own mandate (federal series) or introduction (organic series), first 12 years. Populations differ by series: federal HTTPS = live parent .gov domains (IFP-computed from GSA's archived weekly scans); PIV = federal civilian users (OMB FISMA reports); workplace PC = employed US adults (Census CPS); gray context = US households (Our World in Data). Vermilion: the federal LLM-access mandate arrived 2.6 years into the GenAI era. IFP analysis; external baselines verified 2026-07-06.",
+    }),
+  },
+  "adoption-comparators": {
+    title: "What fast adopters actually did",
+    width: 1120,
+    render: () => ({
+      node: <AdoptionComparatorsChart />,
+      caption:
+        "Nine adoption mechanisms across the US federal mandate, four foreign governments (UK, Australia, Singapore), and two enterprise rollouts (Accenture, Moderna), then the actual figures grouped by how they were produced. A dash (–) is absence of evidence — the mechanism was not found in the sources reviewed — NOT evidence of absence; only ✗ is a positive finding that a mechanism is missing. Every comparator cell traces to a source URL, an access date, and a 3-vote adversarial-verification result (see footnotes); the two refuted claims are shown as deliberately excluded. Self-reported figures are survey data, not measured outcomes. US inventory-derived cells are IFP analysis of the 2025 Federal AI Use Case Inventory; external comparator facts verified 2026-07-06/07. Companion: /figures/integration-depth.",
     }),
   },
 };
