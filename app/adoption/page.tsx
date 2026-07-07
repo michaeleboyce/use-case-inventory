@@ -146,6 +146,188 @@ export default async function AdoptionPage() {
 
       <Section
         number="III"
+        title="The lessons"
+        lede="What the baselines say about how federal adoption actually moves."
+        source="mixed"
+        id="lessons"
+      >
+        <div className="max-w-prose space-y-6 text-[0.95rem] leading-[1.6] text-muted-foreground">
+          <div>
+            <p>
+              <strong className="text-foreground">
+                1. The scoreboard is the mechanism.
+              </strong>{" "}
+              The one mandate that compressed — HTTPS — shipped with a public,
+              weekly-updated compliance dashboard: GSA&apos;s Pulse published
+              every agency&apos;s HTTPS status for peers, press, and Congress
+              to see, and a binding directive (BOD 18-01) later locked the
+              gains in. Cloud First and HSPD-12 had no scoreboard and drifted
+              for a decade. The use case inventory — and per-agency LLM-access
+              reporting — could be GenAI&apos;s Pulse.
+            </p>
+            <div className="mt-2 flex flex-col gap-1">
+              <Citation
+                url="https://github.com/18F/pulse"
+                title="18F — Pulse: how the federal .gov domain space is doing at best practices"
+                accessed="2026-07-06"
+              />
+              <Citation
+                url="https://cyber.dhs.gov/bod/18-01/"
+                title="DHS Binding Operational Directive 18-01 — Enhance Email and Web Security (2017)"
+                accessed="2026-07-06"
+              />
+            </div>
+          </div>
+
+          <div>
+            <p>
+              <strong className="text-foreground">
+                2. Access compressed; integration didn&apos;t.
+              </strong>{" "}
+              The inventory&apos;s operating GenAI concentrates in shallow,
+              standalone chat, while the deeply-integrated federal AI estate
+              remains overwhelmingly pre-GenAI classical ML — and every
+              coding-agent filing in the 2025 inventory is still
+              pre-deployment. The decade got compressed for access, not for
+              integration. See the{" "}
+              <a
+                href="/figures/integration-depth"
+                className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+              >
+                integration-depth analysis
+              </a>{" "}
+              (IFP-adjudicated labels, 2026-07 round).
+            </p>
+          </div>
+
+          <div>
+            <p>
+              <strong className="text-foreground">
+                3. Enterprise access is decided below the department.
+              </strong>{" "}
+              Within-department divergence is the norm, not the exception:
+              every scored HHS operating division independently clears the
+              enterprise-LLM bar, DOJ&apos;s bureaus uniformly do not, and DOE
+              is bimodal across its labs. A mandate addressed to
+              &ldquo;agencies&rdquo; is actually implemented by component
+              CIOs — certification and reporting should bind at that level.
+              See the{" "}
+              <a
+                href="/figures/bureau-divergence"
+                className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+              >
+                bureau-divergence analysis
+              </a>
+              .
+            </p>
+          </div>
+
+          <div>
+            <p>
+              <strong className="text-foreground">
+                4. Crisis compresses what mandates alone don&apos;t.
+              </strong>{" "}
+              PIV login use sat at 1.24% six years after HSPD-12 and roughly
+              20% at nine — then jumped from 42% to 72% in a single quarter
+              during the 2015 Cybersecurity Sprint, after the OPM breach. The
+              federal government historically finishes its own mandates only
+              under catastrophe; locking in LLM-access certification now is
+              how the GenAI mandate avoids needing its own OPM moment.
+            </p>
+            <div className="mt-2 flex flex-col gap-1">
+              <Citation
+                url="https://obamawhitehouse.archives.gov/blog/2015/07/31/strengthening-enhancing-federal-cybersecurity-21st-century"
+                title="White House — Strengthening & Enhancing Federal Cybersecurity for the 21st Century (Cyber Sprint results, 2015)"
+                accessed="2026-07-06"
+              />
+              <Citation
+                url="https://www.route-fifty.com/cybersecurity/2014/05/hspd-12-at-10-years-still-a-long-way-to-go/297300/"
+                title="Route Fifty — HSPD-12 at 10 Years: Still a Long Way to Go (2014)"
+                accessed="2026-07-06"
+              />
+            </div>
+          </div>
+
+          <div>
+            <p>
+              <strong className="text-foreground">
+                5. GenAI adoption routed around the accountability ledger.
+              </strong>{" "}
+              ChatGPT Enterprise (authorized 2026-01-09), Gemini for
+              Government (2026-01-21), and Perplexity Enterprise (2026-02-01)
+              each show a FedRAMP authorization with zero recorded agency
+              reuses as of the 2026-07-03 marketplace check — adoption flowed
+              through OneGov agreements and GSA&apos;s USAi platform instead
+              of the reuse ledger. The compression happened despite the
+              procurement stack, not through it. See the{" "}
+              <a
+                href="/fedramp"
+                className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
+              >
+                FedRAMP coverage section
+              </a>
+              .
+            </p>
+            <div className="mt-2 flex flex-col gap-1">
+              <Citation
+                url="https://marketplace.fedramp.gov/"
+                title="FedRAMP Marketplace (authorization & reuse records)"
+                date="2026-07-03"
+                accessed="2026-07-03"
+              />
+            </div>
+          </div>
+
+          <div>
+            <p>
+              <strong className="text-foreground">
+                6. When it moves, the federal enterprise can outrun industry.
+              </strong>{" "}
+              After the 2015 sprint, 81% of federal civilian users
+              authenticated with strong credentials — at a time when only 28%
+              of Americans used two-factor authentication anywhere (2017),
+              a figure that didn&apos;t reach 79% until 2021. The GenAI moment
+              is an opportunity to lead adoption, not merely catch up.
+            </p>
+            <div className="mt-2 flex flex-col gap-1">
+              <Citation
+                url="https://duo.com/blog/the-2019-state-of-the-auth-report-has-2fa-hit-mainstream-yet"
+                title="Duo Security — State of the Auth 2019 (28% 2FA usage in 2017)"
+                accessed="2026-07-06"
+              />
+              <Citation
+                url="https://duo.com/blog/the-2021-state-of-the-auth-report-2fa-climbs-password-managers-biometrics-trend"
+                title="Duo Security — State of the Auth 2021 (79% 2FA usage)"
+                accessed="2026-07-06"
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <p>
+              <strong className="text-foreground">
+                The clock on the instrument itself:
+              </strong>{" "}
+              the statutory mandate behind these inventories — Advancing
+              American AI Act §7225 — sunsets on{" "}
+              <strong className="text-foreground">December 23, 2027</strong>.
+              After that, whether the federal government keeps measuring its
+              own AI adoption is purely OMB&apos;s discretion. Every lesson
+              above depends on the measurement continuing.
+            </p>
+            <div className="mt-2">
+              <Citation
+                url="https://www.congress.gov/bill/117th-congress/house-bill/7776"
+                title="Pub. L. 117-263, Div. G, Title LXXII, Subtitle B — Advancing American AI Act (§7225 use case inventories)"
+                accessed="2026-07-06"
+              />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        number="IV"
         title="The baselines"
         lede="Every series, its population, metric, driver, and source."
         source="mixed"
@@ -155,7 +337,7 @@ export default async function AdoptionPage() {
       </Section>
 
       <Section
-        number="IV"
+        number="V"
         title="Method & sources"
         lede="How the curves were built, and what they can't say."
         source="derived"
