@@ -6,6 +6,7 @@
 // in ~2.6 years. Every plotted point is exportable via
 // /api/adoption-series.csv and every external series carries a citation.
 
+import Link from "next/link";
 import { Citation } from "@/components/citation";
 import { AdoptionCurveChart } from "@/components/charts/adoption-curve-chart";
 import { Figure, Section } from "@/components/editorial";
@@ -190,12 +191,12 @@ export default async function AdoptionPage() {
               coding-agent filing in the 2025 inventory is still
               pre-deployment. The decade got compressed for access, not for
               integration. See the{" "}
-              <a
+              <Link
                 href="/figures/integration-depth"
                 className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
               >
                 integration-depth analysis
-              </a>{" "}
+              </Link>{" "}
               (IFP-adjudicated labels, 2026-07 round).
             </p>
           </div>
@@ -212,12 +213,12 @@ export default async function AdoptionPage() {
               &ldquo;agencies&rdquo; is actually implemented by component
               CIOs — certification and reporting should bind at that level.
               See the{" "}
-              <a
+              <Link
                 href="/figures/bureau-divergence"
                 className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
               >
                 bureau-divergence analysis
-              </a>
+              </Link>
               .
             </p>
           </div>
@@ -260,12 +261,12 @@ export default async function AdoptionPage() {
               through OneGov agreements and GSA&apos;s USAi platform instead
               of the reuse ledger. The compression happened despite the
               procurement stack, not through it. See the{" "}
-              <a
+              <Link
                 href="/fedramp"
                 className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
               >
                 FedRAMP coverage section
-              </a>
+              </Link>
               .
             </p>
             <div className="mt-2 flex flex-col gap-1">
