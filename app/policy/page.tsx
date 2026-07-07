@@ -52,17 +52,22 @@ export default async function PolicyPage({
         lede="Agency-issued AI policy, counted."
         source="derived"
       >
-        <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-5">
           <StatTile
             label="Pages of policy"
             value={formatNumber(vm.stats.total_pages)}
-            sublabel="agency-issued only"
+            sublabel={`agency-issued · all since ${vm.stats.earliest_year}`}
             accent="stamp"
           />
           <StatTile
             label="Documents"
             value={vm.stats.total_documents}
-            sublabel="agency-issued only"
+            sublabel={`${vm.stats.in_force_documents} currently in force`}
+          />
+          <StatTile
+            label="Publishing agencies"
+            value={vm.stats.publishing_agencies}
+            sublabel="with ≥1 located document"
           />
           <StatTile
             label="M-25-21 strategies"
@@ -111,6 +116,17 @@ export default async function PolicyPage({
         source="derived"
         id="documents"
       >
+        <div className="mb-4 flex items-center justify-end gap-3">
+          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            Full tracker, incl. governing docs
+          </span>
+          <a
+            href="/api/policy-documents.csv"
+            className="inline-flex items-center border border-border bg-background px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.06em] text-foreground hover:border-foreground"
+          >
+            Download CSV ↓
+          </a>
+        </div>
         <DocumentDirectory
           documents={vm.documents}
           initialAgency={initialAgency}

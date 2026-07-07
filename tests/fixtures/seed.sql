@@ -116,6 +116,11 @@ INSERT INTO consolidated_use_cases (id, agency_id, source_file, slug, ai_use_cas
   (3, 2, 'omb-consolidated-2025.csv', 'dhs-genai-consolidated',             'GenAI productivity tools', 'Microsoft Copilot', 'DHS staff use Copilot for drafting', 1),
   (4, 3, 'omb-consolidated-2025.csv', 'gsa-genai-consolidated',             'GenAI productivity tools', 'ChatGPT',           'GSA staff use ChatGPT Enterprise', 1);
 
+-- is_enterprise_wide mirrors deployment_scope='enterprise' for the GenAI rows
+-- (exercises getGenAiAdoptionSeries' 2025 enterprise-agency count: agencies 1 & 3).
+UPDATE use_case_tags SET is_enterprise_wide = 1
+ WHERE use_case_id IN (1, 4, 10) AND deployment_scope = 'enterprise';
+
 -- Tags for consolidated rows (use_case_id is null; consolidated_use_case_id set)
 INSERT INTO use_case_tags (consolidated_use_case_id, entry_type, is_general_llm_access, is_coding_tool, is_generative_ai, deployment_scope, ai_sophistication) VALUES
   (1, 'generic_use_pattern', 1, 0, 1, 'enterprise', 'frontier_llm'),

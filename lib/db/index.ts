@@ -247,6 +247,7 @@ export {
   getSilentlyDroppedGenAiRows,
   getTags2024Headlines,
 } from "./year-comparison";
+export { getGenAiAdoptionSeries } from "./adoption";
 
 // Most query implementations live under ./db/<domain>/ or ./db/<domain>.ts and
 // are re-exported above. STAGE_BUCKET_SQL, DB_PATH, getDb(), and rawDb() live

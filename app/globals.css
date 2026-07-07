@@ -113,6 +113,11 @@
   --chart-3: oklch(0.52 0.175 22);
   --chart-4: oklch(0.55 0.1 245);
   --chart-5: oklch(0.62 0.14 60);
+  /* /adoption comparison series — CVD-validated (dataviz six checks) per mode */
+  --chart-adoption-1: #2677b2; /* blue — federal HTTPS */
+  --chart-adoption-2: #357430; /* green — PIV strong auth */
+  --chart-adoption-3: #c26e12; /* amber — workplace PC */
+  --chart-adoption-context: oklch(0.62 0.02 75); /* recessive household context */
 
   --radius: 0;
 
@@ -172,6 +177,11 @@
   --chart-3: oklch(0.72 0.18 25);
   --chart-4: oklch(0.7 0.14 245);
   --chart-5: oklch(0.82 0.18 92);
+  /* /adoption comparison series — dark-mode steps, separately validated */
+  --chart-adoption-1: #348dcf;
+  --chart-adoption-2: #439458;
+  --chart-adoption-3: #c17f21;
+  --chart-adoption-context: oklch(0.6 0.02 255);
 
   --sidebar: oklch(0.18 0.028 255);
   --sidebar-foreground: var(--ink);

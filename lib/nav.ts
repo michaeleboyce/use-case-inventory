@@ -104,6 +104,7 @@ export const NAV_SECTIONS: NavSection[] = [
       "Adoption, market share, growth and year-over-year change.",
     children: [
       { href: "/analytics", label: "Inventory analytics" },
+      { href: "/adoption", label: "Adoption compared" },
       { href: "/compare-years", label: "Year over year" },
       { href: "/compare-years/silently-dropped", label: "Silently dropped", indent: true },
       { href: "/fedramp/marketplace/analytics", label: "Marketplace analytics (FedRAMP)" },

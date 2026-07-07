@@ -491,6 +491,12 @@ export default async function AnalyticsPage() {
             >
               Year-over-year deep dive
             </MonoChip>
+            <MonoChip
+              href="/adoption"
+              title="Federal GenAI vs prior technology rollouts — HTTPS, PIV, cloud, workplace PCs"
+            >
+              Adoption compared
+            </MonoChip>
           </div>
 
           <div id="scatter" className="scroll-mt-36">

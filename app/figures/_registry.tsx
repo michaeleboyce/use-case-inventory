@@ -16,12 +16,14 @@
 import type { ReactNode } from "react";
 import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
 import { buildDivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_view-model";
+import { AdoptionCurveChart } from "@/components/charts/adoption-curve-chart";
 import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
 import { PeopleWaffle } from "@/components/charts/people-waffle";
 import { IntegrationDepthChart } from "@/components/charts/integration-depth-chart";
 import { BureauDivergenceChart } from "@/components/charts/bureau-divergence-chart";
 import { DivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_sections/divergence-timeline";
 import { getBureauDivergence, getIntegrationDepthAnalysis } from "@/lib/db";
+import { ADOPTION_SERIES } from "@/lib/data/adoption-series";
 import { formatNumber } from "@/lib/formatting";
 
 const SNAPSHOT = "2026-06-12";
@@ -106,5 +108,14 @@ export const FIGURES: Record<string, FigureDef> = {
         caption: `Within-department divergence in enterprise-LLM adoption: each square is one scored bureau (org_ai_maturity rows at sub_agency / office level, rolled up one hop to their parent), filled when that bureau independently clears the enterprise-LLM bar. Parents with ≥3 scored bureaus, sorted by enterprise-LLM share. HHS is a federation where every scored opdiv independently qualifies; DOJ's bureaus uniformly do not; DOE is bimodal across its labs. Scored-bureau counts are FLOORS — a bureau under 5 filed use cases isn't scored, so absence from a strip is not evidence of absence. IFP analysis of the 2025 Federal AI Use Case Inventory.`,
       };
     },
+  },
+  "adoption-curves": {
+    title: "Technology adoption: years since mandate or introduction",
+    width: 1080,
+    render: () => ({
+      node: <AdoptionCurveChart series={ADOPTION_SERIES} exportMode />,
+      caption:
+        "Adoption re-based to years since each technology's own mandate (federal series) or introduction (organic series), first 12 years. Populations differ by series: federal HTTPS = live parent .gov domains (IFP-computed from GSA's archived weekly scans); PIV = federal civilian users (OMB FISMA reports); workplace PC = employed US adults (Census CPS); gray context = US households (Our World in Data). Vermilion: the federal LLM-access mandate arrived 2.6 years into the GenAI era. IFP analysis; external baselines verified 2026-07-06.",
+    }),
   },
 };

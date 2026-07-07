@@ -41,10 +41,21 @@ export function getPolicyStats(): PolicyStats {
   // Pages and document counts deliberately exclude White House / OMB rows —
   // governing documents are the federal foundation, not agency policy.
   const agg = db
-    .prepare<[], { total_pages: number; total_documents: number }>(
+    .prepare<[], {
+      total_pages: number;
+      total_documents: number;
+      in_force_documents: number;
+      in_force_pages: number;
+      publishing_agencies: number;
+      earliest_year: number;
+    }>(
       `SELECT
          COALESCE(SUM(pages), 0) AS total_pages,
-         COUNT(*) AS total_documents
+         COUNT(*) AS total_documents,
+         SUM(CASE WHEN superseded = 0 THEN 1 ELSE 0 END) AS in_force_documents,
+         COALESCE(SUM(CASE WHEN superseded = 0 THEN pages ELSE 0 END), 0) AS in_force_pages,
+         COUNT(DISTINCT agency_abbr) AS publishing_agencies,
+         COALESCE(MIN(publication_year), 0) AS earliest_year
        FROM agency_ai_policy_documents
        WHERE agency_type != 'White House / OMB'`,
     )
@@ -72,6 +83,10 @@ export function getPolicyStats(): PolicyStats {
   return {
     total_pages: agg.total_pages,
     total_documents: agg.total_documents,
+    in_force_documents: agg.in_force_documents,
+    in_force_pages: agg.in_force_pages,
+    publishing_agencies: agg.publishing_agencies,
+    earliest_year: agg.earliest_year,
     total_agencies: compliance.total_agencies,
     strategies_published: compliance.strategies_published,
     plans_published: compliance.plans_published,

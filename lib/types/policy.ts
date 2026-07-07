@@ -63,6 +63,10 @@ export interface AgencyCompliance {
 export interface PolicyStats {
   total_pages: number;        // agency docs only — excludes White House / OMB
   total_documents: number;    // agency docs only
+  in_force_documents: number; // agency docs with superseded = 0
+  in_force_pages: number;     // pages across in-force agency docs
+  publishing_agencies: number; // distinct agencies with ≥1 located doc
+  earliest_year: number;      // MIN(publication_year) across agency docs
   total_agencies: number;     // distinct agencies searched (45)
   strategies_published: number; // agencies with a M-25-21 AI Strategy doc
   plans_published: number;      // agencies with a M-25-21 Compliance Plan doc

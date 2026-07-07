@@ -40,6 +40,17 @@ describe("lib/db/policy", () => {
       const s = getPolicyStats();
       expect(s.last_refreshed).toBe("2026-05-21");
     });
+    it("counts in-force (non-superseded) agency docs and pages", () => {
+      const s = getPolicyStats();
+      // Seed: DOJ 2024 plan (11pp) is superseded → 4 docs, 62-11 pages.
+      expect(s.in_force_documents).toBe(4);
+      expect(s.in_force_pages).toBe(51);
+    });
+    it("counts distinct publishing agencies and earliest year", () => {
+      const s = getPolicyStats();
+      expect(s.publishing_agencies).toBe(3); // DHS, DOJ, NSF
+      expect(s.earliest_year).toBe(2024); // DOJ M-24-10 plan
+    });
   });
 
   describe("getAgencyCompliance", () => {
