@@ -67,6 +67,8 @@ export function needsTagJoin(filters: UseCaseFilterInput): boolean {
     (filters.deploymentScopes != null && filters.deploymentScopes.length > 0) ||
     (filters.aiSophistications != null &&
       filters.aiSophistications.length > 0) ||
+    (filters.integrationDepths != null &&
+      filters.integrationDepths.length > 0) ||
     (filters.architectureTypes != null &&
       filters.architectureTypes.length > 0) ||
     (filters.useTypes != null && filters.useTypes.length > 0) ||
@@ -128,6 +130,24 @@ export function buildTagPredicates(
       `tag.ai_sophistication IN (${filters.aiSophistications.map(() => "?").join(",")})`,
     );
     tagParams.push(...filters.aiSophistications);
+  }
+  // integration_depth (IFP-adjudicated 2026-07). The `not_assessed` sentinel
+  // is NOT a DB enum value — it maps to `integration_depth IS NULL` (entries
+  // outside the labeled pilot+deployed population). Because the arm's tag join
+  // is a LEFT JOIN, the IS NULL branch also catches rows with no tag row at all
+  // (e.g. consolidated entries), which is the intended "not assessed" set.
+  if (filters.integrationDepths && filters.integrationDepths.length > 0) {
+    const labeled = filters.integrationDepths.filter((v) => v !== "not_assessed");
+    const wantsNotAssessed = filters.integrationDepths.includes("not_assessed");
+    const clauses: string[] = [];
+    if (labeled.length > 0) {
+      clauses.push(
+        `tag.integration_depth IN (${labeled.map(() => "?").join(",")})`,
+      );
+      tagParams.push(...labeled);
+    }
+    if (wantsNotAssessed) clauses.push("tag.integration_depth IS NULL");
+    if (clauses.length > 0) tagWhere.push(`(${clauses.join(" OR ")})`);
   }
   if (filters.architectureTypes && filters.architectureTypes.length > 0) {
     tagWhere.push(

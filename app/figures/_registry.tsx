@@ -18,7 +18,10 @@ import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
 import { buildDivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_view-model";
 import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
 import { PeopleWaffle } from "@/components/charts/people-waffle";
+import { IntegrationDepthChart } from "@/components/charts/integration-depth-chart";
+import { BureauDivergenceChart } from "@/components/charts/bureau-divergence-chart";
 import { DivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_sections/divergence-timeline";
+import { getBureauDivergence, getIntegrationDepthAnalysis } from "@/lib/db";
 import { formatNumber } from "@/lib/formatting";
 
 const SNAPSHOT = "2026-06-12";
@@ -73,6 +76,34 @@ export const FIGURES: Record<string, FigureDef> = {
       return {
         node: <DivergenceTimeline data={data} exportMode />,
         caption: `Cumulative agencies whose first agency ATO covers a package with a core-AI service in scope (ink, step) vs. agencies with dated, web-corroborated evidence of a GenAI staff rollout (red marks — sparse by construction). ${ATTRIBUTION}`,
+      };
+    },
+  },
+  "integration-depth": {
+    title: "How coupled is the government's operating AI?",
+    width: 960,
+    render: () => {
+      const data = getIntegrationDepthAnalysis();
+      if (data.totalPD === 0) return null;
+      return {
+        node: <IntegrationDepthChart data={data} />,
+        caption: `Depth of AI integration across the labeled pilot + deployed population (${formatNumber(
+          data.totalPD,
+        )} individual use cases). Each bar splits generative-AI (stamp) from classical / non-GenAI (muted); the right column is that depth's GenAI share. Operating GenAI concentrates in shallow, standalone chat (${formatNumber(
+          data.totalGenAI,
+        )} GenAI rows total) while the deeply-integrated estate is overwhelmingly pre-GenAI classical ML. The coding panel splits each coding-tool taxonomy by live (pilot/deployed) vs not-yet-live — all ${data.codingAgent.count} coding-agent filings are pre-deployment. Integration-depth and coding-tool labels are IFP-adjudicated (2026-07 labeling round), not OMB data. IFP analysis of the 2025 Federal AI Use Case Inventory.`,
+      };
+    },
+  },
+  "bureau-divergence": {
+    title: "Enterprise access is decided below the department",
+    width: 880,
+    render: () => {
+      const rows = getBureauDivergence();
+      if (rows.length === 0) return null;
+      return {
+        node: <BureauDivergenceChart rows={rows} />,
+        caption: `Within-department divergence in enterprise-LLM adoption: each square is one scored bureau (org_ai_maturity rows at sub_agency / office level, rolled up one hop to their parent), filled when that bureau independently clears the enterprise-LLM bar. Parents with ≥3 scored bureaus, sorted by enterprise-LLM share. HHS is a federation where every scored opdiv independently qualifies; DOJ's bureaus uniformly do not; DOE is bimodal across its labs. Scored-bureau counts are FLOORS — a bureau under 5 filed use cases isn't scored, so absence from a strip is not evidence of absence. IFP analysis of the 2025 Federal AI Use Case Inventory.`,
       };
     },
   },

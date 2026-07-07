@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/filter-primitives";
 import { EntryKindToggle } from "./controls";
 import { labelFor, parseCsv, toggleInCsv } from "./filter-utils";
+import { INTEGRATION_DEPTH_ORDER } from "@/lib/derived-display";
 
 export interface FilterOption {
   value: string;
@@ -54,6 +55,7 @@ export interface UseCaseFiltersProps {
     tagEntryTypes: string[];
     tagDeploymentScopes: string[];
     tagAISophistications: string[];
+    tagIntegrationDepths: string[];
     tagArchitectureTypes: string[];
     tagUseTypes: string[];
     tagHighImpactDesignations: string[];
@@ -166,6 +168,9 @@ export function UseCaseFilters({
   const selectedContractingUsages = parseCsv(currentParams.get("contracting"));
   const selectedLineageStatuses = parseCsv(currentParams.get("lineage"));
   const selectedScopes = parseCsv(currentParams.get("scope"));
+  const selectedIntegrationDepths = parseCsv(
+    currentParams.get("integration_depth"),
+  );
   const selectedArchitectures = parseCsv(currentParams.get("architecture"));
   const selectedUseTypes = parseCsv(currentParams.get("use_type"));
   const selectedHighImpact = parseCsv(currentParams.get("high_impact"));
@@ -229,6 +234,18 @@ export function UseCaseFilters({
     if (!q) return facets.bureaus;
     return facets.bureaus.filter((b) => b.toLowerCase().includes(q));
   }, [facets.bureaus, bureauQuery]);
+
+  // Order the DB-distinct integration-depth values shallow → deep, then append
+  // the "Not assessed" (NULL) sentinel so the facet reads as a progression.
+  const orderedIntegrationDepths = useMemo(() => {
+    const present = new Set(facets.tagIntegrationDepths);
+    const ordered = INTEGRATION_DEPTH_ORDER.filter((v) => present.has(v));
+    // Any labeled value not in the canonical order (defensive) sorts after.
+    for (const v of facets.tagIntegrationDepths) {
+      if (!ordered.includes(v)) ordered.push(v);
+    }
+    return [...ordered, "not_assessed"];
+  }, [facets.tagIntegrationDepths]);
 
   const submitVendor = useCallback(
     (e: React.FormEvent) => {
@@ -448,6 +465,33 @@ export function UseCaseFilters({
             label={labelFor(v)}
           />
         ))}
+      </FilterGroup>
+
+      {/* Integration depth — IFP-adjudicated 2026-07 labeling round. How deeply
+          the AI is wired into the agency's work. "Not assessed" (NULL) covers
+          every entry outside the labeled pilot+deployed population — the bulk
+          of the inventory — so it is expected to be by far the largest bucket. */}
+      <FilterGroup
+        title={
+          selectedIntegrationDepths.length > 0
+            ? `Integration depth · ${selectedIntegrationDepths.length} selected`
+            : "Integration depth"
+        }
+        defaultOpen={selectedIntegrationDepths.length > 0}
+        source="derived"
+      >
+        {orderedIntegrationDepths.map((v) => (
+          <CheckRow
+            key={v}
+            checked={selectedIntegrationDepths.includes(v)}
+            onToggle={() => toggleMulti("integration_depth", v)}
+            label={labelFor(v)}
+          />
+        ))}
+        <p className="pt-2 font-mono text-[10px] leading-relaxed tracking-[0.06em] text-muted-foreground">
+          IFP-adjudicated 2026-07. “Not assessed” = outside the labeled
+          pilot/deployed population (distinct from “Unclear”).
+        </p>
       </FilterGroup>
 
       {/* Product */}

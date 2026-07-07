@@ -10,6 +10,7 @@ import { PageSubnav } from "@/components/page-subnav";
 import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
 import { buildProductsViewModel } from "./_view-model";
+import { FrontierPenetrationTable } from "./_sections/frontier-penetration-table";
 
 export const metadata = {
   title: "Products — Federal AI Use Case Inventory 2025",
@@ -24,6 +25,7 @@ export default async function ProductsPage() {
     parentNames,
     vendorShare,
     categoryDistribution,
+    frontierPenetration,
     totalAgencyMentions,
     frontierCount,
   } = await buildProductsViewModel();
@@ -35,6 +37,7 @@ export default async function ProductsPage() {
           { id: "overview", label: "Overview" },
           { id: "vendors", label: "Vendors" },
           { id: "categories", label: "Categories" },
+          { id: "penetration", label: "Penetration" },
           { id: "catalogue", label: "Catalogue" },
         ]}
       />
@@ -224,11 +227,45 @@ export default async function ProductsPage() {
       </div>
 
       {/* ------------------------------------------------------------ */}
-      {/* § III — CATALOGUE                                            */}
+      {/* § III — FRONTIER PENETRATION                                 */}
+      {/* ------------------------------------------------------------ */}
+      <div id="penetration" className="scroll-mt-36">
+      <Section
+        number="III"
+        title="Frontier reach"
+        source="derived"
+        lede="How far the marquee frontier LLM products actually spread across agencies — and how much of that footprint is live versus still in pilot or pre-deployment."
+      >
+        <Figure
+          eyebrow="Fig. 3 · Frontier-product penetration"
+          caption={
+            <>
+              An explicit allow-list of ten frontier products (not{" "}
+              <span className="text-foreground">products.is_frontier_llm</span>).
+              Agencies and attributions count both individual and consolidated
+              entries via{" "}
+              <span className="text-foreground">entry_product_edges</span>; the
+              stage mix reads{" "}
+              <span className="text-foreground">use_cases.stage_normalized</span>{" "}
+              over individual entries only — consolidated entries carry no stage,
+              so they are excluded from the mix. These are{" "}
+              <span className="text-foreground">floors, not totals</span>: only
+              about 35% of use cases name a linkable product, so unnamed
+              deployments are invisible here.
+            </>
+          }
+        >
+          <FrontierPenetrationTable rows={frontierPenetration} />
+        </Figure>
+      </Section>
+      </div>
+
+      {/* ------------------------------------------------------------ */}
+      {/* § IV — CATALOGUE                                             */}
       {/* ------------------------------------------------------------ */}
       <div id="catalogue" className="scroll-mt-36">
       <Section
-        number="III"
+        number="IV"
         title="The catalogue"
         lede="Every canonical product, searchable by name, vendor, type, and capability."
       >

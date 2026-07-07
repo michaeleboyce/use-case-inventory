@@ -9,6 +9,7 @@
 import {
   getAllProducts,
   getCategoryDistribution,
+  getFrontierPenetration,
   getProductCatalogStats,
   getProductNamesById,
   getVendorMarketShare,
@@ -19,6 +20,7 @@ type CatalogStats = ReturnType<typeof getProductCatalogStats>;
 type ParentNames = ReturnType<typeof getProductNamesById>;
 type VendorShare = ReturnType<typeof getVendorMarketShare>;
 type CategoryDistribution = ReturnType<typeof getCategoryDistribution>;
+type FrontierPenetration = ReturnType<typeof getFrontierPenetration>;
 
 export interface ProductsViewModel {
   products: AllProducts;
@@ -26,6 +28,7 @@ export interface ProductsViewModel {
   parentNames: ParentNames;
   vendorShare: VendorShare;
   categoryDistribution: CategoryDistribution;
+  frontierPenetration: FrontierPenetration;
   totalAgencyMentions: number;
   frontierCount: number;
 }
@@ -36,6 +39,7 @@ export async function buildProductsViewModel(): Promise<ProductsViewModel> {
   const parentNames = getProductNamesById();
   const vendorShare = getVendorMarketShare();
   const categoryDistribution = getCategoryDistribution();
+  const frontierPenetration = getFrontierPenetration();
 
   const totalAgencyMentions = products.reduce(
     (acc, p) => acc + (p.agency_count ?? 0),
@@ -49,6 +53,7 @@ export async function buildProductsViewModel(): Promise<ProductsViewModel> {
     parentNames,
     vendorShare,
     categoryDistribution,
+    frontierPenetration,
     totalAgencyMentions,
     frontierCount,
   };

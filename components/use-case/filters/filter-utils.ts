@@ -32,6 +32,13 @@ const LABELS: Record<string, string> = {
   custom_trained: "Custom trained",
   agentic_workflow: "Agentic workflow",
 
+  // integration_depth (IFP-adjudicated 2026-07). `not_assessed` is the
+  // filter-only sentinel for NULL, not a DB value.
+  standalone_chat: "Standalone chat",
+  workflow_embedded: "Workflow-embedded",
+  system_integrated: "System-integrated",
+  not_assessed: "Not assessed",
+
   mission_critical: "Mission-critical",
   administrative: "Administrative",
   it_operations: "IT operations",

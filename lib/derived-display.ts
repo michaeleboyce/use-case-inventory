@@ -23,6 +23,48 @@ import type { UseCaseTag } from "./types";
  *  as a hard fact. Centralized so all surfaces phrase it identically. */
 export const NOT_ASSERTED = "— not asserted —";
 
+/** Human labels for the IFP-adjudicated (2026-07 round) `integration_depth`
+ *  tag. Ordered shallow → deep in `INTEGRATION_DEPTH_ORDER`. */
+export const INTEGRATION_DEPTH_LABELS: Record<string, string> = {
+  standalone_chat: "Standalone chat",
+  workflow_embedded: "Workflow-embedded",
+  system_integrated: "System-integrated",
+  agentic_workflow: "Agentic workflow",
+  unclear: "Unclear",
+};
+
+/** Shallow → deep ordering for `integration_depth`; `unclear` sorts last. */
+export const INTEGRATION_DEPTH_ORDER = [
+  "standalone_chat",
+  "workflow_embedded",
+  "system_integrated",
+  "agentic_workflow",
+  "unclear",
+];
+
+/** Human labels for the IFP-adjudicated (2026-07 round) `coding_tool_type`
+ *  taxonomy. */
+export const CODING_TOOL_TYPE_LABELS: Record<string, string> = {
+  chat_assistant: "Chat assistant",
+  ide_autocomplete: "IDE autocomplete",
+  coding_agent: "Coding agent",
+  code_analysis_tool: "Code-analysis tool",
+  not_coding: "Not coding",
+  unclear: "Unclear",
+};
+
+/** Label an `integration_depth` value; falls back to the raw value. */
+export function integrationDepthLabel(v: string | null | undefined): string | null {
+  if (!v) return null;
+  return INTEGRATION_DEPTH_LABELS[v] ?? v.replace(/_/g, " ");
+}
+
+/** Label a `coding_tool_type` value; falls back to the raw value. */
+export function codingToolTypeLabel(v: string | null | undefined): string | null {
+  if (!v) return null;
+  return CODING_TOOL_TYPE_LABELS[v] ?? v.replace(/_/g, " ");
+}
+
 /** Three-way state for the GenAI badge on a row. Returns "not_asserted" when
  *  the tag says is_generative_ai = 0 but the sophistication implies the entry
  *  is plainly LLM-driven (general LLM access, agentic, coding assistant) — the

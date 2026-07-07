@@ -37,7 +37,11 @@ import {
   ExternalEvidenceList,
 } from "@/components/external-evidence";
 import { formatBoolFlag } from "@/lib/formatting";
-import { genaiDisplayText } from "@/lib/derived-display";
+import {
+  codingToolTypeLabel,
+  genaiDisplayText,
+  integrationDepthLabel,
+} from "@/lib/derived-display";
 import { tagFilterUrl } from "@/lib/urls";
 import {
   Code2,
@@ -371,6 +375,26 @@ function IndividualDetail({ data }: { data: UseCaseWithTags }) {
             value={boolText(tags?.is_frontier_model)}
             source="derived"
           />
+          {tags?.integration_depth && (
+            <Row
+              label="Integration depth"
+              value={
+                <AdjudicatedValue
+                  text={integrationDepthLabel(tags.integration_depth)}
+                />
+              }
+            />
+          )}
+          {tags?.coding_tool_type && (
+            <Row
+              label="Coding tool type"
+              value={
+                <AdjudicatedValue
+                  text={codingToolTypeLabel(tags.coding_tool_type)}
+                />
+              }
+            />
+          )}
         </DL>
       </Section>
 
@@ -955,6 +979,27 @@ function TextBlock({
 function boolText(v: number | null | undefined): string | null {
   if (v == null) return null;
   return formatBoolFlag(v);
+}
+
+/** Renders an IFP-adjudicated (2026-07 labeling round) tag value with an
+ *  explicit provenance badge. Distinct from both the OMB source marker and the
+ *  generic "IFP" derived marker: these two fields came from a dated, adjudicated
+ *  labeling pass over the pilot+deployed population, so they earn their own
+ *  stamp rather than the section-level "derived" tag. */
+function AdjudicatedValue({ text }: { text: string | null }) {
+  if (!text) return <span className="text-muted-foreground">—</span>;
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-2">
+      <span>{text}</span>
+      <MonoChip
+        tone="stamp"
+        size="xs"
+        title="Labeled by IFP in an adjudicated 2026-07 labeling round over the pilot + deployed population — not an OMB-filed field."
+      >
+        IFP-labeled · adj. 2026-07
+      </MonoChip>
+    </span>
+  );
 }
 
 function externalLink(url: string | null | undefined): React.ReactNode {

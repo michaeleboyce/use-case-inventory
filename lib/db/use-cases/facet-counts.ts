@@ -17,6 +17,7 @@ export function getUseCaseFacets(): {
   tagEntryTypes: string[];
   tagDeploymentScopes: string[];
   tagAISophistications: string[];
+  tagIntegrationDepths: string[];
   tagArchitectureTypes: string[];
   tagUseTypes: string[];
   tagHighImpactDesignations: string[];
@@ -152,6 +153,10 @@ export function getUseCaseFacets(): {
     tagEntryTypes: distinct("use_case_tags", "entry_type"),
     tagDeploymentScopes: distinct("use_case_tags", "deployment_scope"),
     tagAISophistications: distinct("use_case_tags", "ai_sophistication"),
+    // IFP-adjudicated 2026-07 integration_depth. Distinct labeled values only;
+    // the "Not assessed" (NULL) option is appended in the filter UI since NULL
+    // is not returned by the DISTINCT scan.
+    tagIntegrationDepths: distinct("use_case_tags", "integration_depth"),
     tagArchitectureTypes: distinct("use_case_tags", "architecture_type"),
     tagUseTypes: distinct("use_case_tags", "use_type"),
     tagHighImpactDesignations: distinct("use_case_tags", "high_impact_designation"),

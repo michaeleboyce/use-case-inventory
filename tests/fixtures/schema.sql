@@ -180,6 +180,14 @@ CREATE TABLE use_case_tags (
 
     created_at TEXT DEFAULT (datetime('now')),
 
+    -- IFP-adjudicated 2026-07 labeling rounds (appended via ALTER TABLE in the
+    -- ETL). integration_depth: standalone_chat | workflow_embedded |
+    -- system_integrated | agentic_workflow | unclear (NULL = not assessed).
+    -- coding_tool_type: chat_assistant | ide_autocomplete | coding_agent |
+    -- code_analysis_tool | not_coding | unclear (NULL = not a coding row).
+    integration_depth TEXT,
+    coding_tool_type TEXT,
+
     -- Must reference either use_cases or consolidated_use_cases, not both
     CHECK ((use_case_id IS NOT NULL AND consolidated_use_case_id IS NULL) OR
            (use_case_id IS NULL AND consolidated_use_case_id IS NOT NULL))

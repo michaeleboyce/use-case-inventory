@@ -62,6 +62,9 @@ export {
   getChildProducts,
   getProductsByVendor,
   getProductNamesById,
+  getFrontierPenetration,
+  FRONTIER_PENETRATION_PRODUCTS,
+  type FrontierPenetrationRow,
 } from "./products";
 export {
   getBureauBreakdown,
@@ -88,6 +91,12 @@ export {
   getCrossCutSummary,
   getCrossCutHeatmap,
   getCategoryTopicCrossTab,
+  getIntegrationDepthAnalysis,
+  type IntegrationDepthAnalysis,
+  type IntegrationDepthDatum,
+  type CodingToolTypeDatum,
+  getBureauDivergence,
+  type BureauDivergenceRow,
 } from "./analytics";
 export {
   getUseCasesForAgency,

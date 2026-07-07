@@ -91,6 +91,9 @@ function buildFilters(sp: Search): UseCasesFilters {
   const scopes = parseCsv(sp.scope);
   if (scopes.length > 0) filters.deploymentScopes = scopes;
 
+  const integrationDepths = parseCsv(sp.integration_depth);
+  if (integrationDepths.length > 0) filters.integrationDepths = integrationDepths;
+
   const archs = parseCsv(sp.architecture);
   if (archs.length > 0) filters.architectureTypes = archs;
 
@@ -324,6 +327,7 @@ export default async function UseCasesPage({
                   tagEntryTypes: facets.tagEntryTypes,
                   tagDeploymentScopes: facets.tagDeploymentScopes,
                   tagAISophistications: facets.tagAISophistications,
+                  tagIntegrationDepths: facets.tagIntegrationDepths,
                   tagArchitectureTypes: facets.tagArchitectureTypes,
                   tagUseTypes: facets.tagUseTypes,
                   tagHighImpactDesignations: facets.tagHighImpactDesignations,

@@ -157,6 +157,118 @@ export function getProductsByVendor(
   return stmt.all(vendor, excludeId);
 }
 
+/**
+ * Frontier-product penetration — cross-product adoption for a fixed, hand-picked
+ * set of the frontier general-purpose LLM products. This is deliberately an
+ * EXPLICIT canonical-name allow-list, NOT `products.is_frontier_llm` (which is
+ * scoped differently — it flags model families, not the specific deployable
+ * products readers recognize, and would pull in scoping we don't want here).
+ *
+ * Per row:
+ *   - `agencies` / `edges`: distinct agencies and total product attributions
+ *     across BOTH entry kinds (individual use_cases + consolidated), via
+ *     `entry_product_edges`.
+ *   - stage mix (`deployed` / `piloted` / `preDeployment` / `otherStage`):
+ *     computed from `use_cases.stage_normalized` over INDIVIDUAL entries only.
+ *     Consolidated entries carry no stage, so they contribute to `edges` and
+ *     `consolidatedEdges` but never to the stage mix — the page footnotes this.
+ *
+ * `productId` is re-resolved by canonical_name at query time, so links stay
+ * valid across ETL rebuilds (ids rotate; canonical_name is stable).
+ */
+export const FRONTIER_PENETRATION_PRODUCTS = [
+  "Microsoft 365 Copilot",
+  "Microsoft 365 Copilot Chat",
+  "ChatGPT",
+  "OpenAI API",
+  "Azure OpenAI",
+  "Claude",
+  "Gemini",
+  "GitHub Copilot",
+  "AWS Bedrock",
+  "Perplexity",
+] as const;
+
+export interface FrontierPenetrationRow {
+  productId: number;
+  canonicalName: string;
+  vendor: string | null;
+  agencies: number;
+  edges: number;
+  individualEdges: number;
+  consolidatedEdges: number;
+  deployed: number;
+  piloted: number;
+  preDeployment: number;
+  otherStage: number;
+}
+
+export function getFrontierPenetration(): FrontierPenetrationRow[] {
+  const names = FRONTIER_PENETRATION_PRODUCTS;
+  const placeholders = names.map(() => "?").join(",");
+  const rows = getDb()
+    .prepare<
+      string[],
+      {
+        product_id: number;
+        canonical_name: string;
+        vendor: string | null;
+        agencies: number;
+        edges: number;
+        individual_edges: number;
+        consolidated_edges: number;
+        deployed: number;
+        piloted: number;
+        pre_deployment: number;
+      }
+    >(
+      `SELECT p.id AS product_id,
+              p.canonical_name,
+              p.vendor,
+              COUNT(DISTINCT epe.agency_id) AS agencies,
+              COUNT(*) AS edges,
+              SUM(CASE WHEN epe.entry_kind = 'use_case' THEN 1 ELSE 0 END)
+                AS individual_edges,
+              SUM(CASE WHEN epe.entry_kind = 'consolidated' THEN 1 ELSE 0 END)
+                AS consolidated_edges,
+              SUM(CASE WHEN epe.entry_kind = 'use_case'
+                        AND uc.stage_normalized = 'deployed' THEN 1 ELSE 0 END)
+                AS deployed,
+              SUM(CASE WHEN epe.entry_kind = 'use_case'
+                        AND uc.stage_normalized = 'pilot' THEN 1 ELSE 0 END)
+                AS piloted,
+              SUM(CASE WHEN epe.entry_kind = 'use_case'
+                        AND uc.stage_normalized = 'pre_deployment' THEN 1 ELSE 0 END)
+                AS pre_deployment
+         FROM products p
+         JOIN entry_product_edges epe ON epe.product_id = p.id
+         LEFT JOIN use_cases uc
+                ON epe.entry_kind = 'use_case' AND uc.id = epe.entry_id
+        WHERE p.canonical_name IN (${placeholders})
+        GROUP BY p.id
+        ORDER BY agencies DESC, edges DESC, p.canonical_name COLLATE NOCASE ASC`,
+    )
+    .all(...names);
+
+  return rows.map((r) => ({
+    productId: r.product_id,
+    canonicalName: r.canonical_name,
+    vendor: r.vendor,
+    agencies: r.agencies,
+    edges: r.edges,
+    individualEdges: r.individual_edges,
+    consolidatedEdges: r.consolidated_edges,
+    deployed: r.deployed,
+    piloted: r.piloted,
+    preDeployment: r.pre_deployment,
+    // Remainder of the individual edges falls into retired/unknown/other; deriving
+    // it by subtraction guarantees the four stage buckets sum to individualEdges
+    // even when stage_normalized is NULL for some rows.
+    otherStage:
+      r.individual_edges - r.deployed - r.piloted - r.pre_deployment,
+  }));
+}
+
 /** id → canonical_name lookup (for "Part of: X" on child-product cards). */
 export function getProductNamesById(): Record<number, string> {
   const rows = getDb()

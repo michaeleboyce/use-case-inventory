@@ -94,6 +94,19 @@ INSERT INTO use_case_tags (use_case_id, entry_type, is_general_llm_access, is_co
   (11, 'product_deployment',  0, 1, 1, 'team',            'frontier_llm',  'cloud_hosted', 'production', 'not_high_impact'),
   (12, 'product_deployment',  0, 0, 1, 'pilot',           'frontier_llm',  'cloud_hosted', 'pilot',      'not_high_impact');
 
+-- IFP-adjudicated 2026-07 integration_depth / coding_tool_type on a subset of
+-- the individual rows. The rest stay NULL so the "not_assessed" (NULL) sentinel
+-- in the integration-depth facet has rows to match. Labeled: 1,3,4,7,10 (five);
+-- NULL / not-assessed: 2,5,6,8,9,11,12 (seven).
+UPDATE use_case_tags SET integration_depth = 'standalone_chat'   WHERE use_case_id = 1;
+UPDATE use_case_tags SET integration_depth = 'workflow_embedded' WHERE use_case_id = 4;
+UPDATE use_case_tags SET integration_depth = 'system_integrated' WHERE use_case_id = 7;
+UPDATE use_case_tags SET integration_depth = 'agentic_workflow'  WHERE use_case_id = 10;
+UPDATE use_case_tags
+   SET integration_depth = 'workflow_embedded', coding_tool_type = 'ide_autocomplete'
+ WHERE use_case_id = 3;
+UPDATE use_case_tags SET coding_tool_type = 'coding_agent' WHERE use_case_id = 11;
+
 -- --------------------------------------------------------------------
 -- consolidated_use_cases — 4 OMB rollups (VA x2, DHS x1, GSA x1)
 -- --------------------------------------------------------------------

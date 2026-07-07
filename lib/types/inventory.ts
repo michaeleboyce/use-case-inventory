@@ -172,6 +172,16 @@ export interface UseCaseTag {
   is_generative_ai: number | null;
   is_frontier_model: number | null;
 
+  /** IFP-adjudicated (2026-07 labeling round) how deeply the AI is wired into
+   *  the agency's work: standalone_chat | workflow_embedded | system_integrated
+   *  | agentic_workflow | unclear. NULL = outside the labeled pilot+deployed
+   *  population ("not assessed"), which is distinct from an explicit 'unclear'. */
+  integration_depth: string | null;
+  /** IFP-adjudicated (2026-07 labeling round) coding-tool taxonomy, only set on
+   *  coding-tagged rows: chat_assistant | ide_autocomplete | coding_agent |
+   *  code_analysis_tool | not_coding | unclear. NULL = not a coding-tagged row. */
+  coding_tool_type: string | null;
+
   deployment_scope: string | null;
   scope_detail: string | null;
   is_enterprise_wide: number | null;
@@ -351,6 +361,13 @@ export interface UseCaseFilterInput {
   entryTypes?: string[];
   deploymentScopes?: string[];
   aiSophistications?: string[];
+  /** IFP-adjudicated (2026-07) `use_case_tags.integration_depth`. Labeled
+   *  values (standalone_chat, workflow_embedded, system_integrated,
+   *  agentic_workflow, unclear) match exactly; the sentinel `not_assessed`
+   *  matches rows whose integration_depth IS NULL — i.e. entries outside the
+   *  labeled pilot+deployed population. Multiple values = OR. Applies to both
+   *  arms via the tag join. */
+  integrationDepths?: string[];
   architectureTypes?: string[];
   useTypes?: string[];
   highImpactDesignations?: string[]; // tags.high_impact_designation
