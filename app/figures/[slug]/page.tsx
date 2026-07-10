@@ -2,7 +2,8 @@
  * /figures/[slug] — fixed-width, capture-ready renders of the article
  * figures. See app/figures/_registry.tsx for the registry, the capture
  * recipe (Playwright element screenshot of #figure-frame), and how to add
- * one. Dynamic [slug] route → exempt from lib/nav.ts registration.
+ * one. Dynamic [slug] route → exempt from lib/nav.ts registration; the
+ * /figures index (registered under REFERENCE_LINKS) links every slug.
  */
 
 import { notFound } from "next/navigation";

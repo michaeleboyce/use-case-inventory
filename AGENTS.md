@@ -86,8 +86,9 @@ nav; they complement it.
 `app/figures/_registry.tsx` maps slugs to fixed-width, capture-ready renders
 of article-grade charts (the same server assembly + client component as the
 live page, mounted with `exportMode`). To publish a new chart as a static
-figure, register it there — the `[slug]` route and `generateStaticParams`
-pick it up automatically (no nav registration; dynamic-route exemption).
+figure, register it there — the `[slug]` route, `generateStaticParams`, and
+the `/figures` index page pick it up automatically (the index is registered
+under `REFERENCE_LINKS`; the `[slug]` capture routes stay out of the nav).
 Capture with a Playwright **element** screenshot of `#figure-frame`; page
 chrome is irrelevant to an element screenshot. Keep captions self-contained
 (IFP attribution + marketplace snapshot date) so exported images retain

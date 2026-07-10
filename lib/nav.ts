@@ -161,6 +161,7 @@ export const REFERENCE_LINKS: NavChild[] = [
   { href: "/about", label: "Methods & Sources" },
   { href: "/glossary", label: "Glossary" },
   { href: "/discrepancies", label: "Discrepancies" },
+  { href: "/figures", label: "Article figures" },
 ];
 
 /**
