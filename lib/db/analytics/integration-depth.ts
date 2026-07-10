@@ -46,7 +46,7 @@ export interface IntegrationDepthAnalysis {
   depths: IntegrationDepthDatum[];
   /** Sum of `total` across depths (pilot+deployed labeled population). */
   totalPD: number;
-  /** Sum of `genai` across depths (the 478 GenAI pilot+deployed rows). */
+  /** Sum of `genai` across depths (the GenAI pilot+deployed population). */
   totalGenAI: number;
   coding: CodingToolTypeDatum[];
   codingTotal: number;
