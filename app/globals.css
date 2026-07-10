@@ -117,6 +117,7 @@
   --chart-adoption-1: #2677b2; /* blue — federal HTTPS */
   --chart-adoption-2: #357430; /* green — PIV strong auth */
   --chart-adoption-3: #c26e12; /* amber — workplace PC */
+  --chart-adoption-4: #6d59b8; /* purple — federal cloud (CFO Act ATOs) */
   --chart-adoption-context: oklch(0.62 0.02 75); /* recessive household context */
 
   --radius: 0;
@@ -181,6 +182,7 @@
   --chart-adoption-1: #348dcf;
   --chart-adoption-2: #439458;
   --chart-adoption-3: #c17f21;
+  --chart-adoption-4: #8f7cd4;
   --chart-adoption-context: oklch(0.6 0.02 255);
 
   --sidebar: oklch(0.18 0.028 255);

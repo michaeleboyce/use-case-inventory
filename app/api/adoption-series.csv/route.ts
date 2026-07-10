@@ -10,8 +10,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { ADOPTION_SERIES } from "@/lib/data/adoption-series";
 import { getGenAiAdoptionSeries } from "@/lib/db/adoption";
+import { assembleAdoptionSeries } from "@/app/adoption/_view-model";
 import { csvRow } from "@/lib/csv";
 
 const HEADER = [
@@ -34,7 +34,7 @@ const HEADER = [
 export async function GET() {
   const lines: string[] = [csvRow(HEADER)];
 
-  for (const s of ADOPTION_SERIES) {
+  for (const s of assembleAdoptionSeries()) {
     for (const p of s.points) {
       lines.push(
         csvRow([

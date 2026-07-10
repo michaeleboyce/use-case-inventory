@@ -24,7 +24,7 @@ import { BureauDivergenceChart } from "@/components/charts/bureau-divergence-cha
 import { AdoptionComparatorsChart } from "@/components/charts/adoption-comparators-chart";
 import { DivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_sections/divergence-timeline";
 import { getBureauDivergence, getIntegrationDepthAnalysis } from "@/lib/db";
-import { ADOPTION_SERIES } from "@/lib/data/adoption-series";
+import { assembleAdoptionSeries } from "@/app/adoption/_view-model";
 import { formatNumber } from "@/lib/formatting";
 
 const SNAPSHOT = "2026-06-12";
@@ -114,9 +114,9 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Technology adoption: years since mandate or introduction",
     width: 1080,
     render: () => ({
-      node: <AdoptionCurveChart series={ADOPTION_SERIES} exportMode />,
+      node: <AdoptionCurveChart series={assembleAdoptionSeries()} exportMode />,
       caption:
-        "Adoption re-based to years since each technology's own mandate (federal series) or introduction (organic series), first 12 years. Populations differ by series: federal HTTPS = live parent .gov domains (IFP-computed from GSA's archived weekly scans); PIV = federal civilian users (OMB FISMA reports); workplace PC = employed US adults (Census CPS); gray context = US households (Our World in Data). Vermilion: the federal LLM-access mandate arrived 2.6 years into the GenAI era. IFP analysis; external baselines verified 2026-07-06.",
+        "Adoption re-based to years since each technology's own mandate (federal series) or introduction (organic series), first 12 years; the key below the chart gives each clock's calendar date. Populations differ by series: federal HTTPS = live parent .gov domains (IFP-computed from GSA's archived weekly scans); PIV = federal civilian users (OMB FISMA reports); cloud = share of the 24 CFO Act agencies holding ≥1 agency ATO on a FedRAMP-authorized service (IFP, marketplace snapshot 2026-06-12 — a floor, since withdrawn services aren't counted); gray context = US households (Our World in Data). Vermilion pair — federal LLM access from the same IFP evidence base, on a clock starting at the ChatGPT release: solid = corroborated floor (workers weighted by each agency's best corroborated share; tier-only agencies count as zero), dashed = bullish availability reading (an agency's full AI-eligible workforce counts from its first dated corroborated rollout — availability, not measured use). Evidence dates lag rollouts; IFP assessments, not OMB data. The vermilion rule marks the LLM-access mandate arriving 2.6 years into that clock. IFP analysis; external baselines verified 2026-07-06.",
     }),
   },
   "adoption-comparators": {

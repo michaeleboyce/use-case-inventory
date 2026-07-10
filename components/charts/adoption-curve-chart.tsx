@@ -41,9 +41,17 @@ const SERIES_COLORS: Record<string, string> = {
   "https-supports": "var(--chart-adoption-1)",
   "piv-login": "var(--chart-adoption-2)",
   "workplace-pc": "var(--chart-adoption-3)",
+  "cloud-cfo-ato": "var(--chart-adoption-4)",
+  // The subject series wear the accent — same hue as the mandate marker.
+  // Solid = corroborated floor; dashed = bullish (agency availability).
+  "federal-llm-access": "var(--stamp)",
+  "federal-llm-access-bullish": "var(--stamp)",
 };
 const CONTEXT_COLOR = "var(--chart-adoption-context)";
-const DASHED_SERIES = new Set(["https-supports"]);
+const DASHED_SERIES = new Set(["https-supports", "federal-llm-access-bullish"]);
+
+/** Series kept out of this chart (editorial call — data + CSV keep them). */
+const EXCLUDED_SERIES = new Set(["workplace-pc", "owid-internet"]);
 
 /**
  * Short direct labels at each line's final point. null = legend-only (the
@@ -56,6 +64,9 @@ const END_LABELS: Record<string, { text: string | null; dy: number }> = {
   "https-supports": { text: null, dy: 0 },
   "piv-login": { text: "PIV login", dy: -8 },
   "workplace-pc": { text: "PC at work", dy: 0 },
+  "cloud-cfo-ato": { text: "Cloud (CFO Act ATOs)", dy: -6 },
+  "federal-llm-access": { text: "LLM access (floor)", dy: 10 },
+  "federal-llm-access-bullish": { text: "LLM (bullish)", dy: -8 },
   "owid-computer": { text: "Computer", dy: 0 },
   "owid-internet": { text: "Internet", dy: 0 },
   "owid-smartphone": { text: "Smartphone", dy: 12 },
@@ -109,7 +120,9 @@ export function AdoptionCurveChart({
   const [showContext, setShowContext] = React.useState(true);
   const maxYears = window12 ? 12 : null;
 
-  const percentSeries = series.filter((s) => s.unit === "percent");
+  const percentSeries = series.filter(
+    (s) => s.unit === "percent" && !EXCLUDED_SERIES.has(s.id),
+  );
   const featured = percentSeries.filter((s) => !s.id.startsWith("owid-"));
   const context = showContext
     ? percentSeries.filter((s) => s.id.startsWith("owid-"))
@@ -273,6 +286,51 @@ export function AdoptionCurveChart({
           })}
         </LineChart>
       </ChartFrame>
+
+      {/* Clock key: the calendar event behind each series' year-0. The
+          shared axis is years-since-start, so the actual mandate dates
+          live here rather than on the axis. One entry per unique event —
+          series that share a clock (the HTTPS pair, the LLM pair) fold. */}
+      <div className="border-t border-border pt-2 font-mono text-[10px] leading-[1.7] text-muted-foreground">
+        <span className="uppercase tracking-[0.14em]">Year 0 for each clock</span>
+        <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5">
+          {uniqueClocks(plotted.map(({ s }) => s)).map((s) => (
+            <li key={s.start.date + s.start.label} className="inline-flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="inline-block h-1.5 w-1.5"
+                style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
+              />
+              {monthYear(s.start.date)} — {s.start.label}
+            </li>
+          ))}
+          {context.length > 0 ? (
+            <li className="text-muted-foreground/70">
+              context clocks: household computer · Aug 1981, smartphone · Jun 2007
+            </li>
+          ) : null}
+        </ul>
+      </div>
     </div>
   );
+}
+
+/** Featured series deduped to one entry per (start date, start label). */
+function uniqueClocks(series: AdoptionSeries[]): AdoptionSeries[] {
+  const seen = new Set<string>();
+  return series.filter((s) => {
+    if (s.id.startsWith("owid-")) return false;
+    const key = `${s.start.date}|${s.start.label}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function monthYear(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
