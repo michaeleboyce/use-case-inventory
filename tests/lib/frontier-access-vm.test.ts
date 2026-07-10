@@ -148,6 +148,34 @@ describe("app/_view-models/frontier-access", () => {
     }
   });
 
+  it("mosaic: per-agency blocks sorted by share, squares partitioned", () => {
+    const model = buildFrontierAccessModel()!;
+    const m = model.mosaic;
+    // VA (.9) → DHS (.02) → GSA (0); all ≥1 square at UNIT 25k.
+    expect(m.agencies.map((a) => a.abbr)).toEqual(["VA", "DHS", "GSA"]);
+    const va = m.agencies[0];
+    // VA: 50k eligible → 2 squares; 45k access / 5k rest → [2, 0, 0].
+    expect(va.squares).toEqual({ access: 2, reachOnly: 0, neither: 0 });
+    expect(va.imputed).toBe(false);
+    const dhs = m.agencies[1];
+    expect(dhs.squares).toEqual({ access: 0, reachOnly: 2, neither: 0 });
+    expect(dhs.imputed).toBe(true);
+    // GSA: no reach → its square lands in "neither".
+    expect(m.agencies[2].squares).toEqual({ access: 0, reachOnly: 0, neither: 1 });
+    expect(m.pooled.agencyCount).toBe(0);
+  });
+
+  it("mosaic: floor ≤ central ≤ bullish uncertainty range", () => {
+    const m = buildFrontierAccessModel()!.mosaic;
+    // Floor: VA corroborated 45k of 120k = 37.5%. Central adds DHS's
+    // imputed 1k. Bullish: VA's full 50k = 41.7%.
+    expect(m.floorPct).toBe(37.5);
+    expect(m.centralPct).toBeCloseTo(38.3, 1);
+    expect(m.bullishPct).toBeCloseTo(41.7, 1);
+    expect(m.floorPct).toBeLessThanOrEqual(m.centralPct);
+    expect(m.centralPct).toBeLessThanOrEqual(m.bullishPct);
+  });
+
   it("degrades to null when the FedRAMP sidecar is missing", () => {
     db.exec("DROP TABLE fedramp_ai_service_classification");
     expect(buildFrontierAccessModel()).toBeNull();

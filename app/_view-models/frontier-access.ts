@@ -71,6 +71,40 @@ export interface WaffleModel {
   imputedAgencyCount: number;
 }
 
+/** One agency's block in the mosaic (the across-agencies waffle). */
+export interface MosaicAgency {
+  abbr: string;
+  name: string;
+  eligible: number;
+  /** Access share used (corroborated or tier-prior). */
+  share: number;
+  imputed: boolean;
+  noAssessment: boolean;
+  /** Core-AI services in scope of packages the agency holds an ATO for. */
+  reach: number;
+  /** Unit squares per state, largest-remainder within the agency. */
+  squares: { access: number; reachOnly: number; neither: number };
+}
+
+export interface MosaicModel {
+  unit: number;
+  /** Agencies with ≥1 whole square, sorted by access share desc. */
+  agencies: MosaicAgency[];
+  /** Sub-unit agencies pooled into one trailing block. */
+  pooled: {
+    agencyCount: number;
+    eligible: number;
+    squares: { access: number; reachOnly: number; neither: number };
+  };
+  /** Corroborated-only access share (%) — tier-imputed agencies at zero. */
+  floorPct: number;
+  /** Central estimate (%): corroborated + tier-prior imputed shares. */
+  centralPct: number;
+  /** Bullish availability (%): full eligible workforce at any agency with
+   *  a corroborated rollout (share evidence present). */
+  bullishPct: number;
+}
+
 export interface FrontierAccessModel {
   scatter: DecouplingPoint[];
   /** Reach rows dropped from the scatter for lacking an abbreviation. */
@@ -78,6 +112,7 @@ export interface FrontierAccessModel {
   /** The computed emphasis threshold (median reach), for captions. */
   medianReach: number;
   waffle: WaffleModel;
+  mosaic: MosaicModel;
 }
 
 export const WAFFLE_UNIT = 25_000;
@@ -218,24 +253,32 @@ export function buildFrontierAccessModel(): FrontierAccessModel | null {
   interface AgencyPools {
     abbr: string;
     name: string;
+    eligible: number;
+    share: number;
     imputed: boolean;
+    noAssessment: boolean;
+    reach: number;
     pools: Record<WaffleState, number>;
   }
   const perAgency: AgencyPools[] = [];
   for (const w of workforce) {
     if (!w.abbreviation || w.eligible <= 0) continue;
     const resolved = resolveShare(tiers[w.abbreviation]);
-    const hasReach = (reachByAbbr.get(w.abbreviation) ?? 0) > 0;
+    const reachCount = reachByAbbr.get(w.abbreviation) ?? 0;
     const access = w.eligible * resolved.share;
     const rest = w.eligible - access;
     perAgency.push({
       abbr: w.abbreviation,
       name: w.name,
+      eligible: w.eligible,
+      share: resolved.share,
       imputed: resolved.imputed,
+      noAssessment: resolved.noAssessment,
+      reach: reachCount,
       pools: {
         access,
-        reach_only: hasReach ? rest : 0,
-        neither: hasReach ? 0 : rest,
+        reach_only: reachCount > 0 ? rest : 0,
+        neither: reachCount > 0 ? 0 : rest,
       },
     });
   }
@@ -287,6 +330,56 @@ export function buildFrontierAccessModel(): FrontierAccessModel | null {
     }
   });
 
+  // ---- Mosaic: the same workers, composed as per-agency blocks ----
+  const blockSquares = (p: AgencyPools) => {
+    const n = Math.round(p.eligible / WAFFLE_UNIT);
+    const [access, reachOnly, neither] = largestRemainder(
+      [p.pools.access, p.pools.reach_only, p.pools.neither],
+      n,
+    );
+    return { access, reachOnly, neither };
+  };
+  const whole = perAgency.filter(
+    (p) => Math.round(p.eligible / WAFFLE_UNIT) >= 1,
+  );
+  const sub = perAgency.filter(
+    (p) => Math.round(p.eligible / WAFFLE_UNIT) < 1,
+  );
+  const mosaicAgencies: MosaicAgency[] = whole
+    .map((p) => ({
+      abbr: p.abbr,
+      name: p.name,
+      eligible: p.eligible,
+      share: p.share,
+      imputed: p.imputed,
+      noAssessment: p.noAssessment,
+      reach: p.reach,
+      squares: blockSquares(p),
+    }))
+    .sort((a, b) => b.share - a.share || b.eligible - a.eligible);
+
+  const pooledEligible = sub.reduce((a, p) => a + p.eligible, 0);
+  const pooledPools = {
+    access: sub.reduce((a, p) => a + p.pools.access, 0),
+    reach_only: sub.reduce((a, p) => a + p.pools.reach_only, 0),
+    neither: sub.reduce((a, p) => a + p.pools.neither, 0),
+  };
+  const [pa, pr, pn] = largestRemainder(
+    [pooledPools.access, pooledPools.reach_only, pooledPools.neither],
+    Math.round(pooledEligible / WAFFLE_UNIT),
+  );
+
+  const pct = (x: number) => Math.round((x / totals.eligible) * 1000) / 10;
+  const floorPct = pct(
+    perAgency.reduce((a, p) => a + (p.imputed ? 0 : p.pools.access), 0),
+  );
+  const centralPct = pct(totals.access);
+  // Bullish: full eligible workforce at any agency with a corroborated
+  // share (mirrors the adoption chart's availability reading).
+  const bullishPct = pct(
+    perAgency.reduce((a, p) => a + (p.imputed ? 0 : p.eligible), 0),
+  );
+
   return {
     scatter: points,
     droppedNoAbbr,
@@ -302,6 +395,18 @@ export function buildFrontierAccessModel(): FrontierAccessModel | null {
       },
       agencyCount: perAgency.length,
       imputedAgencyCount: perAgency.filter((p) => p.imputed).length,
+    },
+    mosaic: {
+      unit: WAFFLE_UNIT,
+      agencies: mosaicAgencies,
+      pooled: {
+        agencyCount: sub.length,
+        eligible: Math.round(pooledEligible),
+        squares: { access: pa, reachOnly: pr, neither: pn },
+      },
+      floorPct,
+      centralPct,
+      bullishPct,
     },
   };
 }

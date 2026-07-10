@@ -19,6 +19,7 @@ import { buildDivergenceTimeline } from "@/app/fedramp/coverage/sleeping-service
 import { AdoptionCurveChart } from "@/components/charts/adoption-curve-chart";
 import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
 import { PeopleWaffle } from "@/components/charts/people-waffle";
+import { PeopleMosaic } from "@/components/charts/people-mosaic";
 import { IntegrationDepthChart } from "@/components/charts/integration-depth-chart";
 import { BureauDivergenceChart } from "@/components/charts/bureau-divergence-chart";
 import { AdoptionComparatorsChart } from "@/components/charts/adoption-comparators-chart";
@@ -67,6 +68,19 @@ export const FIGURES: Record<string, FigureDef> = {
       return {
         node: <PeopleWaffle waffle={model.waffle} exportMode />,
         caption: `One square ≈ ${formatNumber(model.waffle.unit)} AI-eligible federal workers across ${model.waffle.agencyCount} profiled agencies. Red: no general-purpose tool at an agency already holding an ATO on a package with a core-AI service in scope (${model.waffle.imputedAgencyCount} agency shares tier-imputed). ${ATTRIBUTION}`,
+      };
+    },
+  },
+  "people-mosaic": {
+    title: "The reach-vs-access gap, built from the agencies",
+    width: 1080,
+    render: () => {
+      const model = buildFrontierAccessModel();
+      if (!model) return null;
+      const m = model.mosaic;
+      return {
+        node: <PeopleMosaic mosaic={m} exportMode />,
+        caption: `The government-wide worker total assembled from ${m.agencies.length + m.pooled.agencyCount} researched agency profiles — one block per agency, 1 square ≈ ${formatNumber(m.unit)} AI-eligible workers, sorted by access share. Solid black = tool under a web-corroborated share; hollow = tier-prior imputed; red = no tool at an agency holding an ATO on a package with a core-AI service in scope; muted = neither. Uncertainty range: corroborated floor ${m.floorPct}% · tier-prior central ${m.centralPct}% · bullish availability ${m.bullishPct}% of eligible workers. ${ATTRIBUTION}`,
       };
     },
   },

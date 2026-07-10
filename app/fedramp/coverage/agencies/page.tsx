@@ -18,6 +18,7 @@ import { AgenciesCoverageTable } from "./_sections/agencies-table";
 import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
 import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
 import { PeopleWaffle } from "@/components/charts/people-waffle";
+import { PeopleMosaic } from "@/components/charts/people-mosaic";
 
 // Availability tiers, least-available first — the sort puts high-reach /
 // low-access agencies (the article's laggard cases) at the top.
@@ -213,8 +214,15 @@ function FrontierReachSection() {
             />
           </Figure>
           <Figure
-            eyebrow="Fig. B · The same gap, in workers"
-            caption={`One square ≈ ${formatNumber(accessModel.waffle.unit)} AI-eligible federal workers across ${accessModel.waffle.agencyCount} profiled agencies. Red squares are workers with no general-purpose tool at an agency that already holds an ATO on a package with a core-AI service in scope. Access shares are IFP estimates (${accessModel.waffle.imputedAgencyCount} agencies tier-imputed). Static figure: /figures/people-waffle`}
+            eyebrow="Fig. B · The same gap, built from the agencies"
+            caption={`The government-wide total assembled from the ${accessModel.waffle.agencyCount} researched agency profiles, one block per agency (≥1 square of ${formatNumber(accessModel.mosaic.unit)} AI-eligible workers), sorted by access share. Hollow squares mark tier-imputed shares; the strip above states the uncertainty: corroborated floor ${accessModel.mosaic.floorPct}%, tier-prior central ${accessModel.mosaic.centralPct}%, bullish availability ${accessModel.mosaic.bullishPct}%. Static figure: /figures/people-mosaic`}
+            className="mt-10"
+          >
+            <PeopleMosaic mosaic={accessModel.mosaic} />
+          </Figure>
+          <Figure
+            eyebrow="Fig. C · The same workers, pooled"
+            caption={`The pooled view of Fig. B: one square ≈ ${formatNumber(accessModel.waffle.unit)} AI-eligible federal workers across ${accessModel.waffle.agencyCount} profiled agencies. Red squares are workers with no general-purpose tool at an agency that already holds an ATO on a package with a core-AI service in scope. Access shares are IFP estimates (${accessModel.waffle.imputedAgencyCount} agencies tier-imputed). Static figure: /figures/people-waffle`}
             className="mt-10"
           >
             <PeopleWaffle waffle={accessModel.waffle} />
