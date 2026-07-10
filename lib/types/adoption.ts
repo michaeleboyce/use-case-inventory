@@ -29,6 +29,11 @@ export interface AdoptionSeries {
   unit: "percent" | "count";
   /** Federal series: the policy mandate that starts the clock. Organic series: first availability. */
   start: { date: string; label: string };
+  /** When the underlying technology became available, where that predates
+   *  the clock start — surfaces the mandate LAG (e.g. HTTPS was in
+   *  commercial use ~21 years before M-15-13). Omit when the clock start
+   *  IS the introduction (organic series, the LLM pair). */
+  introduced?: { date: string; label: string };
   /** Whether adoption was policy-mandated or organic — a key article distinction. */
   driver: "federal mandate" | "organic";
   source: { title: string; url: string; accessed: string; note?: string };

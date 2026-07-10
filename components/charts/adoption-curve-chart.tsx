@@ -302,6 +302,11 @@ export function AdoptionCurveChart({
                 style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
               />
               {monthYear(s.start.date)} — {s.start.label}
+              {s.introduced ? (
+                <span className="text-muted-foreground/70">
+                  · mandated ~{mandateLagYears(s)}y after {s.introduced.label}
+                </span>
+              ) : null}
             </li>
           ))}
           {context.length > 0 ? (
@@ -333,4 +338,12 @@ function monthYear(iso: string): string {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+/** Whole years between a technology's introduction and its mandate. */
+function mandateLagYears(s: AdoptionSeries): number {
+  if (!s.introduced) return 0;
+  return Math.round(
+    (Date.parse(s.start.date) - Date.parse(s.introduced.date)) / MS_PER_YEAR,
+  );
 }

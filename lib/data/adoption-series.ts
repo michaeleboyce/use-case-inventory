@@ -47,6 +47,7 @@ export const ADOPTION_SERIES: AdoptionSeries[] = [
       "Share of live parent .gov domains that default to or strictly force HTTPS",
     unit: "percent",
     start: { date: "2015-06-08", label: "OMB M-15-13 HTTPS-Only Standard" },
+    introduced: { date: "1994-10-15", label: "HTTPS in commercial use (Netscape SSL, \u22481994)" },
     driver: "federal mandate",
     source: {
       title: "GSA archived Pulse HTTPS scans (weekly parents-*.csv)",
@@ -85,6 +86,7 @@ export const ADOPTION_SERIES: AdoptionSeries[] = [
       "Share of live parent .gov domains with valid HTTPS that does not downgrade",
     unit: "percent",
     start: { date: "2015-06-08", label: "OMB M-15-13 HTTPS-Only Standard" },
+    introduced: { date: "1994-10-15", label: "HTTPS in commercial use (Netscape SSL, \u22481994)" },
     driver: "federal mandate",
     source: {
       title: "GSA archived Pulse HTTPS scans (weekly parents-*.csv)",
@@ -147,6 +149,7 @@ export const ADOPTION_SERIES: AdoptionSeries[] = [
       "Share of users required to authenticate with strong (PIV) credentials",
     unit: "percent",
     start: { date: "2004-08-27", label: "HSPD-12 PIV mandate" },
+    introduced: { date: "1995-06-30", label: "smart-card credentials in commercial use (\u2248mid-1990s)" },
     driver: "federal mandate",
     source: {
       title:

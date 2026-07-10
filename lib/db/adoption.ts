@@ -114,6 +114,7 @@ export function getCloudCfoAtoSeries(): AdoptionSeries | null {
       "Share of CFO Act agencies holding ≥1 agency ATO on a FedRAMP-authorized cloud service (floor: current-marketplace snapshot only)",
     unit: "percent",
     start: { date: "2011-12-08", label: "FedRAMP policy memo (post Cloud First, 2010-12-09)" },
+    introduced: { date: "2006-08-25", label: "commercial IaaS in use (AWS EC2 public beta)" },
     driver: "federal mandate",
     source: {
       title: "IFP analysis of the FedRAMP marketplace snapshot",
