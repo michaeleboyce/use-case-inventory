@@ -57,8 +57,8 @@ export default async function AdoptionPage() {
               Each series is aligned at x = 0 to its own mandate (federal
               series) or first availability (organic series) and plots its own
               source&apos;s metric — populations differ by series and are
-              labeled in the legend; household curves (gray) are context, not
-              comparanda. Federal HTTPS and PIV percentages computed by IFP
+              labeled in the legend; the household-computer curve (gray, full
+              span only) is context, not a comparandum. Federal HTTPS and PIV percentages computed by IFP
               from the archived raw scans and OMB reports. Vermilion line:
               the federal LLM-access mandate arrived 2.6 years into the GenAI
               era. Export every point:{" "}
@@ -358,8 +358,8 @@ export default async function AdoptionPage() {
           <p>
             <strong className="text-foreground">Populations differ.</strong>{" "}
             Federal series count domains, users, or cloud services; the
-            workplace series counts employed adults; household context curves
-            count households. The comparison is honest about this: it claims
+            workplace series counts employed adults; the household context
+            curve counts households. The comparison is honest about this: it claims
             the <em>historically slower</em> adopter (the federal enterprise)
             moved on GenAI at a pace previously seen only in consumer
             technologies — it does not claim the populations are equivalent.

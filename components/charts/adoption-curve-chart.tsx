@@ -51,13 +51,16 @@ const CONTEXT_COLOR = "var(--chart-adoption-context)";
 const DASHED_SERIES = new Set(["https-supports", "federal-llm-access-bullish"]);
 
 /** Series kept out of this chart (editorial call — data + CSV keep them). */
-const EXCLUDED_SERIES = new Set(["workplace-pc", "owid-internet"]);
+const EXCLUDED_SERIES = new Set([
+  "workplace-pc",
+  "owid-internet",
+  "owid-smartphone",
+]);
 
 /**
  * Short direct labels at each line's final point. null = legend-only (the
  * dashed HTTPS-supported line shares hue + endpoint with enforced; a second
- * label there collides). dy staggers series that end at similar values
- * (PIV and the smartphone context line both finish ≈81%).
+ * label there collides). dy staggers series that end at similar values.
  */
 const END_LABELS: Record<string, { text: string | null; dy: number }> = {
   "https-enforces": { text: "HTTPS (enforced)", dy: 4 },
@@ -132,6 +135,11 @@ export function AdoptionCurveChart({
     .map((s) => ({ s, pts: toPlotted(s, maxYears) }))
     .filter(({ pts }) => pts.length > 1);
 
+  // Context series that actually render in the current window (a curve with
+  // ≤1 in-window point is dropped above) — gates the gray legend chip and
+  // the context line of the clock key.
+  const plottedContext = plotted.filter(({ s }) => s.id.startsWith("owid-"));
+
   const xMax = window12
     ? 12
     : Math.ceil(Math.max(...plotted.flatMap(({ pts }) => pts.map((p) => p.x))));
@@ -193,7 +201,7 @@ export function AdoptionCurveChart({
               </span>
             </span>
           ))}
-        {context.length > 0 ? (
+        {plottedContext.length > 0 ? (
           <span className="inline-flex items-center gap-1.5">
             <span
               aria-hidden
@@ -309,9 +317,17 @@ export function AdoptionCurveChart({
               ) : null}
             </li>
           ))}
-          {context.length > 0 ? (
+          {plottedContext.length > 0 ? (
             <li className="text-muted-foreground/70">
-              context clocks: household computer · Aug 1981, smartphone · Jun 2007
+              context clock{plottedContext.length > 1 ? "s" : ""}:{" "}
+              {plottedContext
+                .map(
+                  ({ s }) =>
+                    `household ${s.label
+                      .replace(" (US households)", "")
+                      .toLowerCase()} · ${monthYear(s.start.date)}`,
+                )
+                .join(", ")}
             </li>
           ) : null}
         </ul>
