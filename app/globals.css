@@ -120,6 +120,17 @@
   --chart-adoption-4: #6d59b8; /* purple — federal cloud (CFO Act ATOs) */
   --chart-adoption-context: oklch(0.62 0.02 75); /* recessive household context */
 
+  /* Categorical series palette (access-trajectory slope chart) — 7 slots,
+     fixed assignment order, validated for CVD separation + 3:1 contrast
+     against --paper (dataviz six-checks, 2026-07). */
+  --chart-cat-1: oklch(0.55 0.12 245); /* blue */
+  --chart-cat-2: oklch(0.52 0.175 22); /* vermilion (site stamp) */
+  --chart-cat-3: oklch(0.58 0.14 195); /* teal */
+  --chart-cat-4: oklch(0.55 0.13 70); /* amber */
+  --chart-cat-5: oklch(0.5 0.13 300); /* purple */
+  --chart-cat-6: oklch(0.5 0.14 145); /* green */
+  --chart-cat-7: oklch(0.52 0.16 350); /* magenta */
+
   --radius: 0;
 
   --sidebar: oklch(0.942 0.015 70);
@@ -184,6 +195,16 @@
   --chart-adoption-3: #c17f21;
   --chart-adoption-4: #8f7cd4;
   --chart-adoption-context: oklch(0.6 0.02 255);
+
+  /* Categorical series palette — dark-mode steps, validated against the
+     dark --paper surface (not an automatic flip of the light set). */
+  --chart-cat-1: oklch(0.65 0.12 245);
+  --chart-cat-2: oklch(0.65 0.17 25);
+  --chart-cat-3: oklch(0.65 0.12 195);
+  --chart-cat-4: oklch(0.65 0.13 70);
+  --chart-cat-5: oklch(0.64 0.13 300);
+  --chart-cat-6: oklch(0.64 0.14 145);
+  --chart-cat-7: oklch(0.64 0.15 350);
 
   --sidebar: oklch(0.18 0.028 255);
   --sidebar-foreground: var(--ink);

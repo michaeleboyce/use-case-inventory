@@ -119,6 +119,41 @@ export function getAgencyAccessTiers(): Record<string, AgencyAccessTier> {
   return out;
 }
 
+/** One dated, corroborated share estimate — the raw anchor for the
+ *  access-trajectory chart (see app/_view-models/access-trajectories.ts). */
+export interface AccessShareAnchorRow {
+  agency_abbreviation: string;
+  agency_name: string | null;
+  /** ISO-ish source date; may be partial (YYYY or YYYY-MM). */
+  source_date: string;
+  /** Corroborated estimated_share_of_eligible (0–1). */
+  share: number;
+  tool_name: string | null;
+  source_title: string | null;
+}
+
+/** Every corroborated finding that carries BOTH a source date and a share
+ *  estimate, ordered by agency then date — the evidence anchors from which
+ *  per-agency access trajectories are built. */
+export function getAccessShareAnchors(): AccessShareAnchorRow[] {
+  return getDb()
+    .prepare<[], AccessShareAnchorRow>(
+      `SELECT e.agency_abbreviation,
+              a.name AS agency_name,
+              e.source_date,
+              e.estimated_share_of_eligible AS share,
+              e.tool_name,
+              e.source_title
+         FROM agency_ai_access_evidence e
+         LEFT JOIN agencies a ON a.id = e.agency_id
+        WHERE e.status = 'corroborated'
+          AND e.source_date IS NOT NULL
+          AND e.estimated_share_of_eligible IS NOT NULL
+        ORDER BY e.agency_abbreviation, e.source_date`,
+    )
+    .all();
+}
+
 /** Coverage rollup for the /readiness/access header and the /readiness teaser.
  *  `by_coverage` counts DISTINCT agencies at each agency's BEST (most
  *  available) coverage tier — so an agency with both an `all` tool and a

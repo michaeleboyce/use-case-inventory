@@ -15,6 +15,8 @@
 
 import type { ReactNode } from "react";
 import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
+import { buildAccessTrajectoriesModel } from "@/app/_view-models/access-trajectories";
+import { AccessShareSlope } from "@/components/charts/access-share-slope";
 import { buildDivergenceTimeline } from "@/app/fedramp/coverage/sleeping-services/_view-model";
 import { AdoptionCurveChart } from "@/components/charts/adoption-curve-chart";
 import { DecouplingScatter } from "@/components/charts/decoupling-scatter";
@@ -81,6 +83,18 @@ export const FIGURES: Record<string, FigureDef> = {
       return {
         node: <PeopleMosaic mosaic={m} exportMode />,
         caption: `The government-wide worker total assembled from ${m.agencies.length + m.pooled.agencyCount} researched agency profiles — one block per agency, 1 square ≈ ${formatNumber(m.unit)} AI-eligible workers, sorted by access share. Solid black = tool under a web-corroborated share; hollow = tier-prior imputed; red = no tool at an agency holding an ATO on a package with a core-AI service in scope; muted = neither. Uncertainty range: corroborated floor ${m.floorPct}% · tier-prior central ${m.centralPct}% · bullish availability ${m.bullishPct}% of eligible workers. ${ATTRIBUTION}`,
+      };
+    },
+  },
+  "access-trajectories": {
+    title: "How staff access to a general-purpose AI tool grew, by agency",
+    width: 1080,
+    render: () => {
+      const model = buildAccessTrajectoriesModel();
+      if (!model) return null;
+      return {
+        node: <AccessShareSlope model={model} exportMode />,
+        caption: `Each line is one agency's best web-corroborated share of eligible staff with a general-purpose AI tool, plotted at its evidence dates (running best — a later, narrower finding never reads as a rollback). Only agencies with ≥2 dated findings are drawn; ${model.singleAnchorCount} agencies with a single dated finding are omitted (no trajectory to draw), Treasury (flat at ~5% across its window) is omitted as an editorial call, and ${model.climberCount} of the drawn agencies climbed ≥25 points within their evidence window. Evidence dates lag rollouts — every trajectory is a floor. ${ATTRIBUTION}`,
       };
     },
   },

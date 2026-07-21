@@ -51,7 +51,9 @@ export {
   getAgencyAiAccessEvidence,
   getAiAccessSummary,
   getAgencyAccessTiers,
+  getAccessShareAnchors,
   type AgencyAccessTier,
+  type AccessShareAnchorRow,
 } from "./agency-ai-access";
 export {
   getAllProducts,

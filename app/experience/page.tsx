@@ -33,6 +33,8 @@ import { SensitivityRange } from "@/components/experience/sensitivity-range";
 import { PopulationTelescope } from "@/components/experience/population-telescope";
 import { PeopleWaffle } from "@/components/charts/people-waffle";
 import { buildFrontierAccessModel } from "@/app/_view-models/frontier-access";
+import { buildAccessTrajectoriesModel } from "@/app/_view-models/access-trajectories";
+import { AccessShareSlope } from "@/components/charts/access-share-slope";
 import { DefinitionEuler } from "@/components/experience/definition-euler";
 import { PageNav } from "@/components/experience/page-nav";
 import {
@@ -97,6 +99,7 @@ export default async function ExperiencePage() {
   } catch {
     frontierAccess = null;
   }
+  const accessTrajectories = buildAccessTrajectoriesModel();
   const enterpriseHeadline = headlines.find(
     (h) => h.definition === "ifp_enterprise",
   );
@@ -530,6 +533,26 @@ export default async function ExperiencePage() {
                 compact
                 crossLinkHref="/fedramp/coverage/agencies#reach-access"
               />
+            </div>
+          </div>
+        ) : null}
+
+        {accessTrajectories ? (
+          <div className="mt-8 border-t border-border pt-6">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              How access grew, agency by agency
+            </p>
+            <p className="mt-1 max-w-prose text-xs leading-relaxed text-muted-foreground">
+              Each line is one agency&apos;s best web-corroborated share of
+              eligible staff with a general-purpose AI tool, plotted at the
+              dates the evidence carries. Only agencies with two or more
+              dated findings are drawn (Treasury, flat at ~5%, is left off) —{" "}
+              {accessTrajectories.climberCount} of them climbed 25+ points
+              within their evidence window, while others started high.
+              Evidence dates lag rollouts: every trajectory is a floor.
+            </p>
+            <div className="mt-5">
+              <AccessShareSlope model={accessTrajectories} />
             </div>
           </div>
         ) : null}
