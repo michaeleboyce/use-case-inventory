@@ -111,6 +111,7 @@ const COVERAGE_PANELS: Array<{ href: string; label: string }> = [
   { href: "/fedramp/coverage/spread", label: "Authorization vs adoption" },
   { href: "/fedramp/coverage/fit", label: "Authorization fit" },
   { href: "/fedramp/coverage/agencies", label: "Agency gaps" },
+  { href: "/fedramp/coverage/lab", label: "Chart lab" },
 ];
 
 function safeAiCounts(): AiClassificationCounts | null {

@@ -148,6 +148,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/fedramp/coverage/spread", label: "Authorization vs adoption", indent: true },
       { href: "/fedramp/coverage/fit", label: "Authorization fit", indent: true },
       { href: "/fedramp/coverage/agencies", label: "Agency gaps", indent: true },
+      { href: "/fedramp/coverage/lab", label: "Chart lab", indent: true },
       { href: "/fedramp/curate", label: "Curate" },
     ],
   },
