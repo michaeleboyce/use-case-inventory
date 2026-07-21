@@ -239,6 +239,8 @@ function buildLlmAccessSeries(
       date: "2022-11-30",
       label: "ChatGPT released (LLM-access mandate follows at +2.6y)",
     },
+    introduced: { date: "2022-11-30", label: "ChatGPT public release" },
+    mandate: { date: "2025-07-23", label: "AI Action Plan LLM-access mandate" },
     driver: "federal mandate",
     source: {
       title: "IFP web-corroborated agency access evidence",

@@ -15,19 +15,24 @@ import { ChartFrame } from "@/components/charts/chart-frame";
 import type { AdoptionSeries } from "@/lib/types/adoption";
 
 /**
- * Aligned technology-adoption curves: every series is re-based to
- * x = years since its own mandate (federal series) or introduction
- * (organic series), y = % adoption under that series' own metric.
+ * Aligned technology-adoption curves, two selectable clocks:
+ *
+ *  - "tech" (default, apples-to-apples): every series is re-based to
+ *    x = years since its TECHNOLOGY entered use (commercial availability /
+ *    public release), and each federal mandate is marked on that same
+ *    clock as a colored rule — so "when the technology came out" and
+ *    "when the mandate arrived" are both visible per series, and the
+ *    shrinking mandate lag (HTTPS yr ~21 → cloud yr ~5 → LLM yr 2.6)
+ *    reads directly off the axis.
+ *  - "mandate" (the original view): federal series re-base to their own
+ *    mandate, organic series to introduction — compares post-mandate
+ *    response speed. The vermilion rule marks the LLM-access mandate at
+ *    yr 2.6 of the GenAI era (that pair's clock starts at ChatGPT).
  *
  * Populations differ by construction (federal .gov domains, federal users,
  * employed adults, households) — identity is carried by the legend +
  * per-series population labels, and household curves render recessively
  * in gray so they read as context, not comparanda.
- *
- * The vermilion reference line marks how early in the GenAI era the federal
- * LLM-access mandate arrived (ChatGPT 2022-11-30 → AI Action Plan
- * 2025-07-23 ≈ 2.6 years) — on this axis, prior mandates *start* the clock;
- * GenAI's arrived before year three.
  */
 
 const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
@@ -35,6 +40,43 @@ const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
 /** ChatGPT release → AI Action Plan LLM-access mandate, in years. */
 const GENAI_MANDATE_X =
   (Date.parse("2025-07-23") - Date.parse("2022-11-30")) / MS_PER_YEAR;
+
+export type AdoptionClock = "tech" | "mandate";
+
+/** The technology-introduction event backing the tech clock. */
+export function introEvent(s: AdoptionSeries): { date: string; label: string } {
+  return s.introduced ?? s.start;
+}
+
+/**
+ * The policy-mandate event, if any: an explicit `mandate` wins (the LLM
+ * pair, whose `start` is the ChatGPT release); else `start` on federal
+ * series that carry `introduced` (their clock start IS the mandate).
+ */
+export function mandateEvent(
+  s: AdoptionSeries,
+): { date: string; label: string } | null {
+  if (s.mandate) return s.mandate;
+  if (s.driver === "federal mandate" && s.introduced) return s.start;
+  return null;
+}
+
+/** Years from a series' technology introduction to its mandate. */
+export function mandateXOnTechClock(s: AdoptionSeries): number | null {
+  const m = mandateEvent(s);
+  if (!m) return null;
+  return (Date.parse(m.date) - Date.parse(introEvent(s).date)) / MS_PER_YEAR;
+}
+
+/** Short mandate names for the on-chart markers (tech clock). */
+const MANDATE_SHORT: Record<string, string> = {
+  "https-enforces": "M-15-13 (HTTPS)",
+  "https-supports": "M-15-13 (HTTPS)",
+  "piv-login": "HSPD-12 (PIV)",
+  "cloud-cfo-ato": "FedRAMP memo",
+  "federal-llm-access": "LLM-access mandate",
+  "federal-llm-access-bullish": "LLM-access mandate",
+};
 
 const SERIES_COLORS: Record<string, string> = {
   "https-enforces": "var(--chart-adoption-1)",
@@ -77,8 +119,14 @@ const END_LABELS: Record<string, { text: string | null; dy: number }> = {
 
 type PlottedPoint = { x: number; y: number; date: string };
 
-function toPlotted(s: AdoptionSeries, maxYears: number | null): PlottedPoint[] {
-  const t0 = Date.parse(s.start.date);
+function toPlotted(
+  s: AdoptionSeries,
+  maxYears: number | null,
+  clock: AdoptionClock,
+): PlottedPoint[] {
+  const t0 = Date.parse(
+    clock === "tech" ? introEvent(s).date : s.start.date,
+  );
   return s.points
     .map((p) => ({
       x: (Date.parse(p.date) - t0) / MS_PER_YEAR,
@@ -86,6 +134,25 @@ function toPlotted(s: AdoptionSeries, maxYears: number | null): PlottedPoint[] {
       date: p.date,
     }))
     .filter((p) => p.x >= 0 && (maxYears == null || p.x <= maxYears));
+}
+
+/** Mandate-marker label pinned near the top of the plot; `row` staggers
+ *  neighbors so close markers (cloud yr 5.3, LLM yr 2.6) don't collide. */
+function markerLabel(text: string, color: string, row: number) {
+  return function MarkerLabel(props: { viewBox?: { x?: number } }) {
+    const x = Number(props.viewBox?.x ?? 0);
+    return (
+      <text
+        x={x + 4}
+        y={12 + row * 13}
+        fill={color}
+        fontSize={10}
+        fontFamily="var(--font-mono, monospace)"
+      >
+        {text}
+      </text>
+    );
+  };
 }
 
 /** Direct label on a series' final visible point only. */
@@ -115,13 +182,20 @@ function endLabel(text: string, color: string, total: number, dy: number) {
 export function AdoptionCurveChart({
   series,
   exportMode = false,
+  initialClock = "tech",
 }: {
   series: AdoptionSeries[];
   exportMode?: boolean;
+  /** Which clock the chart opens on (and renders in exportMode). */
+  initialClock?: AdoptionClock;
 }) {
-  const [window12, setWindow12] = React.useState(true);
+  const [clock, setClock] = React.useState<AdoptionClock>(initialClock);
+  const [windowed, setWindowed] = React.useState(true);
   const [showContext, setShowContext] = React.useState(true);
-  const maxYears = window12 ? 12 : null;
+  // The tech clock needs the wider frame: HTTPS data starts at yr ~21 of
+  // its technology; 25y covers every federal series' full mandate story.
+  const windowYears = clock === "tech" ? 25 : 12;
+  const maxYears = windowed ? windowYears : null;
 
   const percentSeries = series.filter(
     (s) => s.unit === "percent" && !EXCLUDED_SERIES.has(s.id),
@@ -132,7 +206,7 @@ export function AdoptionCurveChart({
     : [];
 
   const plotted = [...context, ...featured] // context first → featured on top
-    .map((s) => ({ s, pts: toPlotted(s, maxYears) }))
+    .map((s) => ({ s, pts: toPlotted(s, maxYears, clock) }))
     .filter(({ pts }) => pts.length > 1);
 
   // Context series that actually render in the current window (a curve with
@@ -140,29 +214,69 @@ export function AdoptionCurveChart({
   // the context line of the clock key.
   const plottedContext = plotted.filter(({ s }) => s.id.startsWith("owid-"));
 
-  const xMax = window12
-    ? 12
+  const xMax = windowed
+    ? windowYears
     : Math.ceil(Math.max(...plotted.flatMap(({ pts }) => pts.map((p) => p.x))));
+
+  // Tech clock: one mandate marker per unique (introduction, mandate) pair —
+  // the HTTPS pair and the LLM pair each fold to one rule. Sorted by x, with
+  // label rows staggered so near neighbors don't collide.
+  const mandateMarkers =
+    clock === "tech"
+      ? uniqueBy(
+          plotted
+            .map(({ s }) => s)
+            .filter((s) => !s.id.startsWith("owid-"))
+            .filter((s) => mandateXOnTechClock(s) != null),
+          (s) => `${introEvent(s).date}|${mandateEvent(s)!.date}`,
+        )
+          .map((s) => ({
+            x: mandateXOnTechClock(s)!,
+            color: SERIES_COLORS[s.id] ?? "var(--foreground)",
+            short: MANDATE_SHORT[s.id] ?? mandateEvent(s)!.label,
+          }))
+          .filter((m) => m.x <= xMax)
+          .sort((a, b) => a.x - b.x)
+      : [];
 
   return (
     <div className="flex flex-col gap-3">
       {exportMode ? null : (
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-mono uppercase tracking-[0.14em] text-muted-foreground">
+            Clock:
+          </span>
+          <Button
+            variant={clock === "tech" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setClock("tech")}
+            className="font-mono text-[11px]"
+          >
+            Since technology arrived
+          </Button>
+          <Button
+            variant={clock === "mandate" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setClock("mandate")}
+            className="font-mono text-[11px]"
+          >
+            Since mandate
+          </Button>
+          <span className="ml-4 font-mono uppercase tracking-[0.14em] text-muted-foreground">
             Window:
           </span>
           <Button
-            variant={window12 ? "default" : "outline"}
+            variant={windowed ? "default" : "outline"}
             size="sm"
-            onClick={() => setWindow12(true)}
+            onClick={() => setWindowed(true)}
             className="font-mono text-[11px]"
           >
-            First 12 years
+            First {windowYears} years
           </Button>
           <Button
-            variant={!window12 ? "default" : "outline"}
+            variant={!windowed ? "default" : "outline"}
             size="sm"
-            onClick={() => setWindow12(false)}
+            onClick={() => setWindowed(false)}
             className="font-mono text-[11px]"
           >
             Full span
@@ -229,7 +343,10 @@ export function AdoptionCurveChart({
             tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
             stroke="var(--border)"
             label={{
-              value: "Years since mandate (federal) or introduction (organic)",
+              value:
+                clock === "tech"
+                  ? "Years since the technology entered use — colored rules mark each federal mandate"
+                  : "Years since mandate (federal) or introduction (organic)",
               position: "insideBottom",
               offset: -22,
               fontSize: 11,
@@ -256,17 +373,32 @@ export function AdoptionCurveChart({
               typeof x === "number" ? `Year ${x.toFixed(1)}` : x
             }
           />
-          <ReferenceLine
-            x={GENAI_MANDATE_X}
-            stroke="var(--stamp)"
-            strokeDasharray="4 4"
-            label={{
-              value: "Federal LLM-access mandate — yr 2.6 of GenAI",
-              position: "top",
-              fill: "var(--stamp)",
-              fontSize: 10,
-            }}
-          />
+          {clock === "mandate" ? (
+            <ReferenceLine
+              x={GENAI_MANDATE_X}
+              stroke="var(--stamp)"
+              strokeDasharray="4 4"
+              label={{
+                value: "Federal LLM-access mandate — yr 2.6 of GenAI",
+                position: "top",
+                fill: "var(--stamp)",
+                fontSize: 10,
+              }}
+            />
+          ) : null}
+          {mandateMarkers.map((m, i) => (
+            <ReferenceLine
+              key={`${m.short}-${m.x}`}
+              x={m.x}
+              stroke={m.color}
+              strokeDasharray="4 4"
+              label={markerLabel(
+                `${m.short} · yr ${m.x.toFixed(1)}`,
+                m.color,
+                i % 2,
+              )}
+            />
+          ))}
           {plotted.map(({ s, pts }) => {
             const isContext = s.id.startsWith("owid-");
             const color = isContext ? CONTEXT_COLOR : SERIES_COLORS[s.id];
@@ -295,28 +427,70 @@ export function AdoptionCurveChart({
         </LineChart>
       </ChartFrame>
 
-      {/* Clock key: the calendar event behind each series' year-0. The
-          shared axis is years-since-start, so the actual mandate dates
-          live here rather than on the axis. One entry per unique event —
-          series that share a clock (the HTTPS pair, the LLM pair) fold. */}
+      {/* Clock key: the calendar events behind the axis. Tech clock: year 0
+          is the technology's arrival and the mandate's calendar date + axis
+          year are spelled out per series. Mandate clock: year 0 is the
+          mandate (federal) or introduction (organic), with the mandate LAG
+          noted. One entry per unique clock — series that share one (the
+          HTTPS pair, the LLM pair) fold. */}
       <div className="border-t border-border pt-2 font-mono text-[10px] leading-[1.7] text-muted-foreground">
-        <span className="uppercase tracking-[0.14em]">Year 0 for each clock</span>
+        <span className="uppercase tracking-[0.14em]">
+          {clock === "tech"
+            ? "Each technology's clock — arrival → mandate"
+            : "Year 0 for each clock"}
+        </span>
         <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5">
-          {uniqueClocks(plotted.map(({ s }) => s)).map((s) => (
-            <li key={s.start.date + s.start.label} className="inline-flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="inline-block h-1.5 w-1.5"
-                style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
-              />
-              {monthYear(s.start.date)} — {s.start.label}
-              {s.introduced ? (
-                <span className="text-muted-foreground/70">
-                  · mandated ~{mandateLagYears(s)}y after {s.introduced.label}
-                </span>
-              ) : null}
-            </li>
-          ))}
+          {clock === "tech"
+            ? uniqueBy(
+                plotted
+                  .map(({ s }) => s)
+                  .filter((s) => !s.id.startsWith("owid-")),
+                (s) => introEvent(s).date + introEvent(s).label,
+              ).map((s) => {
+                const m = mandateEvent(s);
+                const mx = mandateXOnTechClock(s);
+                return (
+                  <li
+                    key={s.id}
+                    className="inline-flex items-center gap-1.5"
+                  >
+                    <span
+                      aria-hidden
+                      className="inline-block h-1.5 w-1.5"
+                      style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
+                    />
+                    {monthYear(introEvent(s).date)} — {introEvent(s).label}
+                    {m && mx != null ? (
+                      <span className="text-muted-foreground/70">
+                        · mandated {monthYear(m.date)} (yr {mx.toFixed(1)})
+                      </span>
+                    ) : null}
+                  </li>
+                );
+              })
+            : uniqueBy(
+                plotted
+                  .map(({ s }) => s)
+                  .filter((s) => !s.id.startsWith("owid-")),
+                (s) => `${s.start.date}|${s.start.label}`,
+              ).map((s) => (
+                <li
+                  key={s.start.date + s.start.label}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <span
+                    aria-hidden
+                    className="inline-block h-1.5 w-1.5"
+                    style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
+                  />
+                  {monthYear(s.start.date)} — {s.start.label}
+                  {s.introduced && mandateLagYears(s) > 0 ? (
+                    <span className="text-muted-foreground/70">
+                      · mandated ~{mandateLagYears(s)}y after {s.introduced.label}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
           {plottedContext.length > 0 ? (
             <li className="text-muted-foreground/70">
               context clock{plottedContext.length > 1 ? "s" : ""}:{" "}
@@ -336,14 +510,13 @@ export function AdoptionCurveChart({
   );
 }
 
-/** Featured series deduped to one entry per (start date, start label). */
-function uniqueClocks(series: AdoptionSeries[]): AdoptionSeries[] {
+/** First occurrence per key — folds series that share a clock/mandate. */
+function uniqueBy<T>(items: T[], key: (item: T) => string): T[] {
   const seen = new Set<string>();
-  return series.filter((s) => {
-    if (s.id.startsWith("owid-")) return false;
-    const key = `${s.start.date}|${s.start.label}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
+  return items.filter((item) => {
+    const k = key(item);
+    if (seen.has(k)) return false;
+    seen.add(k);
     return true;
   });
 }

@@ -32,8 +32,12 @@ export interface AdoptionSeries {
   /** When the underlying technology became available, where that predates
    *  the clock start — surfaces the mandate LAG (e.g. HTTPS was in
    *  commercial use ~21 years before M-15-13). Omit when the clock start
-   *  IS the introduction (organic series, the LLM pair). */
+   *  IS the introduction (organic series). */
   introduced?: { date: string; label: string };
+  /** The policy mandate, where `start` is NOT already the mandate (the LLM
+   *  pair starts its clock at the ChatGPT release). Legacy federal series
+   *  omit this — their `start` IS the mandate; the chart derives it. */
+  mandate?: { date: string; label: string };
   /** Whether adoption was policy-mandated or organic — a key article distinction. */
   driver: "federal mandate" | "organic";
   source: { title: string; url: string; accessed: string; note?: string };

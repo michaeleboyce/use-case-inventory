@@ -47,21 +47,26 @@ export default async function AdoptionPage() {
       <Section
         number="I"
         title="The curves"
-        lede="Every technology re-based to years since its own starting gun."
+        lede="Every technology on one kind of clock: when it arrived, and when the mandate came."
         source="mixed"
       >
         <Figure
-          eyebrow="Fig. 1 · Adoption, years since mandate or introduction"
+          eyebrow="Fig. 1 · Adoption on each technology's own clock, mandates marked"
           caption={
             <>
-              Each series is aligned at x = 0 to its own mandate (federal
-              series) or first availability (organic series) and plots its own
+              Default view (apples to apples): each series is aligned at
+              x&nbsp;=&nbsp;0 to when its <em>technology</em>{" "}
+              entered use, and
+              each federal mandate is marked as a colored rule on that same
+              clock — M-15-13 at yr 20.6 of HTTPS, HSPD-12 at yr 9.2 of
+              smart cards, the FedRAMP memo at yr 5.3 of commercial IaaS, the
+              LLM-access mandate at yr 2.6 of ChatGPT. Toggle to the
+              mandate clock for the original view (years since each mandate —
+              post-mandate response speed). Each curve plots its own
               source&apos;s metric — populations differ by series and are
-              labeled in the legend; the household-computer curve (gray, full
-              span only) is context, not a comparandum. Federal HTTPS and PIV percentages computed by IFP
-              from the archived raw scans and OMB reports. Vermilion line:
-              the federal LLM-access mandate arrived 2.6 years into the GenAI
-              era. Export every point:{" "}
+              labeled in the legend; the household-computer curve (gray) is
+              context, not a comparandum. Federal HTTPS and PIV percentages computed by IFP
+              from the archived raw scans and OMB reports. Export every point:{" "}
               <a
                 href="/api/adoption-series.csv"
                 className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
@@ -346,14 +351,21 @@ export default async function AdoptionPage() {
       >
         <div className="max-w-prose space-y-4 text-[0.95rem] leading-[1.6] text-muted-foreground">
           <p>
-            <strong className="text-foreground">Alignment.</strong> Each series
-            is re-based to years since its own mandate (federal series) or
-            first public availability (organic series), so curves compare
-            trajectory shape, not calendar dates. Federal HTTPS percentages
-            are computed by IFP from GSA&apos;s archived weekly domain scans
-            (denominator: live parent .gov domains, ~1,130–1,190 per scan);
-            &ldquo;supported&rdquo; and &ldquo;enforced&rdquo; are the archived
-            Pulse definitions and are deliberately plotted as separate lines.
+            <strong className="text-foreground">Alignment.</strong> The chart
+            offers two clocks. The default re-bases every series to years
+            since its <em>technology</em>{" "}
+            entered use (commercial availability
+            or public release) and marks each federal mandate on that same
+            clock, so a technology&apos;s arrival and its mandate are both
+            visible per series — the apples-to-apples frame. The alternate
+            clock re-bases federal series to their own mandate (organic
+            series to first availability), comparing post-mandate response
+            speed. Both compare trajectory shape, not calendar dates. Federal
+            HTTPS percentages are computed by IFP from GSA&apos;s archived
+            weekly domain scans (denominator: live parent .gov domains,
+            ~1,130–1,190 per scan); &ldquo;supported&rdquo; and
+            &ldquo;enforced&rdquo; are the archived Pulse definitions and are
+            deliberately plotted as separate lines.
           </p>
           <p>
             <strong className="text-foreground">Populations differ.</strong>{" "}

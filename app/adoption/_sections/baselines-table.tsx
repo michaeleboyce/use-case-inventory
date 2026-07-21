@@ -53,6 +53,16 @@ export function BaselinesTable({ series }: { series: AdoptionSeries[] }) {
               <td className="px-3 py-3 font-mono text-[12px] text-muted-foreground">
                 {s.start.date}
                 <div className="text-[11px]">{s.start.label}</div>
+                {s.introduced && s.introduced.date !== s.start.date ? (
+                  <div className="mt-1 text-[11px] text-muted-foreground/70">
+                    tech available {s.introduced.date} — {s.introduced.label}
+                  </div>
+                ) : null}
+                {s.mandate ? (
+                  <div className="mt-1 text-[11px] text-muted-foreground/70">
+                    mandated {s.mandate.date} — {s.mandate.label}
+                  </div>
+                ) : null}
               </td>
               <td className="px-3 py-3 font-mono text-[12px] text-muted-foreground">
                 {span(s)}
