@@ -101,7 +101,9 @@ export function UseCaseFilters({
       const qs = next.toString();
       const href = qs ? `${pathname}?${qs}` : pathname;
       startTransition(() => {
-        router.push(href);
+        // scroll: false keeps the user's place in the results while the
+        // filtered rows re-render around them.
+        router.push(href, { scroll: false });
       });
     },
     [router, pathname],
@@ -145,7 +147,7 @@ export function UseCaseFilters({
   );
 
   const clearAll = useCallback(() => {
-    startTransition(() => router.push(pathname));
+    startTransition(() => router.push(pathname, { scroll: false }));
   }, [router, pathname]);
 
   const submitSearch = useCallback(

@@ -31,7 +31,7 @@ export function ViewToggle() {
       if (next === "grid") params.set("view", "grid");
       else params.delete("view");
       const qs = params.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [router, pathname, searchParams],
   );
