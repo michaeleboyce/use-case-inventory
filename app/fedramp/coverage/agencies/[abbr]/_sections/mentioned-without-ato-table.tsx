@@ -14,7 +14,7 @@ import { formatNumber } from "@/lib/formatting";
 import { buildUseCasesUrl } from "@/lib/urls";
 import { ExpandableCoverageTable } from "@/components/coverage/expandable-coverage-table";
 import { CoverageUseCaseList } from "@/components/coverage/coverage-use-case-list";
-import type { CoverageUseCaseRow } from "@/lib/types";
+import type { ContainmentCoverRow, CoverageUseCaseRow } from "@/lib/types";
 
 export interface MentionedWithoutAtoRow {
   inventory_product_id: number;
@@ -25,6 +25,11 @@ export interface MentionedWithoutAtoRow {
   cso: string | null;
   _detail: CoverageUseCaseRow[];
   _totalUseCases: number;
+  /** Covering packages the agency holds whose scope carries a matching
+   *  service — the plausible containment channel. Empty when none. */
+  _cover: ContainmentCoverRow[];
+  /** Human note naming the likely channel; null when no pattern applied. */
+  _coverNote: string | null;
 }
 
 const columnHelper = createColumnHelper<MentionedWithoutAtoRow>();
@@ -84,6 +89,53 @@ export function MentionedWithoutAtoTable({
             >
               {r.fedramp_id}
             </MonoChip>
+          </span>
+        );
+      },
+    }),
+    columnHelper.display({
+      id: "cover",
+      header: "Possible scope cover",
+      cell: ({ row }) => {
+        const r = row.original;
+        if (r._cover.length === 0) {
+          return (
+            <span
+              className="font-mono text-[10.5px] text-muted-foreground"
+              title="No package this agency holds carries a matching in-scope service. No recorded cover is not evidence of unauthorized use."
+            >
+              no recorded cover
+            </span>
+          );
+        }
+        // One chip per distinct covering package (a package can list several
+        // matching services; keep the highest-impact/first service for the
+        // label). Full detail — service + note — rides in the title.
+        const byHost = new Map<string, ContainmentCoverRow>();
+        for (const c of r._cover) {
+          if (!byHost.has(c.host_fedramp_id)) byHost.set(c.host_fedramp_id, c);
+        }
+        return (
+          <span
+            className="flex flex-wrap gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {[...byHost.values()].map((c) => (
+              <MonoChip
+                key={c.host_fedramp_id}
+                href={`/fedramp/marketplace/products/${c.host_fedramp_id}`}
+                tone="verified"
+                size="xs"
+                title={`Possible scope cover: ${c.cso}${
+                  c.impact_level ? ` (${c.impact_level})` : ""
+                } · ${c.service}. ${
+                  r._coverNote ?? ""
+                } Plausible channel, not a confirmed attribution.`}
+              >
+                {c.cso}
+                {c.impact_level ? ` · ${c.impact_level}` : ""}
+              </MonoChip>
+            ))}
           </span>
         );
       },

@@ -137,7 +137,7 @@ export function getCoverageHubStats(): CoverageStat[] {
       label: "Use cases outside agency ATO scope",
       value: mismatched,
       description:
-        "Use cases whose product is FedRAMP-listed but where the using agency has no ATO recorded on the marketplace. The ledger under-records reuse, so read this as an upper bound — not a count of unauthorized deployments.",
+        "Use cases whose product is FedRAMP-listed but where the using agency has no ATO recorded on the marketplace. The ledger under-records reuse, so read this as an upper bound — not a count of unauthorized deployments; many rows have a plausible containment cover (a matching service in scope of a package the agency does hold).",
     },
     {
       key: "agencies_with_gaps",
@@ -487,20 +487,25 @@ export function getCoverageAgencyDrill(
     .all(agency.id, agency.id);
 
   // Unresolved tokens: surface the most-frequent vendor strings present at
-  // this agency that lack a product link entirely. (Cheap proxy: count
-  // free-text vendor_name occurrences on use_cases without a product_id.)
+  // this agency that lack a product link entirely. Product linkage is
+  // edge-only (m025 dropped use_cases.product_id) — a use case is "unresolved"
+  // when it has no row in entry_product_edges, not when a column is null.
   const unresolvedTokens = db
     .prepare<
       [number],
       { token: string; count: number }
     >(`
-      SELECT TRIM(LOWER(vendor_name)) AS token, COUNT(*) AS count
-        FROM use_cases
-       WHERE agency_id = ?
-         AND product_id IS NULL
-         AND vendor_name IS NOT NULL
-         AND TRIM(vendor_name) <> ''
-       GROUP BY TRIM(LOWER(vendor_name))
+      SELECT TRIM(LOWER(uc.vendor_name)) AS token, COUNT(*) AS count
+        FROM use_cases uc
+       WHERE uc.agency_id = ?
+         AND uc.vendor_name IS NOT NULL
+         AND TRIM(uc.vendor_name) <> ''
+         AND NOT EXISTS (
+           SELECT 1 FROM entry_product_edges epe
+            WHERE epe.entry_kind = 'use_case'
+              AND epe.entry_id = uc.id
+         )
+       GROUP BY TRIM(LOWER(uc.vendor_name))
        ORDER BY count DESC
        LIMIT 20
     `)

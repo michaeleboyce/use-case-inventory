@@ -6,11 +6,14 @@ import {
   getUnlinkedAiProductsForAgency,
   getAiServicesInReachForAgency,
   getSleepingServicesForAgency,
+  getContainmentCoverForAgency,
+  matchContainmentPattern,
   bucketTiming,
   getAgencyAccessTiers,
   type AgencyAccessTier,
 } from "@/lib/db";
 import type {
+  ContainmentCoverRow,
   CoverageAgencyDrill,
   CoverageUseCaseRow,
   FedrampSnapshot,
@@ -183,23 +186,47 @@ export default async function FedrampCoverageAgencyDrillPage({
   const sleepingServicesNum = sleepingServices.length > 0 ? nextSection() : null;
   const tokensNum = nextSection();
 
+  // Containment cover: for each "mentioned without ATO" row, the ledger can't
+  // attribute the use to a channel — but if the agency holds a package whose
+  // services-in-scope catalog carries a matching service, that package is the
+  // likely cover (Azure OpenAI for "OpenAI API", Palantir tenancy for Claude,
+  // …). Prefetched once per agency, then distributed per product family below.
+  // "possible cover ≠ confirmed attribution; no cover ≠ unauthorized."
+  const containmentCover = getContainmentCoverForAgency(agency.id);
+  const coverByPattern = new Map<string, ContainmentCoverRow[]>();
+  for (const c of containmentCover) {
+    const list = coverByPattern.get(c.service_pattern) ?? [];
+    list.push(c);
+    coverByPattern.set(c.service_pattern, list);
+  }
+
   // Attach top-10 use cases per "mentioned without ATO" row, server-side.
   // Cheap — each row's product is a single id lookup; rows are O(few-dozen).
   type MentionedRowWithDetail =
     CoverageAgencyDrill["mentioned_without_ato"][number] & {
       _detail: CoverageUseCaseRow[];
       _totalUseCases: number;
+      _cover: ContainmentCoverRow[];
+      _coverNote: string | null;
     };
   const mentionedWithDetail: MentionedRowWithDetail[] =
-    mentioned_without_ato.map((p) => ({
-      ...p,
-      _detail: getUseCasesForCoverageAgencyProduct(
-        agency.id,
-        p.inventory_product_id,
-        { limit: 10 },
-      ),
-      _totalUseCases: p.use_case_count,
-    }));
+    mentioned_without_ato.map((p) => {
+      const pattern = matchContainmentPattern(p.canonical_name);
+      const cover = pattern
+        ? coverByPattern.get(pattern.servicePattern) ?? []
+        : [];
+      return {
+        ...p,
+        _detail: getUseCasesForCoverageAgencyProduct(
+          agency.id,
+          p.inventory_product_id,
+          { limit: 10 },
+        ),
+        _totalUseCases: p.use_case_count,
+        _cover: cover,
+        _coverNote: pattern?.note ?? null,
+      };
+    });
 
   const crumbLabel =
     agency.name.length > 70 ? agency.name.slice(0, 69) + "…" : agency.name;
@@ -335,7 +362,7 @@ export default async function FedrampCoverageAgencyDrillPage({
       <Section
         number={mentionedNum}
         title="Mentioned without an ATO on file"
-        lede="Products this agency reports using whose FedRAMP listing isn&rsquo;t paired with an ATO at this agency. Click a row to see the actual use cases."
+        lede="Products this agency reports using whose FedRAMP listing isn&rsquo;t paired with an ATO at this agency. The ledger can&rsquo;t attribute a use to a channel, so where the agency holds a package whose in-scope services carry a match, that package is flagged as the likely cover — possible cover &ne; confirmed attribution; no cover &ne; unauthorized. Click a row to see the actual use cases."
       >
         {mentioned_without_ato.length === 0 ? (
           <p className="border-t-2 border-foreground pt-4 max-w-prose text-sm text-muted-foreground">

@@ -472,6 +472,39 @@ export interface AiServiceInReachRow {
   source: string;
 }
 
+/**
+ * One containment-cover pattern: maps a curated-product canonical-name family
+ * (matched as a case-insensitive substring of `products.canonical_name`) to a
+ * `fedramp_authorized_services.service` LIKE pattern that, when in scope of a
+ * package the agency holds an ATO on, is the plausible channel the product
+ * reaches the agency through. A maintained constant — not derived from data.
+ */
+export interface ContainmentPattern {
+  /** Case-insensitive substring matched against `products.canonical_name`. */
+  productPattern: string;
+  /** LIKE pattern matched against `fedramp_authorized_services.service`. */
+  servicePattern: string;
+  /** Human note naming the likely channel (rendered in the chip title). */
+  note: string;
+}
+
+/**
+ * One covering package an agency holds an ATO on whose scope catalog contains
+ * a service matching a containment pattern. "Possible cover, not confirmed
+ * attribution": presence here says the capability is in scope of an
+ * authorization the agency already holds — not that the agency enabled it, and
+ * not that this is the channel behind any specific inventory row.
+ */
+export interface ContainmentCoverRow {
+  /** The `servicePattern` this row satisfies (the join key for page lookup). */
+  service_pattern: string;
+  host_fedramp_id: string;
+  cso: string;
+  impact_level: string | null;
+  /** The specific in-scope service that matched the pattern. */
+  service: string;
+}
+
 /** Per-agency frontier-reach rollup for the coverage agencies list. */
 export interface FrontierReachAgencyRow {
   inventory_agency_id: number;

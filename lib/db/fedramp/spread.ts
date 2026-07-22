@@ -18,6 +18,8 @@ import type {
   AiServiceInReachRow,
   AiServiceInScopeRow,
   AiServiceShelfCounts,
+  ContainmentCoverRow,
+  ContainmentPattern,
   CoreAiSpreadRow,
   FirstCoreAiAtoRow,
   FrontierProductStatus,
@@ -373,4 +375,147 @@ export function getFrontierTrioStatus(): FrontierProductStatus[] {
   );
 
   return rows.map((r) => ({ ...r, ato_holders: holders.all(r.fedramp_id) }));
+}
+
+/* --------------------------------------------------------------------- */
+/* Containment cover — the "possible cover ≠ confirmed attribution" check. */
+/* --------------------------------------------------------------------- */
+
+/**
+ * Maintained crosswalk from curated-product canonical-name families to the
+ * `fedramp_authorized_services` LIKE patterns that would cover them via the
+ * containment / tenancy channel (see the fedramp-provenance-tracing skill,
+ * trap #3). Entries are matched in order as case-insensitive substrings of
+ * `products.canonical_name`; the first match wins, so more specific families
+ * (Microsoft 365) precede looser ones (Microsoft Copilot). A row surfacing on
+ * a coverage board with "no ATO on the product's own listing" is only a real
+ * ledger gap if the agency ALSO holds no package whose scope catalog carries a
+ * matching service — this list is how we test that.
+ *
+ * NOT derived from the DB: curated from vendor knowledge (Azure OpenAI is the
+ * OpenAI channel; Claude for Government rides Palantir's FedStart tenancy;
+ * etc.). The join can't tell containment from tenancy, so the note names the
+ * relationship.
+ */
+export const CONTAINMENT_PATTERNS: ContainmentPattern[] = [
+  {
+    productPattern: "OpenAI API",
+    servicePattern: "%OpenAI%",
+    note: "Azure OpenAI Service, in scope of Azure packages.",
+  },
+  {
+    productPattern: "ChatGPT",
+    servicePattern: "%OpenAI%",
+    note: "Azure OpenAI Service, in scope of Azure packages.",
+  },
+  {
+    productPattern: "Azure OpenAI",
+    servicePattern: "%OpenAI%",
+    note: "Azure OpenAI Service, in scope of Azure packages.",
+  },
+  {
+    productPattern: "Gemini",
+    servicePattern: "%Gemini%",
+    note: "Gemini, in scope of Google Workspace / Google Cloud packages.",
+  },
+  {
+    productPattern: "Microsoft Sentinel",
+    servicePattern: "%Sentinel%",
+    note: "Microsoft Sentinel, in scope of Azure packages.",
+  },
+  {
+    productPattern: "Databricks",
+    servicePattern: "%Databricks%",
+    note: "Databricks, in scope of a hyperscaler package.",
+  },
+  {
+    productPattern: "Claude",
+    servicePattern: "%Claude%",
+    note: "Claude for Government, via Palantir FedStart tenancy.",
+  },
+  {
+    productPattern: "Microsoft 365",
+    servicePattern: "%Microsoft 365%",
+    note: "Microsoft 365 service, in scope of an M365 package.",
+  },
+  {
+    productPattern: "Microsoft Copilot",
+    servicePattern: "%Copilot%",
+    note: "Microsoft Copilot service, in scope of an M365 / Azure package.",
+  },
+  {
+    productPattern: "Slack",
+    servicePattern: "%Slack%",
+    note: "Slack, in scope of a Salesforce package.",
+  },
+];
+
+/**
+ * The first containment pattern whose `productPattern` is a case-insensitive
+ * substring of the given canonical product name, or null if none apply. Used
+ * to decide whether a "mentioned without ATO" row has a containment channel
+ * worth checking for.
+ */
+export function matchContainmentPattern(
+  canonicalName: string,
+): ContainmentPattern | null {
+  const lc = canonicalName.toLowerCase();
+  return (
+    CONTAINMENT_PATTERNS.find((p) =>
+      lc.includes(p.productPattern.toLowerCase()),
+    ) ?? null
+  );
+}
+
+/**
+ * For one inventory agency, every covering package it holds an ATO on whose
+ * scope catalog carries a service matching a containment pattern — the batched
+ * form the agency drill page consumes. Rows are tagged with the
+ * `service_pattern` they satisfy so the page can look up cover for a given
+ * product family. Says nothing about whether the agency enabled the service;
+ * "possible cover, not confirmed attribution."
+ *
+ * Guards on `fedramp_authorized_services` existing — a stale DB copy without
+ * the services mirror degrades to an empty list rather than throwing.
+ */
+export function getContainmentCoverForAgency(
+  inventoryAgencyId: number,
+): ContainmentCoverRow[] {
+  const db = getDb();
+  const hasServices = Boolean(
+    db
+      .prepare(
+        `SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'fedramp_authorized_services'`,
+      )
+      .get(),
+  );
+  if (!hasServices) return [];
+
+  const stmt = db.prepare<
+    [string, number],
+    Omit<ContainmentCoverRow, "service_pattern">
+  >(
+    `SELECT DISTINCT p.fedramp_id AS host_fedramp_id,
+            p.cso,
+            p.impact_level,
+            s.service AS service
+       FROM fedramp_authorized_services s
+       JOIN fedramp_authorizations a ON a.fedramp_id = s.fedramp_id
+       JOIN fedramp_agency_links al ON al.fedramp_agency_id = a.agency_id
+       JOIN fedramp_products p ON p.fedramp_id = s.fedramp_id
+      WHERE s.service LIKE ?
+        AND al.inventory_agency_id = ?
+      ORDER BY p.impact_level DESC, p.cso, s.service`,
+  );
+
+  const distinctPatterns = [
+    ...new Set(CONTAINMENT_PATTERNS.map((p) => p.servicePattern)),
+  ];
+  const out: ContainmentCoverRow[] = [];
+  for (const pattern of distinctPatterns) {
+    for (const r of stmt.all(pattern, inventoryAgencyId)) {
+      out.push({ service_pattern: pattern, ...r });
+    }
+  }
+  return out;
 }
