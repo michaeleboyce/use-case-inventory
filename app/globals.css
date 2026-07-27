@@ -118,6 +118,7 @@
   --chart-adoption-2: #357430; /* green — PIV strong auth */
   --chart-adoption-3: #c26e12; /* amber — workplace PC */
   --chart-adoption-4: #6d59b8; /* purple — federal cloud (CFO Act ATOs) */
+  --chart-adoption-5: #00829b; /* teal — federal DNSSEC (.gov signed) */
   --chart-adoption-context: oklch(0.62 0.02 75); /* recessive household context */
 
   /* Categorical series palette (access-trajectory slope chart) — 7 slots,
@@ -194,6 +195,7 @@
   --chart-adoption-2: #439458;
   --chart-adoption-3: #c17f21;
   --chart-adoption-4: #8f7cd4;
+  --chart-adoption-5: #1899ad;
   --chart-adoption-context: oklch(0.6 0.02 255);
 
   /* Categorical series palette — dark-mode steps, validated against the

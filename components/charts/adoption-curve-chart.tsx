@@ -73,6 +73,7 @@ const MANDATE_SHORT: Record<string, string> = {
   "https-enforces": "M-15-13 (HTTPS)",
   "https-supports": "M-15-13 (HTTPS)",
   "piv-login": "HSPD-12 (PIV)",
+  "dnssec-gov": "M-08-23 (DNSSEC)",
   "cloud-cfo-ato": "FedRAMP memo",
   "federal-llm-access": "LLM-access mandate",
   "federal-llm-access-bullish": "LLM-access mandate",
@@ -84,6 +85,7 @@ const SERIES_COLORS: Record<string, string> = {
   "piv-login": "var(--chart-adoption-2)",
   "workplace-pc": "var(--chart-adoption-3)",
   "cloud-cfo-ato": "var(--chart-adoption-4)",
+  "dnssec-gov": "var(--chart-adoption-5)",
   // The subject series wear the accent — same hue as the mandate marker.
   // Solid = corroborated floor; dashed = bullish (agency availability).
   "federal-llm-access": "var(--stamp)",
@@ -108,6 +110,7 @@ const END_LABELS: Record<string, { text: string | null; dy: number }> = {
   "https-enforces": { text: "HTTPS (enforced)", dy: 4 },
   "https-supports": { text: null, dy: 0 },
   "piv-login": { text: "PIV login", dy: -8 },
+  "dnssec-gov": { text: "DNSSEC (.gov)", dy: -13 },
   "workplace-pc": { text: "PC at work", dy: 0 },
   "cloud-cfo-ato": { text: "Cloud (CFO Act ATOs)", dy: -6 },
   "federal-llm-access": { text: "LLM access (floor)", dy: 10 },
@@ -395,7 +398,7 @@ export function AdoptionCurveChart({
               label={markerLabel(
                 `${m.short} · yr ${m.x.toFixed(1)}`,
                 m.color,
-                i % 2,
+                i % 3,
               )}
             />
           ))}

@@ -11,13 +11,14 @@ import { ADOPTION_SERIES } from "@/lib/data/adoption-series";
 describe("lib/data/adoption-series", () => {
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-  it("has at least the five core baseline series", () => {
+  it("has at least the six core baseline series", () => {
     const ids = ADOPTION_SERIES.map((s) => s.id);
     for (const required of [
       "https-enforces",
       "https-supports",
       "workplace-pc",
       "piv-login",
+      "dnssec-gov",
       "fedramp-authorizations",
     ]) {
       expect(ids).toContain(required);

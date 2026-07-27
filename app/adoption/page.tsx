@@ -31,7 +31,7 @@ export default async function AdoptionPage() {
         kicker="§ V · Analytics · Adoption"
         metaLines={[
           "Federal GenAI vs prior technology rollouts",
-          "External baselines verified 2026-07-06",
+          "External baselines verified 2026-07-06 · DNSSEC 2026-07-26",
         ]}
         title={
           <>
@@ -59,14 +59,17 @@ export default async function AdoptionPage() {
               entered use, and
               each federal mandate is marked as a colored rule on that same
               clock — M-15-13 at yr 20.6 of HTTPS, HSPD-12 at yr 9.2 of
-              smart cards, the FedRAMP memo at yr 5.3 of commercial IaaS, the
+              smart cards, the FedRAMP memo at yr 5.3 of commercial IaaS,
+              M-08-23 at yr 3.5 of DNSSEC, the
               LLM-access mandate at yr 2.6 of ChatGPT. Toggle to the
               mandate clock for the original view (years since each mandate —
               post-mandate response speed). Each curve plots its own
               source&apos;s metric — populations differ by series and are
               labeled in the legend; the household-computer curve (gray) is
-              context, not a comparandum. Federal HTTPS and PIV percentages computed by IFP
-              from the archived raw scans and OMB reports. Export every point:{" "}
+              context, not a comparandum. Federal HTTPS, PIV, and DNSSEC
+              percentages computed or hand-assembled by IFP from the archived
+              raw scans, OMB FISMA reports, and NIST&apos;s live DNSSEC
+              monitor. Export every point:{" "}
               <a
                 href="/api/adoption-series.csv"
                 className="underline decoration-dotted underline-offset-2 hover:text-[var(--stamp)]"
@@ -91,6 +94,11 @@ export default async function AdoptionPage() {
             services by year five. PIV strong authentication drifted for a
             decade after HSPD-12, then jumped 42% → 72% in a single quarter —
             under the 2015 breach-response sprint, not the original mandate.
+            DNSSEC sits between: roughly 20% of federal .gov domains were
+            signed at M-08-23&apos;s own December 2009 deadline, and the climb
+            to 74% by FY2012 came only after DHS began scanning every domain
+            and a cross-agency Tiger Team published the results — compliance
+            followed measurement, not the memo.
           </p>
         </div>
       </Section>
@@ -365,7 +373,15 @@ export default async function AdoptionPage() {
             weekly domain scans (denominator: live parent .gov domains,
             ~1,130–1,190 per scan); &ldquo;supported&rdquo; and
             &ldquo;enforced&rdquo; are the archived Pulse definitions and are
-            deliberately plotted as separate lines.
+            deliberately plotted as separate lines. The DNSSEC series mixes
+            three measured sources over the same kind of population (federal
+            second-level .gov domains) with slightly different denominators:
+            press-corroborated coverage of the December 2009 deadline, the
+            DHS-scan &ldquo;DNSSEC Implementation&rdquo; percentages from
+            OMB&apos;s FY2011–FY2012 FISMA reports, and a 2026 endpoint
+            IFP-computed from NIST&apos;s live deployment monitor over
+            CISA&apos;s 1,338-domain federal list (84.4% signed; 81.8% also
+            valid and chained) — approximate points are flagged in the data.
           </p>
           <p>
             <strong className="text-foreground">Populations differ.</strong>{" "}

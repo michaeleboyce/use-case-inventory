@@ -23,6 +23,10 @@ const HEADER = [
   "driver",
   "clock_start_date",
   "clock_start_label",
+  "introduced_date",
+  "introduced_label",
+  "mandate_date",
+  "mandate_label",
   "date",
   "value",
   "approx",
@@ -31,10 +35,25 @@ const HEADER = [
   "source_accessed",
 ];
 
+/** Mandate derivation mirroring the chart (see mandateEvent in
+ *  components/charts/adoption-curve-chart.tsx): explicit `mandate` wins;
+ *  legacy federal series' `start` IS the mandate when `introduced` is set. */
+function mandateOf(s: {
+  mandate?: { date: string; label: string };
+  driver: string;
+  introduced?: { date: string; label: string };
+  start: { date: string; label: string };
+}): { date: string; label: string } | null {
+  if (s.mandate) return s.mandate;
+  if (s.driver === "federal mandate" && s.introduced) return s.start;
+  return null;
+}
+
 export async function GET() {
   const lines: string[] = [csvRow(HEADER)];
 
   for (const s of assembleAdoptionSeries()) {
+    const mandate = mandateOf(s);
     for (const p of s.points) {
       lines.push(
         csvRow([
@@ -46,6 +65,10 @@ export async function GET() {
           s.driver,
           s.start.date,
           s.start.label,
+          s.introduced?.date ?? "",
+          s.introduced?.label ?? "",
+          mandate?.date ?? "",
+          mandate?.label ?? "",
           p.date,
           p.value,
           p.approx ? "Y" : "N",
@@ -100,6 +123,10 @@ export async function GET() {
           GENAI_META.driver,
           GENAI_META.start_date,
           GENAI_META.start_label,
+          "2022-11-30",
+          "ChatGPT public release",
+          "2025-07-23",
+          "AI Action Plan LLM-access mandate",
           `${cycle.inventory_year}-12-31`,
           cycle[key],
           "N",

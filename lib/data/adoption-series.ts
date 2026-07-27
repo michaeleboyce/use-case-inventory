@@ -18,6 +18,18 @@
 //   - PIV series: discrete datapoints hand-assembled from OMB FISMA reports
 //     and White House Cybersecurity Sprint reporting; metric definitions vary
 //     slightly across reports (see note).
+//   - DNSSEC series: hand-assembled by IFP. FY2010-FY2012 points are the
+//     government-wide "DNSSEC Implementation" percentages from OMB's annual
+//     FISMA Reports to Congress (DHS-scan validated, not self-reported;
+//     FY2011 report p.8 + Figure 9, FY2012 report p.25 + Figure 10); the
+//     Dec-2009 deadline point (~20%) is press-corroborated (Computerworld/
+//     GCN); the 2026 endpoint is IFP-computed from NIST's live USGv6
+//     deployment monitor (share of the 1,338 CISA-listed federal
+//     second-level .gov domains whose zone is DNSSEC-signed, snapshot
+//     2026.07.26 — "Good" signed+valid+chained was 81.8%). Denominators
+//     differ across the three sources (see note). 3-vote adversarial
+//     verification 2026-07-21: audit/article/research_2026-07-26/ in the
+//     ETL repo.
 //   - OWID household series: Our World in Data "Technology adoption in US
 //     households" grapher CSV (Comin & Hobijn HCCTAD + Horace Dediu), CC BY.
 //
@@ -164,6 +176,30 @@ export const ADOPTION_SERIES: AdoptionSeries[] = [
       { date: "2015-04-30", value: 42 },
       { date: "2015-07-31", value: 72 },
       { date: "2015-11-16", value: 81 },
+    ],
+  },
+  {
+    id: "dnssec-gov",
+    label: "Federal DNSSEC — .gov signed",
+    population: "Federal second-level .gov domains",
+    metric: "Share of federal second-level .gov domains DNSSEC-signed",
+    unit: "percent",
+    start: { date: "2008-08-22", label: "OMB M-08-23 DNSSEC mandate" },
+    introduced: { date: "2005-03-01", label: "DNSSEC-bis final specs (RFC 4033–4035, Mar 2005)" },
+    driver: "federal mandate",
+    source: {
+      title:
+        "OMB FISMA Annual Reports to Congress (FY2011–FY2012) & NIST USGv6 deployment monitor",
+      url: "https://obamawhitehouse.archives.gov/sites/default/files/omb/assets/egov_docs/fy12_fisma.pdf",
+      accessed: "2026-07-26",
+      note: "Hand-assembled; FY figures are DHS-scan results from OMB FISMA reports (FY2011 Fig. 9, FY2012 Fig. 10); 2009 point press-corroborated (~20% signed at the Dec 2009 deadline); 2026 endpoint IFP-computed from NIST's USGv6 monitor over CISA's 1,338 federal .gov domains (denominator differs). 3-vote adversarial verification 2026-07-21.",
+    },
+    points: [
+      { date: "2009-12-31", value: 20, approx: true },
+      { date: "2010-09-30", value: 35 },
+      { date: "2011-09-30", value: 65 },
+      { date: "2012-09-30", value: 74 },
+      { date: "2026-07-26", value: 84.4, approx: true },
     ],
   },
   {
