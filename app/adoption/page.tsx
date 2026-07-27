@@ -16,6 +16,7 @@ import { formatNumber } from "@/lib/formatting";
 import { buildAdoptionViewModel } from "./_view-model";
 import { GenAiGrowthChart } from "./_sections/genai-growth-chart";
 import { BaselinesTable } from "./_sections/baselines-table";
+import { AdoptionLineSources } from "./_sections/line-sources";
 
 export const metadata = { title: "Technology Adoption Compared" };
 
@@ -64,9 +65,9 @@ export default async function AdoptionPage() {
               LLM-access mandate at yr 2.6 of ChatGPT. Toggle to the
               mandate clock for the original view (years since each mandate —
               post-mandate response speed). Each curve plots its own
-              source&apos;s metric — populations differ by series and are
-              labeled in the legend; the household-computer curve (gray) is
-              context, not a comparandum. Federal HTTPS, PIV, and DNSSEC
+              source&apos;s metric — every line is a federal-enterprise
+              population, labeled in the legend, with per-line sources
+              documented under Method &amp; sources below. Federal HTTPS, PIV, and DNSSEC
               percentages computed or hand-assembled by IFP from the archived
               raw scans, OMB FISMA reports, and NIST&apos;s live DNSSEC
               monitor. Export every point:{" "}
@@ -385,12 +386,14 @@ export default async function AdoptionPage() {
           </p>
           <p>
             <strong className="text-foreground">Populations differ.</strong>{" "}
-            Federal series count domains, users, or cloud services; the
-            workplace series counts employed adults; the household context
-            curve counts households. The comparison is honest about this: it claims
-            the <em>historically slower</em> adopter (the federal enterprise)
-            moved on GenAI at a pace previously seen only in consumer
-            technologies — it does not claim the populations are equivalent.
+            The chart is government-only, but even within the federal
+            enterprise the series count different things — .gov domains
+            (HTTPS, DNSSEC), civilian users (PIV), CFO Act agencies (cloud),
+            AI-eligible workers (LLM access) — so curves compare trajectory
+            shape, not a shared denominator. The consumer baselines
+            (household computer, internet, smartphone; workplace PC) remain
+            in the dataset, the baselines table, and the CSV export, but are
+            no longer plotted.
           </p>
           <p>
             <strong className="text-foreground">
@@ -400,21 +403,16 @@ export default async function AdoptionPage() {
             institutional activity. They never share an axis with the
             percentage curves.
           </p>
+          <div className="border-t border-border pt-4">
+            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              Sources, by line
+            </p>
+            <AdoptionLineSources />
+          </div>
           <ul className="space-y-2 border-t border-border pt-4">
-            {vm.series
-              .filter(
-                (s, i, all) =>
-                  all.findIndex((t) => t.source.url === s.source.url) === i,
-              )
-              .map((s) => (
-                <li key={s.id}>
-                  <Citation
-                    url={s.source.url}
-                    title={s.source.title}
-                    accessed={s.source.accessed}
-                  />
-                </li>
-              ))}
+            <li className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              Context &amp; corroboration
+            </li>
             <li>
               <Citation
                 url="https://www.nber.org/system/files/working_papers/w32966/w32966.pdf"

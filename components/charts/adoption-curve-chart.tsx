@@ -24,15 +24,16 @@ import type { AdoptionSeries } from "@/lib/types/adoption";
  *    "when the mandate arrived" are both visible per series, and the
  *    shrinking mandate lag (HTTPS yr ~21 → cloud yr ~5 → LLM yr 2.6)
  *    reads directly off the axis.
- *  - "mandate" (the original view): federal series re-base to their own
- *    mandate, organic series to introduction — compares post-mandate
- *    response speed. The vermilion rule marks the LLM-access mandate at
- *    yr 2.6 of the GenAI era (that pair's clock starts at ChatGPT).
+ *  - "mandate" (the original view): every series re-bases to its own
+ *    mandate — compares post-mandate response speed. The vermilion rule
+ *    marks the LLM-access mandate at yr 2.6 of the GenAI era (that pair's
+ *    clock starts at ChatGPT).
  *
- * Populations differ by construction (federal .gov domains, federal users,
- * employed adults, households) — identity is carried by the legend +
- * per-series population labels, and household curves render recessively
- * in gray so they read as context, not comparanda.
+ * Government-only by design: every plotted series is a federal-enterprise
+ * population (.gov domains, federal users, CFO Act agencies, AI-eligible
+ * workers) — identity is carried by the legend + per-series population
+ * labels. Household/workforce comparison series (OWID, Census CPS) stay in
+ * the data + CSV but are excluded here.
  */
 
 const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
@@ -91,12 +92,13 @@ const SERIES_COLORS: Record<string, string> = {
   "federal-llm-access": "var(--stamp)",
   "federal-llm-access-bullish": "var(--stamp)",
 };
-const CONTEXT_COLOR = "var(--chart-adoption-context)";
 const DASHED_SERIES = new Set(["https-supports", "federal-llm-access-bullish"]);
 
-/** Series kept out of this chart (editorial call — data + CSV keep them). */
+/** Series kept out of this chart — non-federal populations (editorial
+ *  call: government adoption only; data + CSV keep them). */
 const EXCLUDED_SERIES = new Set([
   "workplace-pc",
+  "owid-computer",
   "owid-internet",
   "owid-smartphone",
 ]);
@@ -115,9 +117,6 @@ const END_LABELS: Record<string, { text: string | null; dy: number }> = {
   "cloud-cfo-ato": { text: "Cloud (CFO Act ATOs)", dy: -6 },
   "federal-llm-access": { text: "LLM access (floor)", dy: 10 },
   "federal-llm-access-bullish": { text: "LLM (bullish)", dy: -8 },
-  "owid-computer": { text: "Computer", dy: 0 },
-  "owid-internet": { text: "Internet", dy: 0 },
-  "owid-smartphone": { text: "Smartphone", dy: 12 },
 };
 
 type PlottedPoint = { x: number; y: number; date: string };
@@ -194,28 +193,15 @@ export function AdoptionCurveChart({
 }) {
   const [clock, setClock] = React.useState<AdoptionClock>(initialClock);
   const [windowed, setWindowed] = React.useState(true);
-  const [showContext, setShowContext] = React.useState(true);
   // The tech clock needs the wider frame: HTTPS data starts at yr ~21 of
   // its technology; 25y covers every federal series' full mandate story.
   const windowYears = clock === "tech" ? 25 : 12;
   const maxYears = windowed ? windowYears : null;
 
-  const percentSeries = series.filter(
-    (s) => s.unit === "percent" && !EXCLUDED_SERIES.has(s.id),
-  );
-  const featured = percentSeries.filter((s) => !s.id.startsWith("owid-"));
-  const context = showContext
-    ? percentSeries.filter((s) => s.id.startsWith("owid-"))
-    : [];
-
-  const plotted = [...context, ...featured] // context first → featured on top
+  const plotted = series
+    .filter((s) => s.unit === "percent" && !EXCLUDED_SERIES.has(s.id))
     .map((s) => ({ s, pts: toPlotted(s, maxYears, clock) }))
     .filter(({ pts }) => pts.length > 1);
-
-  // Context series that actually render in the current window (a curve with
-  // ≤1 in-window point is dropped above) — gates the gray legend chip and
-  // the context line of the clock key.
-  const plottedContext = plotted.filter(({ s }) => s.id.startsWith("owid-"));
 
   const xMax = windowed
     ? windowYears
@@ -229,7 +215,6 @@ export function AdoptionCurveChart({
       ? uniqueBy(
           plotted
             .map(({ s }) => s)
-            .filter((s) => !s.id.startsWith("owid-"))
             .filter((s) => mandateXOnTechClock(s) != null),
           (s) => `${introEvent(s).date}|${mandateEvent(s)!.date}`,
         )
@@ -284,50 +269,27 @@ export function AdoptionCurveChart({
           >
             Full span
           </Button>
-          <span className="ml-4 font-mono uppercase tracking-[0.14em] text-muted-foreground">
-            Household context:
-          </span>
-          <Button
-            variant={showContext ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowContext((v) => !v)}
-            className="font-mono text-[11px]"
-          >
-            {showContext ? "Shown" : "Hidden"}
-          </Button>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-        {plotted
-          .filter(({ s }) => !s.id.startsWith("owid-"))
-          .map(({ s }) => (
-            <span key={s.id} className="inline-flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="inline-block w-4"
-                style={
-                  DASHED_SERIES.has(s.id)
-                    ? { height: 0, borderTop: `2px dashed ${SERIES_COLORS[s.id]}` }
-                    : { height: 2, background: SERIES_COLORS[s.id] }
-                }
-              />
-              {s.label}
-              <span className="normal-case tracking-normal text-muted-foreground/70">
-                ({s.population.toLowerCase()})
-              </span>
-            </span>
-          ))}
-        {plottedContext.length > 0 ? (
-          <span className="inline-flex items-center gap-1.5">
+        {plotted.map(({ s }) => (
+          <span key={s.id} className="inline-flex items-center gap-1.5">
             <span
               aria-hidden
-              className="inline-block h-0.5 w-4"
-              style={{ background: CONTEXT_COLOR }}
+              className="inline-block w-4"
+              style={
+                DASHED_SERIES.has(s.id)
+                  ? { height: 0, borderTop: `2px dashed ${SERIES_COLORS[s.id]}` }
+                  : { height: 2, background: SERIES_COLORS[s.id] }
+              }
             />
-            US households (context)
+            {s.label}
+            <span className="normal-case tracking-normal text-muted-foreground/70">
+              ({s.population.toLowerCase()})
+            </span>
           </span>
-        ) : null}
+        ))}
       </div>
 
       <ChartFrame height={380}>
@@ -403,8 +365,7 @@ export function AdoptionCurveChart({
             />
           ))}
           {plotted.map(({ s, pts }) => {
-            const isContext = s.id.startsWith("owid-");
-            const color = isContext ? CONTEXT_COLOR : SERIES_COLORS[s.id];
+            const color = SERIES_COLORS[s.id] ?? "var(--foreground)";
             const lbl = END_LABELS[s.id] ?? { text: s.label, dy: 0 };
             return (
               <Line
@@ -413,9 +374,8 @@ export function AdoptionCurveChart({
                 dataKey="y"
                 name={`${s.label} — ${s.population}`}
                 stroke={color}
-                strokeWidth={isContext ? 1.25 : 2}
+                strokeWidth={2}
                 strokeDasharray={DASHED_SERIES.has(s.id) ? "5 4" : undefined}
-                strokeOpacity={isContext ? 0.75 : 1}
                 dot={false}
                 activeDot={{ r: 4 }}
                 isAnimationActive={false}
@@ -445,9 +405,7 @@ export function AdoptionCurveChart({
         <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-0.5">
           {clock === "tech"
             ? uniqueBy(
-                plotted
-                  .map(({ s }) => s)
-                  .filter((s) => !s.id.startsWith("owid-")),
+                plotted.map(({ s }) => s),
                 (s) => introEvent(s).date + introEvent(s).label,
               ).map((s) => {
                 const m = mandateEvent(s);
@@ -460,7 +418,7 @@ export function AdoptionCurveChart({
                     <span
                       aria-hidden
                       className="inline-block h-1.5 w-1.5"
-                      style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
+                      style={{ background: SERIES_COLORS[s.id] ?? "var(--foreground)" }}
                     />
                     {monthYear(introEvent(s).date)} — {introEvent(s).label}
                     {m && mx != null ? (
@@ -472,9 +430,7 @@ export function AdoptionCurveChart({
                 );
               })
             : uniqueBy(
-                plotted
-                  .map(({ s }) => s)
-                  .filter((s) => !s.id.startsWith("owid-")),
+                plotted.map(({ s }) => s),
                 (s) => `${s.start.date}|${s.start.label}`,
               ).map((s) => (
                 <li
@@ -484,7 +440,7 @@ export function AdoptionCurveChart({
                   <span
                     aria-hidden
                     className="inline-block h-1.5 w-1.5"
-                    style={{ background: SERIES_COLORS[s.id] ?? CONTEXT_COLOR }}
+                    style={{ background: SERIES_COLORS[s.id] ?? "var(--foreground)" }}
                   />
                   {monthYear(s.start.date)} — {s.start.label}
                   {s.introduced && mandateLagYears(s) > 0 ? (
@@ -494,19 +450,6 @@ export function AdoptionCurveChart({
                   ) : null}
                 </li>
               ))}
-          {plottedContext.length > 0 ? (
-            <li className="text-muted-foreground/70">
-              context clock{plottedContext.length > 1 ? "s" : ""}:{" "}
-              {plottedContext
-                .map(
-                  ({ s }) =>
-                    `household ${s.label
-                      .replace(" (US households)", "")
-                      .toLowerCase()} · ${monthYear(s.start.date)}`,
-                )
-                .join(", ")}
-            </li>
-          ) : null}
         </ul>
       </div>
     </div>

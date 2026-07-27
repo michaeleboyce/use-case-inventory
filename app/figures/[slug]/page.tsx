@@ -52,6 +52,14 @@ export default async function FigurePage({
         <p className="mt-6 max-w-none font-mono text-[10.5px] leading-[1.6] text-muted-foreground">
           {rendered.caption}
         </p>
+        {rendered.sources ? (
+          <div className="mt-6 border-t border-border pt-4">
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Sources, by line
+            </p>
+            {rendered.sources}
+          </div>
+        ) : null}
       </div>
     </div>
   );
